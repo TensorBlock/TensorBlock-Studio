@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "outDir": "out-tsc",
+    "sourceMap": true,
+    "strict": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "*.ts"
+  ]
+} 

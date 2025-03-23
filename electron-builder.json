@@ -1,0 +1,45 @@
+{
+  "appId": "com.tensorblock.TensorBlockStudio",
+  "productName": "TensorBlock Studio",
+  "asar": true,
+  "asarUnpack": [
+    "dist/assets/icons/**"
+  ],
+  "directories": {
+    "app": "app",
+    "output": "release/"
+  },
+  "files": [
+    "**/*",
+    "!**/*.ts",
+    "!*.map",
+    "!package.json",
+    "!package-lock.json"
+  ],
+  "win": {
+    "icon": "app/dist/assets/icons",
+    "target": [
+      "portable"
+    ]
+  },
+  "portable": {
+    "splashImage": "app/dist/assets/icons/electron.bmp"
+  },
+  "mac": {
+    "icon": "app/dist/assets/icons_mac",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ]
+  },
+  "linux": {
+    "icon": "app/dist/assets/icons",
+    "category": "Utility",
+    "maintainer": "tensorblock.co",
+    "target": [
+      "AppImage"
+    ]
+  }
+}

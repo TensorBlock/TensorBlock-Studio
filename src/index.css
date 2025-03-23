@@ -1,0 +1,33 @@
+@layer tailwind-base, primereact, tailwind-utilities;
+
+@import 'primereact/resources/themes/lara-light-blue/theme.css' layer(primereact);
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
+
+:root {
+  --primary-color-50: #F8F7F3;
+  --primary-color: #9B9378;
+  --primary-color-200: #E6E3DB;
+  --primary-color-outline: #E6E3DB;
+  --surface-200: #E7E5E4;
+  --surface-700: #44403C;
+}
+
+
+/* Add these styles for Electron window dragging */
+.app-region-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.app-region-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}

@@ -1,0 +1,16 @@
+{
+  "name": "tensorblock-studio",
+  "description": "TensorBlock Studio",
+  "author": {
+    "name": "Jiawei Peng"
+  },
+  "version": "0.0.1",
+  "main": "out-tsc/main.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+  }
+}
