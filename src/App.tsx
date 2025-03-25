@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChatPage } from './pages/ChatPage';
 import MainLayout from './components/layout/MainLayout';
-import { SettingsService } from './services/settings-service';
+import { SettingsService, SETTINGS_CHANGE_EVENT } from './services/settings-service';
 
 function App() {
   // State for settings
@@ -11,17 +11,19 @@ function App() {
   // Load settings when app starts
   useEffect(() => {
     const settingsService = SettingsService.getInstance();
-    setApiKey(settingsService.getApiKey());
+    const selectedProvider = settingsService.getSelectedProvider();
+    setApiKey(settingsService.getApiKey(selectedProvider));
     setSelectedModel(settingsService.getSelectedModel());
     
     // Listen for settings changes
-    const handleStorageChange = () => {
-      setApiKey(settingsService.getApiKey());
+    const handleSettingsChange = () => {
+      const provider = settingsService.getSelectedProvider();
+      setApiKey(settingsService.getApiKey(provider));
       setSelectedModel(settingsService.getSelectedModel());
     };
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    return () => window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
   }, []);
 
   return (

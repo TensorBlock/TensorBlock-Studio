@@ -10,35 +10,10 @@ import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
 
 /**
- * Response format for text completions
- */
-export interface OpenAICompletionResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    text: string;
-    index: number;
-    logprobs: null | {
-      tokens: string[];
-      token_logprobs: number[];
-      top_logprobs: Record<string, number>[] | null;
-      text_offset: number[];
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
-
-/**
  * Response format for chat completions
+ * Fireworks.ai uses OpenAI-compatible API, so we reuse the same response format
  */
-export interface OpenAIChatCompletionResponse {
+export interface FireworksCompletionResponse {
   id: string;
   object: string;
   created: number;
@@ -59,105 +34,76 @@ export interface OpenAIChatCompletionResponse {
 }
 
 /**
- * Response format for image generation
+ * Default models for Fireworks.ai
  */
-export interface OpenAIImageGenerationResponse {
-  created: number;
-  data: Array<{ 
-    url?: string; 
-    b64_json?: string; 
-    revised_prompt?: string 
-  }>;
-}
-
-/**
- * Default models for OpenAI
- */
-export const OPENAI_MODELS = {
-  GPT_3_5_TURBO: 'gpt-3.5-turbo',
-  GPT_3_5_TURBO_16K: 'gpt-3.5-turbo-16k',
-  GPT_4: 'gpt-4',
-  GPT_4_TURBO: 'gpt-4-turbo',
-  GPT_4_VISION: 'gpt-4-vision-preview',
-  GPT_4_32K: 'gpt-4-32k',
-  TEXT_EMBEDDING_ADA_002: 'text-embedding-ada-002',
-  DALL_E_3: 'dall-e-3',
-  DALL_E_2: 'dall-e-2',
-  WHISPER_1: 'whisper-1',
-  TTS_1: 'tts-1',
-  TTS_1_HD: 'tts-1-hd',
+export const FIREWORKS_MODELS = {
+  LLAMA_3_8B: 'accounts/fireworks/models/llama-v3-8b',
+  LLAMA_3_70B: 'accounts/fireworks/models/llama-v3-70b',
+  MIXTRAL_8X7B: 'accounts/fireworks/models/mixtral-8x7b-instruct',
+  MIXTRAL_8X22B: 'accounts/fireworks/models/mixtral-8x22b-instruct',
+  CODE_LLAMA_70B: 'accounts/fireworks/models/codellama-70b-instruct',
+  GEMMA_7B: 'accounts/fireworks/models/gemma-7b-it',
+  VICUNA_13B: 'accounts/fireworks/models/vicuna-13b-v1.5',
+  QWE_4X4B: 'accounts/fireworks/models/firefunction-v2',
 };
 
 /**
- * Implementation of OpenAI service provider
+ * Implementation of Fireworks.ai service provider
  */
-export class OpenAIService extends AiServiceProvider {
-  private apiModels: string[] = Object.values(OPENAI_MODELS);
+export class FireworksService extends AiServiceProvider {
+  private apiModels: string[] = Object.values(FIREWORKS_MODELS);
   private settingsService: SettingsService;
 
   /**
-   * Create a new OpenAI service provider
+   * Create a new Fireworks service provider
    */
   constructor(config?: Partial<AiServiceConfig>) {
     // Get settings from settings service
     const settingsService = SettingsService.getInstance();
-    const openaiSettings = settingsService.getProviderSettings('OpenAI');
+    const fireworksSettings = settingsService.getProviderSettings('Fireworks');
     
-    // Apply default configuration
+    // Default configuration for Fireworks
+    const baseURL = fireworksSettings.baseUrl || config?.baseURL || API_CONFIG.fireworks.baseUrl;
+    
+    // Apply default configuration and override with provided config
     super({
-      baseURL: config?.baseURL || API_CONFIG.openai.baseUrl,
-      apiKey: config?.apiKey || getValidatedApiKey(openaiSettings.apiKey || API_CONFIG.openai.apiKey),
-      organizationId: config?.organizationId || getValidatedApiKey(openaiSettings.organizationId || API_CONFIG.openai.organizationId),
-      timeout: config?.timeout || API_CONFIG.openai.defaultTimeout,
-      headers: {
-        'OpenAI-Beta': 'assistants=v1',
-        ...config?.headers,
-      },
+      baseURL: baseURL,
+      apiKey: config?.apiKey || getValidatedApiKey(fireworksSettings.apiKey || API_CONFIG.fireworks.apiKey),
+      timeout: config?.timeout || API_CONFIG.fireworks.defaultTimeout,
       ...config,
     });
-
+    
     // Store services
     this.settingsService = settingsService;
-
-    // We're omitting the API version header as it's not needed
-    // and can cause compatibility issues with the OpenAI API
   }
 
   /**
    * Get the name of the service provider
    */
   get name(): string {
-    return 'OpenAI';
+    return 'Fireworks.ai';
   }
 
   /**
-   * Get the capabilities supported by OpenAI
+   * Get the capabilities supported by Fireworks.ai
    */
   get capabilities(): AIServiceCapability[] {
     return [
       AIServiceCapability.TextCompletion,
       AIServiceCapability.ChatCompletion,
-      AIServiceCapability.ImageGeneration,
-      AIServiceCapability.ImageEditing,
-      AIServiceCapability.AudioTranscription,
-      AIServiceCapability.AudioGeneration,
-      AIServiceCapability.Embedding,
       AIServiceCapability.FunctionCalling,
-      AIServiceCapability.ToolUsage,
-      AIServiceCapability.VisionAnalysis,
-      AIServiceCapability.FineTuning,
     ];
   }
 
   /**
-   * Get the available models for OpenAI
+   * Get the available models for Fireworks.ai
    */
   get availableModels(): string[] {
     return this.apiModels;
   }
 
   /**
-   * Fetch the list of available models from OpenAI
+   * Fetch the list of available models from Fireworks.ai
    */
   public async fetchAvailableModels(): Promise<string[]> {
     try {
@@ -165,13 +111,13 @@ export class OpenAIService extends AiServiceProvider {
       this.apiModels = response.data.map(model => model.id);
       return this.apiModels;
     } catch (error) {
-      console.error('Failed to fetch OpenAI models:', error);
+      console.error('Failed to fetch Fireworks.ai models:', error);
       return this.apiModels;
     }
   }
 
   /**
-   * Implementation of text completion for OpenAI
+   * Implementation of text completion for Fireworks.ai
    */
   protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
     // Validate API key before making the request
@@ -180,7 +126,7 @@ export class OpenAIService extends AiServiceProvider {
     }
 
     const completionOptions = {
-      model: options.model || OPENAI_MODELS.GPT_3_5_TURBO,
+      model: options.model || FIREWORKS_MODELS.LLAMA_3_8B,
       prompt,
       max_tokens: options.max_tokens || options.maxTokens || 1000,
       temperature: options.temperature ?? 0.7,
@@ -192,18 +138,18 @@ export class OpenAIService extends AiServiceProvider {
     };
 
     try {
-      const response = await this.client.post<OpenAICompletionResponse>(
+      const response = await this.client.post<FireworksCompletionResponse>(
         '/completions',
         completionOptions
       );
 
       if (response.choices && response.choices.length > 0) {
-        return response.choices[0].text.trim();
+        return response.choices[0].message.content.trim();
       }
 
-      throw new Error('No completion choices returned');
+      throw new Error('No completion choices returned from Fireworks.ai API');
     } catch (error) {
-      // Check for auth errors first
+      // Check for auth errors
       if ((error as AxiosError).response?.status === 401 || 
           (error as AxiosError).response?.status === 403) {
         throw this.handleAuthError(error);
@@ -212,7 +158,7 @@ export class OpenAIService extends AiServiceProvider {
       // Log detailed error information
       const axiosError = error as AxiosError;
       if (axiosError.response) {
-        console.error('OpenAI text completion error details:', {
+        console.error('Fireworks.ai text completion error details:', {
           status: axiosError.response.status,
           statusText: axiosError.response.statusText,
           data: axiosError.response.data,
@@ -222,13 +168,13 @@ export class OpenAIService extends AiServiceProvider {
           }
         });
       }
-      console.error('OpenAI completion error:', error);
+      console.error('Fireworks.ai completion error:', error);
       throw error;
     }
   }
 
   /**
-   * Implementation of chat completion for OpenAI
+   * Implementation of chat completion for Fireworks.ai
    */
   protected async chatCompletionImplementation(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage> {
     // Validate API key before making the request
@@ -237,9 +183,9 @@ export class OpenAIService extends AiServiceProvider {
     }
     
     const completionOptions = {
-      model: options.model || OPENAI_MODELS.GPT_3_5_TURBO,
+      model: options.model || FIREWORKS_MODELS.LLAMA_3_8B,
       messages,
-      max_tokens: options.max_tokens || options.maxTokens,
+      max_tokens: options.max_tokens || options.maxTokens || 1000,
       temperature: options.temperature ?? 0.7,
       top_p: options.top_p ?? options.topP ?? 1.0,
       frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
@@ -249,7 +195,7 @@ export class OpenAIService extends AiServiceProvider {
     };
 
     try {
-      const response = await this.client.post<OpenAIChatCompletionResponse>(
+      const response = await this.client.post<FireworksCompletionResponse>(
         '/chat/completions',
         completionOptions
       );
@@ -262,9 +208,9 @@ export class OpenAIService extends AiServiceProvider {
         };
       }
 
-      throw new Error('No chat completion choices returned');
+      throw new Error('No chat completion choices returned from Fireworks.ai API');
     } catch (error) {
-      // Check for auth errors first
+      // Check for auth errors
       if ((error as AxiosError).response?.status === 401 || 
           (error as AxiosError).response?.status === 403) {
         throw this.handleAuthError(error);
@@ -273,7 +219,7 @@ export class OpenAIService extends AiServiceProvider {
       // Log detailed error information
       const axiosError = error as AxiosError;
       if (axiosError.response) {
-        console.error('OpenAI chat completion error details:', {
+        console.error('Fireworks.ai chat completion error details:', {
           status: axiosError.response.status,
           statusText: axiosError.response.statusText,
           data: axiosError.response.data,
@@ -283,50 +229,7 @@ export class OpenAIService extends AiServiceProvider {
           }
         });
       }
-      console.error('OpenAI chat completion error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Generate an image using DALL-E
-   */
-  public async generateImage(
-    prompt: string, 
-    options: { 
-      model?: string; 
-      size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792';
-      quality?: 'standard' | 'hd';
-      n?: number;
-      style?: 'vivid' | 'natural';
-      responseFormat?: 'url' | 'b64_json';
-      user?: string;
-    } = {}
-  ): Promise<string[]> {
-    if (!this.supportsCapability(AIServiceCapability.ImageGeneration)) {
-      throw new Error(`${this.name} does not support image generation`);
-    }
-
-    const imageOptions = {
-      model: options.model || OPENAI_MODELS.DALL_E_3,
-      prompt,
-      n: options.n || 1,
-      size: options.size || '1024x1024',
-      quality: options.quality || 'standard',
-      style: options.style || 'vivid',
-      response_format: options.responseFormat || 'url',
-      user: options.user,
-    };
-
-    try {
-      const response = await this.client.post<OpenAIImageGenerationResponse>(
-        '/images/generations',
-        imageOptions
-      );
-
-      return response.data.map(item => item.url || `data:image/png;base64,${item.b64_json}`);
-    } catch (error) {
-      console.error('OpenAI image generation error:', error);
+      console.error('Fireworks.ai chat completion error:', error);
       throw error;
     }
   }

@@ -274,4 +274,13 @@ export class HttpClient {
     
     return enhancedError;
   }
+
+  /**
+   * Set a new base URL for the client
+   * This can be useful when switching between different environments
+   * @param baseURL The new base URL
+   */
+  public setBaseURL(baseURL: string): void {
+    this.client.defaults.baseURL = baseURL;
+  }
 } 

@@ -26,7 +26,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     if (initialSelectedModel && initialSelectedModel !== selectedModel) {
       setSelectedModel(initialSelectedModel);
     }
-  }, [initialSelectedModel]);
+  }, [initialSelectedModel, selectedModel]);
 
   // Get the active conversation
   const activeConversation = activeConversationId
@@ -145,7 +145,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         onSelectModel={setSelectedModel}
         selectedModel={selectedModel}
       />
-      
+
       {/* Main content with chat history and messages */}
       <div className="flex flex-1 overflow-hidden">
         <ChatHistoryList 

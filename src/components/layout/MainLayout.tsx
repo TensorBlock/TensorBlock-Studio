@@ -1,9 +1,8 @@
-import React, { ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode, useState } from 'react';
 import TitleBar from './TitleBar';
 import Sidebar from './Sidebar';
 import BottomBar from './BottomBar';
-import SettingsPage from '../settings/SettingsPage';
-import { SettingsService, UserSettings } from '../../services/settings-service';
+import SettingsPage from '../../pages/SettingsPage';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -13,13 +12,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [activePage, setActivePage] = useState('chat');
   const [loadedModels] = useState<string[]>(['OpenAI API']);
   const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState<UserSettings>({ apiKey: '', selectedModel: '' });
-
-  // Initialize settings
-  useEffect(() => {
-    const settingsService = SettingsService.getInstance();
-    setSettings(settingsService.getSettings());
-  }, []);
 
   // Handle page changes
   const handlePageChange = (page: string) => {
@@ -31,10 +23,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   // Handle settings save
-  const handleSaveSettings = (newSettings: UserSettings) => {
-    const settingsService = SettingsService.getInstance();
-    settingsService.updateSettings(newSettings);
-    setSettings(newSettings);
+  const handleSettingsSaved = () => {
+    // Refresh the page or reload the necessary components
+    console.log('Settings saved, updating components...');
   };
 
   return (
@@ -61,8 +52,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <SettingsPage 
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={handleSaveSettings}
-        currentSettings={settings}
+        onSave={handleSettingsSaved}
       />
     </div>
   );
