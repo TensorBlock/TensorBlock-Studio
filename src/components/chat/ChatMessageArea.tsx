@@ -1,6 +1,7 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation } from '../../types/chat';
 import { Send, Loader } from 'lucide-react';
+import MarkdownContent from './MarkdownContent';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -57,7 +58,11 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   : 'bg-gray-200 text-gray-800 rounded-tl-none'
               }`}
             >
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              {message.role === 'user' ? (
+                <p className="whitespace-pre-wrap">{message.content}</p>
+              ) : (
+                <MarkdownContent content={message.content} />
+              )}
             </div>
           </div>
         ))}
