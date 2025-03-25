@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import TopBar from '../components/layout/TopBar';
 import ChatHistoryList from '../components/chat/ChatHistoryList';
@@ -20,6 +20,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { isLoading, error, getChatCompletion } = useAI();
+  const initialChatCreated = useRef(false);
 
   // Update selected model when initialSelectedModel changes
   useEffect(() => {
@@ -34,7 +35,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     : null;
 
   // Create a new conversation
-  const createNewChat = () => {
+  const createNewChat = useCallback(() => {
     const id = uuidv4();
     const newConversation: Conversation = {
       id,
@@ -52,9 +53,9 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       updatedAt: new Date()
     };
     
-    setConversations([newConversation, ...conversations]);
+    setConversations(prev => [newConversation, ...prev]);
     setActiveConversationId(id);
-  };
+  }, [selectedModel]);
 
   // Handle sending a message
   const handleSendMessage = async (content: string) => {
@@ -131,10 +132,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
   // Create an initial chat if there are none
   useEffect(() => {
-    if (conversations.length === 0) {
+    if (conversations.length === 0 && !initialChatCreated.current) {
+      initialChatCreated.current = true;
       createNewChat();
     }
-  }, []);
+  }, [conversations.length, createNewChat]);
 
   // Show API key missing message if needed
   const isApiKeyMissing = !apiKey && selectedModel;
