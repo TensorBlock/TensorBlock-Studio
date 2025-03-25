@@ -21,8 +21,6 @@ type CodeProps = React.ClassAttributes<HTMLElement> &
 export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => {
   // Custom pre-processor for LaTeX content
   const processedContent = React.useMemo(() => {
-    console.log("Original content:", content);
-    
     // Manual replacement of LaTeX delimiters
     let processed = content;
     
@@ -45,8 +43,6 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => 
     // This is a simplified approach
     processed = processed.replace(/\[\s*(.*?)\s*\]/g, '$$$1$$');
     processed = processed.replace(/\[\[\s*(.*?)\s*\]\]/g, '$$$$1$$');
-    
-    console.log("Processed content:", processed);
     
     return processed;
   }, [content]);

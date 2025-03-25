@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChatPage } from './pages/ChatPage';
 import MainLayout from './components/layout/MainLayout';
 import { SettingsService, SETTINGS_CHANGE_EVENT } from './services/settings-service';
+import DatabaseInitializer from './components/core/DatabaseInitializer';
 
 function App() {
   // State for settings
@@ -27,12 +28,14 @@ function App() {
   }, []);
 
   return (
-    <MainLayout>
-      <ChatPage 
-        initialSelectedModel={selectedModel}
-        apiKey={apiKey}
-      />
-    </MainLayout>
+    <DatabaseInitializer>
+      <MainLayout>
+        <ChatPage 
+          initialSelectedModel={selectedModel}
+          apiKey={apiKey}
+        />
+      </MainLayout>
+    </DatabaseInitializer>
   );
 }
 

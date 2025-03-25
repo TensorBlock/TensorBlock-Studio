@@ -94,7 +94,7 @@ export abstract class AiServiceProvider {
   /**
    * Get the available models for this provider
    */
-  abstract get availableModels(): string[];
+  abstract get availableModels(): string[] | undefined;
 
   /**
    * Create a new AI service provider

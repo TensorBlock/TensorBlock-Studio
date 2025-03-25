@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Server, Layers } from 'lucide-react';
 import { SettingsService, ProviderSettings } from '../services/settings-service';
 import { ApiManagement, ModelManagement } from '../components/settings';
+import { DatabaseIntegrationService } from '../services/database-integration';
+import { ModelCacheService } from '../services/model-cache-service';
 
 interface SettingsPageProps {
   isOpen: boolean;
@@ -22,8 +24,25 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [providerSettings, setProviderSettings] = useState<Record<string, ProviderSettings>>({});
   const [selectedModel, setSelectedModel] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [isDbInitialized, setIsDbInitialized] = useState(false);
+  const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
   
   const settingsService = SettingsService.getInstance();
+  
+  // Initialize database
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        const dbService = DatabaseIntegrationService.getInstance();
+        await dbService.initialize();
+        setIsDbInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize database:', error);
+      }
+    };
+    
+    initDb();
+  }, []);
   
   // Load settings when the modal opens
   useEffect(() => {
@@ -33,6 +52,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setProviderSettings(settings.providers);
       setSelectedModel(settings.selectedModel);
       setSaveStatus('idle');
+      setHasApiKeyChanged(false);
     }
   }, [isOpen]);
   
@@ -44,6 +64,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   // Handle API key change
   const handleApiKeyChange = (value: string) => {
     const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
+    const currentApiKey = currentProviderSettings.apiKey || '';
+    
+    // Check if API key has changed
+    if (value !== currentApiKey) {
+      setHasApiKeyChanged(true);
+    }
+    
     setProviderSettings({
       ...providerSettings,
       [selectedProvider]: {
@@ -107,11 +134,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
   
   // Save all settings
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!isDbInitialized) {
+      setSaveStatus('error');
+      return;
+    }
+    
     setSaveStatus('saving');
     
     try {
-      // Update provider settings
+      // Update provider settings in memory
       Object.keys(providerSettings).forEach(provider => {
         settingsService.updateProviderSettings(providerSettings[provider], provider);
       });
@@ -121,6 +153,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       
       // Update selected model
       settingsService.setSelectedModel(selectedModel);
+      
+      // Save to database
+      const dbService = DatabaseIntegrationService.getInstance();
+      await dbService.saveApiSettings();
+      
+      // Refresh model cache if API key has changed
+      if (hasApiKeyChanged) {
+        const modelCacheService = ModelCacheService.getInstance();
+        modelCacheService.refreshModels(); // Refresh in background
+        setHasApiKeyChanged(false);
+      }
       
       setSaveStatus('success');
       

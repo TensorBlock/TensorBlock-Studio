@@ -8,6 +8,8 @@ An Electron-based desktop application for interacting with various AI models via
 - Extensible architecture for adding multiple AI service providers
 - Built with React, Vite, TypeScript, and TailwindCSS
 - Electron for cross-platform desktop support
+- Model selection dialog with provider-specific model lists
+- Automatic model caching for improved performance
 
 ## Getting Started
 
@@ -70,6 +72,16 @@ The AI service architecture is designed to be modular and extensible, allowing f
 - **Http Client**: A robust HTTP client built on axios with automatic retry, rate limit tracking, and other features.
 - **AI Service Provider**: Base class for all AI service providers with common functionality.
 - **AI Service Manager**: Central manager for registering and accessing all AI service providers.
+- **Model Cache Service**: Service for fetching, caching, and managing AI models from different providers.
+- **Settings Service**: Central service for managing user settings and API configurations.
+- **Database Integration Service**: Service for persisting conversations, messages, and settings.
+
+### UI Components
+
+- **SelectModelDialog**: Fullscreen dialog for selecting AI models from different providers with support for filtering, searching and provider-based grouping.
+- **ContextMenu**: Reusable context menu component for various application actions.
+- **MessageContextMenu**: Specialized context menu for chat message actions.
+- **ConfirmDialog**: Customizable confirmation dialog for user actions.
 
 ### Adding a New AI Provider
 
@@ -133,6 +145,24 @@ private registerDefaultProviders(): void {
     this.registerProvider(new ExampleProvider());
   }
 }
+```
+
+### Model Caching
+
+The application implements a sophisticated model caching system that:
+
+1. Automatically fetches available models when API keys are set
+2. Caches model lists for each provider to reduce API calls
+3. Refreshes the cache when API keys change or after a specified TTL
+4. Persists cached models in local storage for fast loading
+
+```typescript
+// Example of using the model cache service
+const modelCacheService = ModelCacheService.getInstance();
+const models = await modelCacheService.getAllModels();
+
+// Force refresh of models for all providers
+await modelCacheService.refreshModels();
 ```
 
 ## Contributing

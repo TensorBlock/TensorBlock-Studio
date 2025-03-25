@@ -73,27 +73,27 @@ export interface OpenAIImageGenerationResponse {
 /**
  * Default models for OpenAI
  */
-export const OPENAI_MODELS = {
-  GPT_3_5_TURBO: 'gpt-3.5-turbo',
-  GPT_3_5_TURBO_16K: 'gpt-3.5-turbo-16k',
-  GPT_4: 'gpt-4',
-  GPT_4_TURBO: 'gpt-4-turbo',
-  GPT_4_VISION: 'gpt-4-vision-preview',
-  GPT_4_32K: 'gpt-4-32k',
-  TEXT_EMBEDDING_ADA_002: 'text-embedding-ada-002',
-  DALL_E_3: 'dall-e-3',
-  DALL_E_2: 'dall-e-2',
-  WHISPER_1: 'whisper-1',
-  TTS_1: 'tts-1',
-  TTS_1_HD: 'tts-1-hd',
-};
+// export const OPENAI_MODELS = {
+//   GPT_3_5_TURBO: 'gpt-3.5-turbo',
+//   GPT_3_5_TURBO_16K: 'gpt-3.5-turbo-16k',
+//   GPT_4: 'gpt-4',
+//   GPT_4_TURBO: 'gpt-4-turbo',
+//   GPT_4_VISION: 'gpt-4-vision-preview',
+//   GPT_4_32K: 'gpt-4-32k',
+//   TEXT_EMBEDDING_ADA_002: 'text-embedding-ada-002',
+//   DALL_E_3: 'dall-e-3',
+//   DALL_E_2: 'dall-e-2',
+//   WHISPER_1: 'whisper-1',
+//   TTS_1: 'tts-1',
+//   TTS_1_HD: 'tts-1-hd',
+// };
 
 /**
  * Implementation of OpenAI service provider
  */
 export class OpenAIService extends AiServiceProvider {
-  private apiModels: string[] = Object.values(OPENAI_MODELS);
   private settingsService: SettingsService;
+  private apiModels: string[] = [];
 
   /**
    * Create a new OpenAI service provider
@@ -152,7 +152,7 @@ export class OpenAIService extends AiServiceProvider {
   /**
    * Get the available models for OpenAI
    */
-  get availableModels(): string[] {
+  get availableModels(): string[] | undefined {
     return this.apiModels;
   }
 
@@ -180,7 +180,7 @@ export class OpenAIService extends AiServiceProvider {
     }
 
     const completionOptions = {
-      model: options.model || OPENAI_MODELS.GPT_3_5_TURBO,
+      model: options.model || 'gpt-3.5-turbo',
       prompt,
       max_tokens: options.max_tokens || options.maxTokens || 1000,
       temperature: options.temperature ?? 0.7,
@@ -237,7 +237,7 @@ export class OpenAIService extends AiServiceProvider {
     }
     
     const completionOptions = {
-      model: options.model || OPENAI_MODELS.GPT_3_5_TURBO,
+      model: options.model || 'gpt-3.5-turbo',
       messages,
       max_tokens: options.max_tokens || options.maxTokens,
       temperature: options.temperature ?? 0.7,
@@ -308,7 +308,7 @@ export class OpenAIService extends AiServiceProvider {
     }
 
     const imageOptions = {
-      model: options.model || OPENAI_MODELS.DALL_E_3,
+      model: options.model || 'dall-e-3',
       prompt,
       n: options.n || 1,
       size: options.size || '1024x1024',

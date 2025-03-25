@@ -132,6 +132,7 @@ export function useAI() {
     startRequest();
     
     try {
+
       const provider = serviceManagerRef.current.getChatCompletionProvider();
       
       if (!provider) {

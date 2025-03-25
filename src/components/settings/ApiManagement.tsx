@@ -234,8 +234,8 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   </p>
                 </div>
                 
-                <div className="border-t border-gray-200 pt-6 mt-6">
-                  <h4 className="text-md font-medium mb-4">API Endpoints</h4>
+                <div className="pt-6 mt-6 border-t border-gray-200">
+                  <h4 className="mb-4 font-medium text-md">API Endpoints</h4>
                   
                   <div className="space-y-4">
                     <div>
