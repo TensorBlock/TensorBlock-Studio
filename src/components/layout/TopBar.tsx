@@ -1,14 +1,15 @@
-import { ChevronDown, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Cpu, Settings } from 'lucide-react';
 import React, { useState } from 'react';
 import { SelectModelDialog } from '../models/SelectModelDialog';
 import { ModelOption } from '../../services/model-cache-service';
 
 interface TopBarProps {
-  onSelectModel: (model: string) => void;
+  onSelectModel: (model: string, provider: string) => void;
   selectedModel?: string;
+  onOpenSettingsDialog: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel }) => {
+const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel, onOpenSettingsDialog }) => {
   const [isModelDialogOpen, setIsModelDialogOpen] = useState(false);
   
   const handleOpenModelDialog = () => {
@@ -19,8 +20,8 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel }) => {
     setIsModelDialogOpen(false);
   };
   
-  const handleSelectModel = (model: ModelOption) => {
-    onSelectModel(model.id);
+  const handleSelectModel = (model: ModelOption, provider: string) => {
+    onSelectModel(model.id, provider);
     setIsModelDialogOpen(false);
   };
   
@@ -32,12 +33,15 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel }) => {
           onClick={handleOpenModelDialog}
           aria-label="Select AI model"
         >
-          <LayoutGrid className="w-5 h-5 text-gray-600" />
+          <Cpu className="w-5 h-5 p-0.5 text-gray-600" />
           <span className='text-center truncate max-w-[200px]'>{selectedModel}</span>
           <ChevronDown className="w-5 h-5 text-gray-600" />
         </button>
       </div>
-      <button className="text-sm text-gray-600 hover:text-gray-900">API</button>
+      <button className="flex items-center justify-center gap-2 px-2 py-1 text-sm text-gray-600 border border-gray-200 rounded-md hover:text-gray-900" onClick={onOpenSettingsDialog}>
+        <Settings className="w-5 h-5 p-0.5" />
+        <span className='truncate max-w-[200px]'>API</span>
+      </button>
       
       <SelectModelDialog
         isOpen={isModelDialogOpen}

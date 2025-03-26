@@ -1,13 +1,14 @@
 import { 
   AiServiceProvider, 
   AIServiceCapability, 
-  AiServiceConfig, 
-  ChatMessage, 
+  AiServiceConfig,
   CompletionOptions 
 } from '../core/ai-service-provider';
 import { AxiosError } from 'axios';
 import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
+import { Message } from '../../types/chat';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Response format for chat completions
@@ -175,15 +176,20 @@ export class TogetherService extends AiServiceProvider {
   /**
    * Implementation of chat completion for Together.ai
    */
-  protected async chatCompletionImplementation(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage> {
+  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
     // Validate API key before making the request
     if (!this.hasValidApiKey()) {
       throw new Error(`API key not configured for ${this.name} service`);
     }
     
+    const messagesForAI = messages.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+    
     const completionOptions = {
       model: options.model || TOGETHER_MODELS.LLAMA_3_8B,
-      messages,
+      messages: messagesForAI,
       max_tokens: options.max_tokens || options.maxTokens || 1000,
       temperature: options.temperature ?? 0.7,
       top_p: options.top_p ?? options.topP ?? 1.0,
@@ -202,8 +208,12 @@ export class TogetherService extends AiServiceProvider {
       if (response.choices && response.choices.length > 0) {
         const { role, content } = response.choices[0].message;
         return { 
-          role: role as ChatMessage['role'], 
-          content: content.trim() 
+          id: uuidv4(),
+          role: role as Message['role'], 
+          content: content.trim(),
+          timestamp: new Date(),
+          provider: this.name,
+          model: completionOptions.model
         };
       }
 

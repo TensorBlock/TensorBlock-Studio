@@ -25,7 +25,6 @@ export interface UserSettings {
   };
   selectedProvider: string;
   selectedModel: string;
-  lastUsedModel?: string;
 }
 
 /**
@@ -70,7 +69,6 @@ const DEFAULT_SETTINGS: UserSettings = {
   },
   selectedProvider: 'OpenAI',
   selectedModel: 'gpt-3.5-turbo',
-  lastUsedModel: 'gpt-3.5-turbo',
 };
 
 /**
@@ -126,9 +124,8 @@ export class SettingsService {
                 apiVersion: '2023-06-01',
               }
             },
-            selectedProvider: 'OpenAI',
+            selectedProvider: parsedSettings.selectedProvider || DEFAULT_SETTINGS.selectedProvider,
             selectedModel: parsedSettings.selectedModel || DEFAULT_SETTINGS.selectedModel,
-            lastUsedModel: parsedSettings.lastUsedModel || DEFAULT_SETTINGS.lastUsedModel,
           };
         }
         

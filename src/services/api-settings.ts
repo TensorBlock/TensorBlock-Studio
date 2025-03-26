@@ -15,11 +15,13 @@ export interface Conversation {
     lastMessage?: string;
 }
 
-export interface ChatMessage {
+export interface DbChatMessage {
     id: number;
     conversationId: string;
     role: 'user' | 'assistant' | 'system';
     content: string;
     timestamp: Date;
+    model: string;
+    provider: string;
     metadata?: Record<string, string | number | boolean>;
 }

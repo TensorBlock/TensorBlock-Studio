@@ -1,6 +1,7 @@
 import { HttpClient } from './http-client';
 import { AxiosHeaders } from 'axios';
 import { AxiosError } from 'axios';
+import { Message } from '../../types/chat';
 
 /**
  * Configuration for AI service providers
@@ -43,19 +44,11 @@ export enum AIServiceCapability {
 }
 
 /**
- * Base message format for all chat models
- */
-export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant' | 'function' | 'tool';
-  content: string;
-  name?: string;
-}
-
-/**
  * Options for text and chat completions
  */
 export interface CompletionOptions {
   model: string;
+  provider: string;
   maxTokens?: number;
   max_tokens?: number; // OpenAI API parameter name
   temperature?: number;
@@ -223,7 +216,7 @@ export abstract class AiServiceProvider {
   /**
    * Get a chat completion 
    */
-  public async getChatCompletion(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage> {
+  public async getChatCompletion(messages: Message[], options: CompletionOptions): Promise<Message> {
     if (!this.supportsCapability(AIServiceCapability.ChatCompletion)) {
       throw new Error(`${this.name} does not support chat completion`);
     }
@@ -234,7 +227,7 @@ export abstract class AiServiceProvider {
   /**
    * Implementation of chat completion - to be overridden by providers
    */
-  protected abstract chatCompletionImplementation(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage>;
+  protected abstract chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message>;
 
   /**
    * Check if the service has a valid API key

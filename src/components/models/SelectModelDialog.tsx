@@ -5,7 +5,7 @@ import { ModelCacheService, ModelOption } from '../../services/model-cache-servi
 interface SelectModelDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectModel: (model: ModelOption) => void;
+  onSelectModel: (model: ModelOption, provider: string) => void;
   currentModelId?: string;
 }
 
@@ -61,9 +61,9 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
     setSearchQuery(e.target.value);
   };
   
-  const handleSelectModel = (model: ModelOption) => {
+  const handleSelectModel = (model: ModelOption, provider: string) => {
     setSelectedModelId(model.id);
-    onSelectModel(model);
+    onSelectModel(model, provider);
   };
   
   // Filter models based on search query
@@ -87,8 +87,8 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white mt-[29px]">
+      <div className="bg-gray-900 w-full h-[calc(100vh-29px)] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h2 className="text-xl font-semibold text-white">Select Model</h2>
           <button 
@@ -146,7 +146,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
                     {providerModels.map(model => (
                       <div
                         key={model.id}
-                        onClick={() => handleSelectModel(model)}
+                        onClick={() => handleSelectModel(model, provider)}
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${
                           selectedModelId === model.id
                             ? 'bg-blue-600 text-white'

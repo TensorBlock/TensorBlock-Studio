@@ -2,13 +2,13 @@ import {
   AiServiceProvider, 
   AIServiceCapability, 
   AiServiceConfig, 
-  ChatMessage, 
   CompletionOptions 
 } from '../core/ai-service-provider';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
-
+import { Message } from '../../types/chat';
+import { v4 as uuidv4 } from 'uuid';
 /**
  * Response format for chat completions from Anthropic
  */
@@ -131,7 +131,7 @@ export class AnthropicService extends AiServiceProvider {
    */
   protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
     // Convert to chat completion since Anthropic doesn't have a dedicated completion endpoint
-    const chatMessage: ChatMessage = { role: 'user', content: prompt };
+    const chatMessage: Message = { role: 'user', content: prompt, id: uuidv4(), timestamp: new Date(), provider: this.name, model: options.model };
     const response = await this.chatCompletionImplementation([chatMessage], options);
     return response.content;
   }
@@ -139,7 +139,7 @@ export class AnthropicService extends AiServiceProvider {
   /**
    * Implementation of chat completion for Anthropic
    */
-  protected async chatCompletionImplementation(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage> {
+  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
     // Validate API key before making the request
     if (!this.hasValidApiKey()) {
       throw new Error(`API key not configured for ${this.name} service`);
@@ -188,8 +188,12 @@ export class AnthropicService extends AiServiceProvider {
         .join('');
 
       return { 
+        id: uuidv4(),
         role: 'assistant', 
-        content: content.trim() 
+        content: content.trim(),
+        timestamp: new Date(),
+        provider: this.name,
+        model: completionOptions.model
       };
     } catch (error) {
       // Check for auth errors

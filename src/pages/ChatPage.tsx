@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import TopBar from '../components/layout/TopBar';
 import ChatHistoryList from '../components/chat/ChatHistoryList';
 import ChatMessageArea from '../components/chat/ChatMessageArea';
 import { Conversation } from '../types/chat';
-import { useAI } from '../hooks/useAI';
-import { DatabaseIntegrationService } from '../services/database-integration';
 import { ModelCacheService } from '../services/model-cache-service';
 import { SettingsService } from '../services/settings-service';
+import { ChatService } from '../services/chat-service';
 
 interface ChatPageProps {
   initialSelectedModel?: string;
@@ -17,31 +15,40 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   initialSelectedModel = '',
   apiKey = ''
 }) => {
-  const [selectedModel, setSelectedModel] = useState<string>(initialSelectedModel);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const { isLoading, error, getChatCompletion } = useAI();
-  const initialChatCreated = useRef(false);
-  const dbServiceRef = useRef<DatabaseIntegrationService | null>(null);
-  const [isDbInitialized, setIsDbInitialized] = useState(false);
+  const chatServiceRef = useRef<ChatService | null>(null);
+  const [isServiceInitialized, setIsServiceInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Initialize the database
+  // Initialize the services
   useEffect(() => {
-    const initDb = async () => {
+    const initServices = async () => {
       try {
-        const dbService = DatabaseIntegrationService.getInstance();
-        await dbService.initialize();
-        dbServiceRef.current = dbService;
-        setIsDbInitialized(true);
+        // Initialize chat service
+        const chatService = ChatService.getInstance();
+        await chatService.initialize();
+        chatServiceRef.current = chatService;
         
-        // Load conversations
-        const conversationsList = await dbService.loadConversationsList();
+        // Setup AI service state listener
+        const aiService = chatService.getAIService();
+        const unsubscribe = aiService.subscribe(() => {
+          setIsLoading(aiService.isLoading);
+          setError(aiService.error);
+        });
+        
+        // Load conversations from chat service
+        const conversationsList = chatService.getConversations();
         setConversations(conversationsList);
         
-        // Set active conversation if there are any
-        if (conversationsList.length > 0 && !activeConversationId) {
-          setActiveConversationId(conversationsList[0].id);
+        // Set active conversation from chat service
+        const activeId = chatService.getActiveConversationId();
+        if (activeId) {
+          setActiveConversationId(activeId);
         }
+        
+        setIsServiceInitialized(true);
         
         // Initialize model cache
         const modelCache = ModelCacheService.getInstance();
@@ -51,33 +58,39 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         if (!initialSelectedModel) {
           const settingsService = SettingsService.getInstance();
           const settings = settingsService.getSettings();
-          if (settings.lastUsedModel) {
-            setSelectedModel(settings.lastUsedModel);
+          if (settings.selectedModel) {
+            settingsService.setSelectedModel(settings.selectedModel);
           }
         }
+        
+        return () => {
+          unsubscribe(); // Clean up the subscription
+        };
       } catch (error) {
-        console.error('Failed to initialize database:', error);
+        console.error('Failed to initialize services:', error);
       }
     };
     
-    initDb();
-  }, []);
+    initServices();
+  }, [initialSelectedModel]);
 
   // Load active conversation details when selected
   useEffect(() => {
-    if (activeConversationId && isDbInitialized) {
+    if (activeConversationId && isServiceInitialized && chatServiceRef.current) {
       const loadConversation = async () => {
         try {
-          const dbService = dbServiceRef.current;
-          if (!dbService) return;
+          const chatService = chatServiceRef.current;
+          if (!chatService) return;
           
-          const conversation = await dbService.loadConversation(activeConversationId);
+          // Tell the chat service which conversation is active
+          chatService.setActiveConversation(activeConversationId);
+          
+          // Load the conversation details
+          const conversation = await chatService.loadConversation(activeConversationId);
           
           if (conversation) {
-            // Update the conversation in the list with its messages
-            setConversations(prev => 
-              prev.map(c => c.id === activeConversationId ? conversation : c)
-            );
+            // Update the conversations list
+            setConversations(chatService.getConversations());
           }
         } catch (error) {
           console.error('Failed to load conversation:', error);
@@ -86,29 +99,31 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       
       loadConversation();
     }
-  }, [activeConversationId, isDbInitialized]);
+  }, [activeConversationId, isServiceInitialized]);
 
   // Update selected model when initialSelectedModel changes
   useEffect(() => {
+    const selectedModel = SettingsService.getInstance().getSelectedModel();
     if (initialSelectedModel && initialSelectedModel !== selectedModel) {
-      setSelectedModel(initialSelectedModel);
+      SettingsService.getInstance().setSelectedModel(initialSelectedModel);
     }
-  }, [initialSelectedModel, selectedModel]);
+  }, [initialSelectedModel, SettingsService.getInstance().getSelectedModel()]);
   
   // Save selected model to settings when it changes
   useEffect(() => {
-    if (selectedModel && isDbInitialized) {
+    const selectedModel = SettingsService.getInstance().getSelectedModel();
+    if (selectedModel && isServiceInitialized) {
       const settingsService = SettingsService.getInstance();
       const settings = settingsService.getSettings();
       
-      if (settings.lastUsedModel !== selectedModel) {
+      if (settings.selectedModel !== selectedModel) {
         settingsService.updateSettings({
           ...settings,
-          lastUsedModel: selectedModel
+          selectedModel: selectedModel
         });
       }
     }
-  }, [selectedModel, isDbInitialized]);
+  }, [SettingsService.getInstance().getSelectedModel(), isServiceInitialized]);
 
   // Get the active conversation
   const activeConversation = activeConversationId
@@ -117,110 +132,42 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
   // Create a new conversation
   const createNewChat = useCallback(async () => {
-    if (!isDbInitialized) return;
+    if (!isServiceInitialized || !chatServiceRef.current) return;
     
     try {
-      const dbService = dbServiceRef.current;
-      if (!dbService) return;
+      const chatService = chatServiceRef.current;
       
-      const newConversation = await dbService.createConversation(
-        'New Conversation', 
-        selectedModel
+      const newConversation = await chatService.createConversation(
+        'New Conversation',
       );
       
-      setConversations(prev => [newConversation, ...prev]);
+      // Update the state with the new list of conversations
+      setConversations(chatService.getConversations());
       setActiveConversationId(newConversation.id);
     } catch (error) {
       console.error('Failed to create new conversation:', error);
     }
-  }, [selectedModel, isDbInitialized]);
-
-  // Handle selecting a model
-  const handleSelectModel = (modelId: string) => {
-    setSelectedModel(modelId);
-  };
+  }, [SettingsService.getInstance().getSelectedModel(), isServiceInitialized]);
 
   // Handle sending a message
   const handleSendMessage = async (content: string) => {
-    if (!activeConversationId || !selectedModel || !isDbInitialized) return;
+    if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
     
     try {
-      const dbService = dbServiceRef.current;
-      if (!dbService) return;
+      const chatService = chatServiceRef.current;
+      const selectedModel = SettingsService.getInstance().getSelectedModel();
+      const selectedProvider = SettingsService.getInstance().getSelectedProvider();
+      console.log('selectedProvider', selectedProvider);
+      console.log('selectedModel', selectedModel);
       
-      // Save user message to database
-      const userMessage = await dbService.saveChatMessage(
-        activeConversationId,
-        'user',
-        content
-      );
-      
-      // Update conversation in UI
-      const updatedConversations = conversations.map(conv => {
-        if (conv.id === activeConversationId) {
-          // Update conversation title for new conversations
-          const shouldUpdateTitle = conv.messages.length === 1 && conv.messages[0].role === 'system';
-          const title = shouldUpdateTitle 
-            ? content.substring(0, 30) + (content.length > 30 ? '...' : '') 
-            : conv.title;
-          
-          // Update conversation
-          const updatedConv = {
-            ...conv,
-            title,
-            messages: [...conv.messages, userMessage],
-            updatedAt: new Date()
-          };
-          
-          // Update conversation in database
-          dbService.updateConversation(updatedConv);
-          
-          return updatedConv;
-        }
-        return conv;
+      // Send user message
+      await chatService.sendMessage(content, (updatedConversation) => {
+        setConversations(updatedConversation);
       });
+
+      // Update conversations state again
+      setConversations(chatService.getConversations());
       
-      setConversations(updatedConversations);
-      
-      // Prepare messages for AI service
-      const activeConv = updatedConversations.find(c => c.id === activeConversationId);
-      if (!activeConv) return;
-      
-      const messagesForAI = activeConv.messages.map(m => ({
-        role: m.role,
-        content: m.content
-      }));
-      
-      // Get AI response
-      const response = await getChatCompletion(messagesForAI);
-      
-      if (response) {
-        // Save assistant message to database
-        const assistantMessage = await dbService.saveChatMessage(
-          activeConversationId,
-          'assistant',
-          response.content
-        );
-        
-        // Update conversation in UI
-        setConversations(prevConversations => 
-          prevConversations.map(conv => {
-            if (conv.id === activeConversationId) {
-              const updatedConv = {
-                ...conv,
-                messages: [...conv.messages, assistantMessage],
-                updatedAt: new Date()
-              };
-              
-              // Update conversation in database
-              dbService.updateConversation(updatedConv);
-              
-              return updatedConv;
-            }
-            return conv;
-          })
-        );
-      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -229,25 +176,25 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   // Select a conversation
   const handleSelectConversation = (id: string) => {
     setActiveConversationId(id);
+    
+    // Also update in the service
+    if (chatServiceRef.current) {
+      chatServiceRef.current.setActiveConversation(id);
+    }
   };
 
   // Rename a conversation
   const handleRenameConversation = async (id: string, newTitle: string) => {
-    if (!isDbInitialized) return;
+    if (!isServiceInitialized || !chatServiceRef.current) return;
     
     try {
-      const dbService = dbServiceRef.current;
-      if (!dbService) return;
+      const chatService = chatServiceRef.current;
       
-      // Update in database
-      await dbService.renameConversation(id, newTitle);
+      // Rename the conversation
+      await chatService.renameConversation(id, newTitle);
       
-      // Update in UI
-      setConversations(prevConversations => 
-        prevConversations.map(conv => 
-          conv.id === id ? { ...conv, title: newTitle } : conv
-        )
-      );
+      // Update conversations state
+      setConversations(chatService.getConversations());
     } catch (error) {
       console.error('Error renaming conversation:', error);
     }
@@ -255,25 +202,20 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
   // Delete a conversation
   const handleDeleteConversation = async (id: string) => {
-    if (!isDbInitialized) return;
+    if (!isServiceInitialized || !chatServiceRef.current) return;
     
     try {
-      const dbService = dbServiceRef.current;
-      if (!dbService) return;
+      const chatService = chatServiceRef.current;
       
-      // Delete from database
-      await dbService.deleteConversation(id);
+      // Delete the conversation
+      await chatService.deleteConversation(id);
       
-      // Remove from UI
-      setConversations(prevConversations => 
-        prevConversations.filter(conv => conv.id !== id)
-      );
+      // Update conversations state
+      setConversations(chatService.getConversations());
       
-      // If the active conversation was deleted, set active to null or the first available
-      if (activeConversationId === id) {
-        const remainingConversations = conversations.filter(conv => conv.id !== id);
-        setActiveConversationId(remainingConversations.length > 0 ? remainingConversations[0].id : null);
-      }
+      // Update active conversation id
+      const newActiveId = chatService.getActiveConversationId();
+      setActiveConversationId(newActiveId);
     } catch (error) {
       console.error('Error deleting conversation:', error);
     }
@@ -281,21 +223,16 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
   // Create an initial chat if there are none
   useEffect(() => {
-    if (conversations.length === 0 && !initialChatCreated.current && isDbInitialized) {
-      initialChatCreated.current = true;
+    if (conversations.length === 0 && isServiceInitialized) {
       createNewChat();
     }
-  }, [conversations.length, createNewChat, isDbInitialized]);
+  }, [conversations.length, createNewChat, isServiceInitialized]);
 
   // Show API key missing message if needed
-  const isApiKeyMissing = !apiKey && selectedModel;
+  const isApiKeyMissing = !apiKey && SettingsService.getInstance().getSelectedModel();
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <TopBar 
-        onSelectModel={handleSelectModel}
-        selectedModel={selectedModel}
-      />
 
       {/* Main content with chat history and messages */}
       <div className="flex flex-1 overflow-hidden">

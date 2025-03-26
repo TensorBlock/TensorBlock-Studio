@@ -1,4 +1,4 @@
-import { ApiSettings, Conversation, ChatMessage } from './ApiSettings';
+import { ApiSettings, Conversation, DbChatMessage } from './api-settings';
 import { v4 as uuidv4 } from 'uuid';
 
 // database.ts
@@ -58,7 +58,8 @@ export class DatabaseService {
                 id: uuidv4(),
                 title,
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                
             };
 
             const transaction = this.db.transaction('conversations', 'readwrite');
@@ -124,7 +125,7 @@ export class DatabaseService {
     }
 
     // Chat History Methods
-    async saveChatMessage(message: Omit<ChatMessage, 'id'>): Promise<number> {
+    async saveChatMessage(message: Omit<DbChatMessage, 'id'>): Promise<number> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
@@ -154,7 +155,7 @@ export class DatabaseService {
         });
     }
 
-    async getChatHistory(conversationId: string): Promise<ChatMessage[]> {
+    async getChatHistory(conversationId: string): Promise<DbChatMessage[]> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 

@@ -1,7 +1,7 @@
 import { DatabaseService } from './database';
 import { SettingsService, ProviderSettings } from './settings-service';
 import { Conversation as ChatConversation, Message } from '../types/chat';
-import { Conversation as DbConversation, ChatMessage, ApiSettings } from './ApiSettings';
+import { Conversation as DbConversation, DbChatMessage, ApiSettings } from './api-settings';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -90,36 +90,42 @@ export class DatabaseIntegrationService {
     /**
      * Create a new conversation
      */
-    public async createConversation(title: string, modelId: string): Promise<ChatConversation> {
+    public async createConversation(title: string): Promise<ChatConversation> {
         try {
             // Create in database
             const dbConversation = await this.dbService.createConversation(title);
-            
-            // Create system message
-            const systemMessage: Omit<ChatMessage, 'id'> = {
-                conversationId: dbConversation.id,
-                role: 'system',
-                content: 'You are a helpful assistant. Be concise in your responses.',
-                timestamp: new Date()
-            };
-            
-            // Save system message
-            await this.dbService.saveChatMessage(systemMessage);
             
             // Create app conversation object
             const appConversation: ChatConversation = {
                 id: dbConversation.id,
                 title: dbConversation.title,
-                messages: [{
-                    id: uuidv4(),  // We'll use a temporary ID since we don't know the DB ID
-                    role: 'system',
-                    content: systemMessage.content,
-                    timestamp: systemMessage.timestamp
-                }],
-                modelId: modelId,
+                messages: [],
                 createdAt: dbConversation.createdAt,
                 updatedAt: dbConversation.updatedAt
             };
+
+            // Create system message
+            const systemMessage: Omit<DbChatMessage, 'id'> = {
+                conversationId: dbConversation.id,
+                role: 'system',
+                content: 'You are a helpful assistant. Be concise in your responses.',
+                timestamp: new Date(),
+                model: 'unknown',
+                provider: 'unknown'
+            };
+            
+            // Save system message
+            await this.dbService.saveChatMessage(systemMessage);
+            
+            // Add system message to the conversation
+            appConversation.messages = [{
+                id: uuidv4(),
+                role: 'system',
+                content: systemMessage.content,
+                timestamp: systemMessage.timestamp,
+                provider: 'unknown',
+                model: 'unknown'
+            }];
             
             return appConversation;
         } catch (error) {
@@ -134,15 +140,19 @@ export class DatabaseIntegrationService {
     public async saveChatMessage(
         conversationId: string, 
         role: 'user' | 'assistant' | 'system', 
-        content: string
+        content: string,
+        provider: string,
+        model: string
     ): Promise<Message> {
         try {
             // Create message object
-            const dbMessage: Omit<ChatMessage, 'id'> = {
+            const dbMessage: Omit<DbChatMessage, 'id'> = {
                 conversationId,
                 role,
                 content,
-                timestamp: new Date()
+                timestamp: new Date(),
+                model,
+                provider
             };
             
             // Save to database
@@ -153,7 +163,9 @@ export class DatabaseIntegrationService {
                 id: messageId.toString(),
                 role,
                 content,
-                timestamp: dbMessage.timestamp
+                timestamp: dbMessage.timestamp,
+                provider,
+                model
             };
         } catch (error) {
             console.error('Error saving chat message:', error);
@@ -322,18 +334,19 @@ export class DatabaseIntegrationService {
             id: dbConversation.id,
             title: dbConversation.title,
             messages: [], // Will be loaded separately when needed
-            modelId: this.settingsService.getSelectedModel(), // Default to current model
             createdAt: dbConversation.createdAt,
             updatedAt: dbConversation.updatedAt
         };
     }
 
-    private mapDbMessageToAppMessage(dbMessage: ChatMessage): Message {
+    private mapDbMessageToAppMessage(dbMessage: DbChatMessage): Message {
         return {
             id: dbMessage.id.toString(),
             role: dbMessage.role,
             content: dbMessage.content,
-            timestamp: dbMessage.timestamp
+            timestamp: dbMessage.timestamp,
+            provider: dbMessage.provider,
+            model: dbMessage.model
         };
     }
 } 

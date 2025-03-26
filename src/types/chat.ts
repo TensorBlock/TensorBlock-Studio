@@ -5,13 +5,14 @@ export interface Message {
   role: MessageRole;
   content: string;
   timestamp: Date;
+  provider: string;
+  model: string;
 }
 
 export interface Conversation {
   id: string;
   title: string;
   messages: Message[];
-  modelId: string;
   createdAt: Date;
   updatedAt: Date;
 }
