@@ -283,4 +283,11 @@ export class HttpClient {
   public setBaseURL(baseURL: string): void {
     this.client.defaults.baseURL = baseURL;
   }
+
+  /**
+   * Get the base URL of the client
+   */
+  public getBaseURL(): string {
+    return this.client.defaults.baseURL || '';
+  }
 } 

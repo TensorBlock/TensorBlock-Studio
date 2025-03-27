@@ -42,20 +42,10 @@ export interface GeminiChatCompletionResponse {
 }
 
 /**
- * Default models for Gemini
- */
-export const GEMINI_MODELS = {
-  GEMINI_PRO: 'gemini-pro',
-  GEMINI_PRO_VISION: 'gemini-pro-vision',
-  GEMINI_ULTRA: 'gemini-ultra',
-  GEMINI_ULTRA_VISION: 'gemini-ultra-vision',
-};
-
-/**
  * Implementation of Gemini service provider
  */
 export class GeminiService extends AiServiceProvider {
-  private apiModels: string[] = Object.values(GEMINI_MODELS);
+  private apiModels: string[] = [];
   private apiVersion: string;
   private settingsService: SettingsService;
 
@@ -109,20 +99,31 @@ export class GeminiService extends AiServiceProvider {
 
   /**
    * Fetch the list of available models from Gemini
-   * Note: We return the predefined list as Gemini API doesn't provide a comprehensive models endpoint
    */
-  public async fetchAvailableModels(): Promise<string[]> {
-    return this.apiModels;
+  public override async fetchAvailableModels(): Promise<string[]> {
+    try {
+      const response = await this.client.get<{models: {name: string, displayName: string}[]}>(
+        `${this.client.getBaseURL()}/models?key=${this.getSanitizedApiKey()}`
+      );
+      this.apiModels = response.models.map(model => model.name.replace('models/', ''));
+      return this.apiModels;
+    } catch (error) {
+      console.error('Failed to fetch Gemini models:', error);
+      return this.apiModels;
+    }
   }
 
   /**
-   * Update the API key for OpenRouter
+   * Update the API key for Gemini
    */
   public override updateApiKey(ApiKey: string): void {
     this.config.apiKey = ApiKey;
     this.setupAuthenticationByProvider();
   }
 
+  /**
+   * Setup authentication for Gemini
+   */
   override setupAuthenticationByProvider(): void {
     const sanitizedApiKey = this.getSanitizedApiKey();
     
@@ -135,9 +136,6 @@ export class GeminiService extends AiServiceProvider {
       if (!config.headers) {
         config.headers = new AxiosHeaders();
       }
-      
-      // Set authorization header based on the API key
-      config.headers.set('x-api-key', `${sanitizedApiKey}`);
       
       return config;
     });
@@ -177,26 +175,26 @@ export class GeminiService extends AiServiceProvider {
     // Format messages for Gemini API
     for (const message of messages) {
       formattedMessages.push({
-        role: message.role === 'system' ? 'user' : message.role,
+        role: message.role === 'assistant' ? 'model' : (message.role === 'system' ? 'user' : message.role),
         parts: [{ text: message.content }],
       });
     }
     
     // Handle special case: If the first message is a system message, we need to combine it with the first user message
     // since Gemini doesn't have a dedicated system message concept
-    if (messages.length > 1 && messages[0].role === 'system' && messages[1].role === 'user') {
-      formattedMessages[1].parts[0].text = `${messages[0].content}\n\n${messages[1].content}`;
-      formattedMessages.shift(); // Remove the system message
-    }
+    // if (messages.length > 1 && messages[0].role === 'system' && messages[1].role === 'user') {
+    //   formattedMessages[1].parts[0].text = `${messages[0].content}\n\n${messages[1].content}`;
+    //   formattedMessages.shift(); // Remove the system message
+    // }
     
-    const model = options.model || GEMINI_MODELS.GEMINI_PRO;
+    const model = options.model;
     
     // Prepare completion options
     const completionOptions = {
       contents: formattedMessages,
       generationConfig: {
         maxOutputTokens: options.max_tokens || options.maxTokens || 1000,
-        temperature: options.temperature ?? 0.7,
+        temperature: options.temperature ?? 1.0,
         topP: options.top_p ?? options.topP ?? 1.0,
         stopSequences: options.stop || [],
       },
@@ -206,7 +204,7 @@ export class GeminiService extends AiServiceProvider {
       // Note the specific URL format with API key as a query parameter
       const apiKey = this.getSanitizedApiKey();
       const response = await this.client.post<GeminiChatCompletionResponse>(
-        `/${this.apiVersion}/models/${model}:generateContent?key=${apiKey}`,
+        `/models/${model}:generateContent?key=${apiKey}`,
         completionOptions
       );
 

@@ -32,7 +32,7 @@ export const API_CONFIG = {
   gemini: {
     apiKey: import.meta.env.VITE_GEMINI_API_KEY,
     baseUrl: 'https://generativelanguage.googleapis.com',
-    apiVersion: 'v1',
+    apiVersion: 'v1beta',
     defaultTimeout: 60000,
   },
   

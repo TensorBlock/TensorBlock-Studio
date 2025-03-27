@@ -160,7 +160,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
             )}
             
             {/* Gemini-specific settings */}
-            {selectedProvider === 'Gemini' && (
+            {/* {selectedProvider === 'Gemini' && (
               <>
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -187,10 +187,10 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   />
                 </div>
               </>
-            )}
+            )} */}
             
             {/* Base URL setting for providers that need it */}
-            {(selectedProvider === 'Fireworks.ai' || 
+            {/* {(selectedProvider === 'Fireworks.ai' || 
               selectedProvider === 'Together' || 
               selectedProvider === 'OpenRouter') && (
               <div>
@@ -211,7 +211,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-            )}
+            )} */}
             
             {/* Custom provider settings */}
             {selectedProvider === 'Custom' && (
