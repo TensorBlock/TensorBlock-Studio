@@ -107,8 +107,8 @@ export class TogetherService extends AiServiceProvider {
    */
   public async fetchAvailableModels(): Promise<string[]> {
     try {
-      const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-      this.apiModels = response.data.map(model => model.id);
+      const response = await this.client.get<{id: string, display_name: string}[]>('/models');
+      this.apiModels = response.map(model => model.id);
       return this.apiModels;
     } catch (error) {
       console.error('Failed to fetch Together.ai models:', error);
@@ -138,7 +138,7 @@ export class TogetherService extends AiServiceProvider {
       }
       
       // Set authorization header based on the API key
-      config.headers.set('x-api-key', `${sanitizedApiKey}`);
+      config.headers.set('Authorization', `Bearer ${sanitizedApiKey}`);
       
       return config;
     });

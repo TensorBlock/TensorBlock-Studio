@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronRight, Save, AlertCircle } from 'lucide-react';
 import { ProviderSettings } from '../../services/settings-service';
 
-export type AIProvider = 'OpenAI' | 'Anthropic' | 'Gemini' | 'Fireworks.ai' | 'Together' | 'OpenRouter' | 'Custom';
+export type AIProvider = 'OpenAI' | 'Anthropic' | 'Gemini' | 'Fireworks.ai' | 'Together.ai' | 'OpenRouter' | 'Custom';
 
 interface ApiManagementProps {
   selectedProvider: AIProvider;
@@ -37,7 +37,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
     'Anthropic', 
     'Gemini', 
     'Fireworks.ai', 
-    'Together', 
+    'Together.ai', 
     'OpenRouter', 
     'Custom'
   ];
