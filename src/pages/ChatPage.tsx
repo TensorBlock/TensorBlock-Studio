@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatHistoryList from '../components/chat/ChatHistoryList';
 import ChatMessageArea from '../components/chat/ChatMessageArea';
 import { Conversation } from '../types/chat';
-import { ModelCacheService } from '../services/model-cache-service';
 import { SettingsService } from '../services/settings-service';
 import { ChatService } from '../services/chat-service';
 
@@ -50,10 +49,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         
         setIsServiceInitialized(true);
         
-        // Initialize model cache
-        const modelCache = ModelCacheService.getInstance();
-        modelCache.getAllModels(); // Start fetching models in the background
-        
         // Get saved model from settings if no initial model provided
         if (!initialSelectedModel) {
           const settingsService = SettingsService.getInstance();
@@ -61,6 +56,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
           if (settings.selectedModel) {
             settingsService.setSelectedModel(settings.selectedModel);
           }
+          aiService.refreshModels();
         }
         
         return () => {
@@ -159,14 +155,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       const selectedProvider = SettingsService.getInstance().getSelectedProvider();
       console.log('selectedProvider', selectedProvider);
       console.log('selectedModel', selectedModel);
-      
+
       // Send user message
       await chatService.sendMessage(content, (updatedConversation) => {
         setConversations(updatedConversation);
       });
-
-      // Update conversations state again
-      setConversations(chatService.getConversations());
       
     } catch (error) {
       console.error('Error sending message:', error);

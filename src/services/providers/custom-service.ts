@@ -2,12 +2,13 @@ import {
   AiServiceProvider, 
   AIServiceCapability, 
   AiServiceConfig, 
-  ChatMessage, 
   CompletionOptions 
 } from '../core/ai-service-provider';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { API_CONFIG } from '../core/config';
 import { SettingsService } from '../settings-service';
+import { Message } from '../../types/chat';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Response formats for custom provider (OpenAI-compatible)
@@ -183,6 +184,14 @@ export class CustomService extends AiServiceProvider {
   }
 
   /**
+   * Update the API key for OpenRouter
+   */
+  public override updateApiKey(ApiKey: string): void {
+    this.config.apiKey = ApiKey;
+  }
+
+
+  /**
    * Implementation of text completion
    */
   protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
@@ -194,7 +203,12 @@ export class CustomService extends AiServiceProvider {
     // If no completions endpoint is defined but chat completions is,
     // use chat completions as a fallback
     if (!this.customEndpoints.completions && this.customEndpoints.chatCompletions) {
-      const chatMessage: ChatMessage = { role: 'user', content: prompt };
+      const chatMessage: Message = { role: 'user', content: prompt, 
+        id: uuidv4(), 
+        timestamp: new Date(), 
+        provider: this.name, 
+        model: options.model 
+      };
       const response = await this.chatCompletionImplementation([chatMessage], options);
       return response.content;
     }
@@ -247,7 +261,7 @@ export class CustomService extends AiServiceProvider {
   /**
    * Implementation of chat completion
    */
-  protected async chatCompletionImplementation(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage> {
+  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
     // Validate API key before making the request
     if (!this.hasValidApiKey()) {
       throw new Error(`API key not configured for ${this.name} service`);
@@ -275,8 +289,12 @@ export class CustomService extends AiServiceProvider {
       if (response.choices && response.choices.length > 0) {
         const { role, content } = response.choices[0].message;
         return { 
-          role: role as ChatMessage['role'], 
-          content: content.trim() 
+          role: role as Message['role'], 
+          content: content.trim(),
+          id: uuidv4(),
+          timestamp: new Date(),
+          provider: this.name,
+          model: options.model
         };
       }
 

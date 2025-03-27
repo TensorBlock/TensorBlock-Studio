@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader, Check, X } from 'lucide-react';
-import { ModelCacheService, ModelOption } from '../../services/model-cache-service';
+import { Search, Loader, Check, ChevronDown } from 'lucide-react';
+import { AIService, ModelOption } from '../../services/ai-service';
 
 interface SelectModelDialogProps {
   isOpen: boolean;
@@ -33,8 +33,8 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   const loadModels = async () => {
     setIsLoading(true);
     try {
-      const modelCacheService = ModelCacheService.getInstance();
-      const models = await modelCacheService.getAllModels();
+      const aiService = AIService.getInstance();
+      const models = await aiService.refreshGetAllModels();
       setModels(models);
     } catch (error) {
       console.error("Error loading models:", error);
@@ -46,9 +46,9 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
-      const modelCacheService = ModelCacheService.getInstance();
-      await modelCacheService.refreshModels();
-      const refreshedModels = await modelCacheService.getAllModels();
+      const aiService = AIService.getInstance();
+      await aiService.refreshModels();
+      const refreshedModels = await aiService.refreshGetAllModels();
       setModels(refreshedModels);
     } catch (error) {
       console.error("Error refreshing models:", error);
@@ -96,7 +96,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
             className="text-gray-400 hover:text-white"
             aria-label="Close dialog"
           >
-            <X size={20} />
+            <ChevronDown size={20} />
           </button>
         </div>
         

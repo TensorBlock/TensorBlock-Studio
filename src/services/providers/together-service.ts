@@ -117,6 +117,13 @@ export class TogetherService extends AiServiceProvider {
   }
 
   /**
+   * Update the API key for Together.ai
+   */
+  public override updateApiKey(ApiKey: string): void {
+    this.config.apiKey = ApiKey;
+  }
+
+  /**
    * Implementation of text completion for Together.ai
    */
   protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {

@@ -2,13 +2,13 @@ import {
   AiServiceProvider, 
   AIServiceCapability, 
   AiServiceConfig, 
-  ChatMessage, 
   CompletionOptions 
 } from '../core/ai-service-provider';
 import { AxiosError } from 'axios';
 import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
-
+import { Message } from '../../types/chat';
+import { v4 as uuidv4 } from 'uuid';
 /**
  * Response format for chat completions
  * OpenRouter uses an OpenAI-compatible API
@@ -142,6 +142,13 @@ export class OpenRouterService extends AiServiceProvider {
       return this.apiModels;
     }
   }
+  
+  /**
+   * Update the API key for OpenRouter
+   */
+  public override updateApiKey(ApiKey: string): void {
+    this.config.apiKey = ApiKey;
+  }
 
   /**
    * Implementation of text completion for OpenRouter
@@ -149,7 +156,14 @@ export class OpenRouterService extends AiServiceProvider {
   protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
     // OpenRouter doesn't have a dedicated completions endpoint like OpenAI
     // Convert text completion to chat completion
-    const chatMessage: ChatMessage = { role: 'user', content: prompt };
+    const chatMessage: Message = { 
+      role: 'user', 
+      content: prompt, 
+      id: uuidv4(), 
+      timestamp: new Date(), 
+      provider: this.name, 
+      model: options.model 
+    };
     const response = await this.chatCompletionImplementation([chatMessage], options);
     return response.content;
   }
@@ -157,7 +171,7 @@ export class OpenRouterService extends AiServiceProvider {
   /**
    * Implementation of chat completion for OpenRouter
    */
-  protected async chatCompletionImplementation(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage> {
+  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
     // Validate API key before making the request
     if (!this.hasValidApiKey()) {
       throw new Error(`API key not configured for ${this.name} service`);
@@ -187,8 +201,12 @@ export class OpenRouterService extends AiServiceProvider {
       if (response.choices && response.choices.length > 0) {
         const { role, content } = response.choices[0].message;
         return { 
-          role: role as ChatMessage['role'], 
-          content: content.trim() 
+          role: role as Message['role'], 
+          content: content.trim(),
+          id: uuidv4(),
+          timestamp: new Date(),
+          provider: this.name,
+          model: options.model
         };
       }
 

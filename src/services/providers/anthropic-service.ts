@@ -120,8 +120,15 @@ export class AnthropicService extends AiServiceProvider {
    * Note: Anthropic doesn't have a models endpoint like OpenAI,
    * so we return the predefined list
    */
-  public async fetchAvailableModels(): Promise<string[]> {
+  public override async fetchAvailableModels(): Promise<string[]> {
     return this.apiModels;
+  }
+
+  /**
+   * Update the API key for OpenRouter
+   */
+  public override updateApiKey(ApiKey: string): void {
+    this.config.apiKey = ApiKey;
   }
 
   /**

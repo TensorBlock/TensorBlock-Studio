@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Server, Layers } from 'lucide-react';
+import { Server } from 'lucide-react';
 import { SettingsService, ProviderSettings } from '../services/settings-service';
 import { ApiManagement, ModelManagement } from '../components/settings';
 import { DatabaseIntegrationService } from '../services/database-integration';
-import { ModelCacheService } from '../services/model-cache-service';
+import { AIService } from '../services/ai-service';
 
 interface SettingsPageProps {
   isOpen: boolean;
@@ -28,6 +28,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
   
   const settingsService = SettingsService.getInstance();
+  const aiService = AIService.getInstance();
   
   // Initialize database
   useEffect(() => {
@@ -158,10 +159,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       const dbService = DatabaseIntegrationService.getInstance();
       await dbService.saveApiSettings();
       
-      // Refresh model cache if API key has changed
+      // Refresh models if API key has changed
       if (hasApiKeyChanged) {
-        const modelCacheService = ModelCacheService.getInstance();
-        modelCacheService.refreshModels(); // Refresh in background
+        await aiService.refreshModels();
         setHasApiKeyChanged(false);
       }
       
@@ -204,7 +204,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               API Management
             </button>
             
-            <button
+            {/*<button
               className={`flex items-center w-full px-4 py-3 text-left ${
                 activeTab === 'models' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-200'
               }`}
@@ -212,7 +212,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             >
               <Layers size={18} className="mr-2" />
               Model Management
-            </button>
+            </button>*/}
           </div>
           
           <div className="p-4 border-t border-gray-200">

@@ -1,9 +1,15 @@
-import { AiServiceProvider, AIServiceCapability, AiServiceConfig, CompletionOptions } from './core/ai-service-provider';
+import { AiServiceProvider, AIServiceCapability, CompletionOptions } from './core/ai-service-provider';
 import { OpenAIService } from './providers/openai-service';
-import { SettingsService, SETTINGS_CHANGE_EVENT } from './settings-service';
+import { SettingsService } from './settings-service';
 import * as providersList from './providers/providers';
 import { Message } from '../types/chat';
 
+export interface ModelOption {
+  id: string;
+  name: string;
+  provider: string;
+  description?: string;
+}
 
 /**
  * Status of an AI request
@@ -19,6 +25,11 @@ interface AIState {
 }
 
 /**
+ * Custom event name for settings changes
+ */
+export const SETTINGS_CHANGE_EVENT = 'tensorblock_settings_change';
+
+/**
  * Service for interacting with AI providers
  */
 export class AIService {
@@ -29,6 +40,9 @@ export class AIService {
     error: null
   };
   private listeners: Set<() => void> = new Set();
+  private modelCache: Map<string, ModelOption[]> = new Map();
+  private lastFetchTime: Map<string, number> = new Map();
+  private readonly CACHE_TTL = 3600000; // 1 hour in milliseconds
 
   /**
    * Get the singleton instance
@@ -45,40 +59,24 @@ export class AIService {
    */
   private constructor() {
     // Initialize with default providers
-    this.registerAllProviders();
-    this.configureApiKey();
+    this.configureProviders();
     this.setupSettingsListener();
-  }
-
-  private registerAllProviders(): void {
-    Object.values(providersList).forEach(ProviderClass => {
-      if (typeof ProviderClass === 'function') {
-        const instance = new ProviderClass(); // instantiate it
-        this.registerProvider(instance);
-      }
-    });
-  }
-  
-  /**
-   * Register a new AI service provider
-   */
-  public registerProvider(provider: AiServiceProvider): void {
-    this.providers.set(provider.name, provider);
   }
 
   /**
    * Configure API key from settings
    */
-  private configureApiKey(): void {
+  private configureProviders(): void {
     const settingsService = SettingsService.getInstance();
-    const apiKey = settingsService.getApiKey();
     
-    if (apiKey) {
-      // We need to reinitialize the OpenAI service with the new API key
-      this.configureService('OpenAI', {
-        apiKey
-      });
-    }
+    Object.values(providersList).forEach(ProviderClass => {
+      if (typeof ProviderClass === 'function') {
+        const provider = new ProviderClass();
+        const apiKey = settingsService.getApiKey(provider.name);
+        provider.updateApiKey(apiKey);
+        this.providers.set(provider.name, provider);
+      }
+    });
   }
 
   /**
@@ -86,7 +84,9 @@ export class AIService {
    */
   private setupSettingsListener(): void {
     const handleSettingsChange = () => {
-      this.configureApiKey();
+      this.configureProviders();
+      // Refresh models when settings change
+      this.refreshModels();
     };
     
     window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
@@ -214,34 +214,6 @@ export class AIService {
   }
 
   /**
-   * Configure an existing service with new options
-   */
-  public configureService(name: string, config: Partial<AiServiceConfig>): boolean {
-    // Remove the existing provider
-    const existingProvider = this.getProvider(name);
-    if (!existingProvider) {
-      console.warn(`Cannot configure provider ${name}: Provider not found`);
-      return false;
-    }
-    
-    // Create a new instance with the updated configuration
-    try {
-      // Currently only supporting OpenAI
-      if (name === 'OpenAI') {
-        const newProvider = new OpenAIService(config);
-        this.providers.set(name, newProvider);
-        return true;
-      }
-      
-      console.warn(`Cannot configure provider ${name}: Provider type not supported for reconfiguration`);
-      return false;
-    } catch (error) {
-      console.error(`Error configuring service ${name}:`, error);
-      return false;
-    }
-  }
-
-  /**
    * Get a text completion from the AI
    */
   public async getCompletion(
@@ -301,8 +273,13 @@ export class AIService {
         throw new Error('No chat completion provider available');
       }
 
+      const finalModel = options?.model || provider.availableModels?.[0] || 'gpt-3.5-turbo';
+
+      console.log('Using model:', finalModel);
+      console.log('Using provider:', provider.name);
+
       const result = await provider.getChatCompletion(messages, {
-        model: options?.model || provider.availableModels?.[0] || 'gpt-3.5-turbo',
+        model: finalModel,
         provider: options?.provider || provider.name || 'OpenAI',
         maxTokens: options?.maxTokens,
         temperature: options?.temperature,
@@ -397,5 +374,69 @@ export class AIService {
    */
   public getServiceManager(): AIService {
     return this;
+  }
+
+  public async refreshGetAllModels(): Promise<ModelOption[]> {
+    const allModels: ModelOption[] = [];
+    for (const [providerName] of this.providers) {
+      const models = await this.getModelsForProvider(providerName);
+      allModels.push(...models);
+    }
+    
+    return allModels;
+  }
+
+  public async getModelsForProvider(providerName: string): Promise<ModelOption[]> {
+    if(!this.providers.has(providerName)) {
+      return [];
+    }
+
+    if(!this.providers.get(providerName)!.hasValidApiKey()) {
+      return [];
+    }
+
+    // Check cache first
+    const cachedModels = this.modelCache.get(providerName);
+    const lastFetch = this.lastFetchTime.get(providerName) || 0;
+    
+    if (cachedModels && Date.now() - lastFetch < this.CACHE_TTL) {
+      return cachedModels;
+    }
+
+    // Fetch fresh models
+    const provider = this.providers.get(providerName);
+    if (!provider) {
+      return [];
+    }
+
+    try {
+      const models = await provider.fetchAvailableModels();
+      const modelOptions: ModelOption[] = models.map(modelId => ({
+        id: modelId,
+        name: modelId,
+        provider: providerName,
+        description: `Model from ${providerName}`
+      }));
+
+      // Update cache
+      this.modelCache.set(providerName, modelOptions);
+      this.lastFetchTime.set(providerName, Date.now());
+
+      return modelOptions;
+    } catch (error) {
+      console.error(`Failed to fetch models for ${providerName}:`, error);
+      return [];
+    }
+  }
+
+  public async refreshModels(): Promise<void> {
+    // Clear cache
+    this.modelCache.clear();
+    this.lastFetchTime.clear();
+
+    // Fetch models for all providers
+    for (const providerName of this.providers.keys()) {
+      await this.getModelsForProvider(providerName);
+    }
   }
 } 

@@ -6,4 +6,3 @@ export { FireworksService } from './fireworks-service';
 export { TogetherService } from './together-service';
 export { OpenRouterService } from './openrouter-service';
 export { CustomService } from './custom-service';
-export type { CustomEndpoints, CustomProviderConfig } from './custom-service'; 

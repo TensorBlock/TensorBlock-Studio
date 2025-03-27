@@ -1,7 +1,7 @@
 import { ChevronDown, Cpu, Settings } from 'lucide-react';
 import React, { useState } from 'react';
 import { SelectModelDialog } from '../models/SelectModelDialog';
-import { ModelOption } from '../../services/model-cache-service';
+import { ModelOption } from '../../services/ai-service';
 
 interface TopBarProps {
   onSelectModel: (model: string, provider: string) => void;

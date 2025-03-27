@@ -90,6 +90,16 @@ export abstract class AiServiceProvider {
   abstract get availableModels(): string[] | undefined;
 
   /**
+   * Fetch the available models for this provider
+   */
+  abstract fetchAvailableModels(): Promise<string[]>;
+
+  /**
+   * Update the API key for this provider
+   */
+  abstract updateApiKey(ApiKey: string): void;
+
+  /**
    * Create a new AI service provider
    */
   constructor(config: AiServiceConfig) {

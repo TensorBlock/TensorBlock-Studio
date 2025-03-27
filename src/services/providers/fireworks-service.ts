@@ -2,12 +2,13 @@ import {
   AiServiceProvider, 
   AIServiceCapability, 
   AiServiceConfig, 
-  ChatMessage, 
   CompletionOptions 
 } from '../core/ai-service-provider';
 import { AxiosError } from 'axios';
 import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
+import { Message } from '../../types/chat';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Response format for chat completions
@@ -117,6 +118,13 @@ export class FireworksService extends AiServiceProvider {
   }
 
   /**
+   * Update the API key for Fireworks.ai
+   */
+  public override updateApiKey(ApiKey: string): void {
+    this.config.apiKey = ApiKey;
+  }
+
+  /**
    * Implementation of text completion for Fireworks.ai
    */
   protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
@@ -176,7 +184,7 @@ export class FireworksService extends AiServiceProvider {
   /**
    * Implementation of chat completion for Fireworks.ai
    */
-  protected async chatCompletionImplementation(messages: ChatMessage[], options: CompletionOptions): Promise<ChatMessage> {
+  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
     // Validate API key before making the request
     if (!this.hasValidApiKey()) {
       throw new Error(`API key not configured for ${this.name} service`);
@@ -203,8 +211,12 @@ export class FireworksService extends AiServiceProvider {
       if (response.choices && response.choices.length > 0) {
         const { role, content } = response.choices[0].message;
         return { 
-          role: role as ChatMessage['role'], 
-          content: content.trim() 
+          role: role as Message['role'], 
+          content: content.trim(),
+          id: uuidv4(),
+          timestamp: new Date(),
+          provider: this.name,
+          model: options.model
         };
       }
 
