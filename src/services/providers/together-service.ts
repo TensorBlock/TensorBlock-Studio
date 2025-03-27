@@ -4,7 +4,7 @@ import {
   AiServiceConfig,
   CompletionOptions 
 } from '../core/ai-service-provider';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
 import { Message } from '../../types/chat';
@@ -121,6 +121,27 @@ export class TogetherService extends AiServiceProvider {
    */
   public override updateApiKey(ApiKey: string): void {
     this.config.apiKey = ApiKey;
+    this.setupAuthenticationByProvider();
+  }
+
+  override setupAuthenticationByProvider(): void {
+    const sanitizedApiKey = this.getSanitizedApiKey();
+    
+    if (!sanitizedApiKey) {
+      console.warn(`No API key provided for ${this.name} service`);
+      return;
+    }
+
+    this.client.addRequestInterceptor((config) => {
+      if (!config.headers) {
+        config.headers = new AxiosHeaders();
+      }
+      
+      // Set authorization header based on the API key
+      config.headers.set('x-api-key', `${sanitizedApiKey}`);
+      
+      return config;
+    });
   }
 
   /**

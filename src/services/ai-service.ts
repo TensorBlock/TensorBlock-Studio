@@ -73,6 +73,7 @@ export class AIService {
       if (typeof ProviderClass === 'function') {
         const provider = new ProviderClass();
         const apiKey = settingsService.getApiKey(provider.name);
+        console.log(`${provider.name} API Key: ${apiKey}`);
         provider.updateApiKey(apiKey);
         this.providers.set(provider.name, provider);
       }

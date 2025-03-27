@@ -30,22 +30,10 @@ export interface AnthropicChatCompletionResponse {
 }
 
 /**
- * Default models for Anthropic
- */
-export const ANTHROPIC_MODELS = {
-  CLAUDE_3_OPUS: 'claude-3-opus-20240229',
-  CLAUDE_3_SONNET: 'claude-3-sonnet-20240229',
-  CLAUDE_3_HAIKU: 'claude-3-haiku-20240307',
-  CLAUDE_2_1: 'claude-2.1',
-  CLAUDE_2: 'claude-2',
-  CLAUDE_INSTANT_1: 'claude-instant-1.2',
-};
-
-/**
  * Implementation of Anthropic service provider
  */
 export class AnthropicService extends AiServiceProvider {
-  private apiModels: string[] = Object.values(ANTHROPIC_MODELS);
+  private apiModels: string[] = [];
   private apiVersion: string;
   private settingsService: SettingsService;
 
@@ -116,12 +104,17 @@ export class AnthropicService extends AiServiceProvider {
   }
 
   /**
-   * Fetch the list of available models from Anthropic
-   * Note: Anthropic doesn't have a models endpoint like OpenAI,
-   * so we return the predefined list
+   * Fetch the list of available models from OpenAI
    */
   public override async fetchAvailableModels(): Promise<string[]> {
-    return this.apiModels;
+    try {
+      const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
+      this.apiModels = response.data.map(model => model.id);
+      return this.apiModels;
+    } catch (error) {
+      console.error('Failed to fetch OpenAI models:', error);
+      return this.apiModels;
+    }
   }
 
   /**
@@ -129,6 +122,33 @@ export class AnthropicService extends AiServiceProvider {
    */
   public override updateApiKey(ApiKey: string): void {
     this.config.apiKey = ApiKey;
+    this.setupAuthenticationByProvider();
+  }
+
+  override setupAuthenticationByProvider(): void {
+    const sanitizedApiKey = this.getSanitizedApiKey();
+    
+    if (!sanitizedApiKey) {
+      console.warn(`No API key provided for ${this.name} service`);
+      return;
+    }
+
+    this.client.addRequestInterceptor((config) => {
+      if (!config.headers) {
+        config.headers = new AxiosHeaders();
+      }
+      
+      // Set authorization header based on the API key
+      config.headers.set('x-api-key', `${sanitizedApiKey}`);
+      config.headers.set('anthropic-version', this.apiVersion);
+      config.headers.set('Access-Control-Allow-Origin', '*');
+      
+      console.log("Request Headers:", config.headers);
+      config.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      config.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, anthropic-version');
+
+      return config;
+    });
   }
 
   /**
@@ -173,7 +193,7 @@ export class AnthropicService extends AiServiceProvider {
     
     // Prepare completion options
     const completionOptions = {
-      model: options.model || ANTHROPIC_MODELS.CLAUDE_3_HAIKU,
+      model: options.model || 'claude-3-haiku-20240307',
       messages: formattedMessages,
       system: system,
       max_tokens: options.max_tokens || options.maxTokens || 1000,

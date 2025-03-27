@@ -191,8 +191,6 @@ export class HttpClient {
     let lastError: AxiosError | null = null;
     let attempt = 0;
 
-    console.log("Request Data:", config.data);
-
     while (attempt <= this.retryConfig.maxRetries) {
       try {
         const response = await this.client.request<T>(config);

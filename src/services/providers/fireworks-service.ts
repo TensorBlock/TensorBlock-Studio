@@ -4,7 +4,7 @@ import {
   AiServiceConfig, 
   CompletionOptions 
 } from '../core/ai-service-provider';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
 import { Message } from '../../types/chat';
@@ -35,24 +35,10 @@ export interface FireworksCompletionResponse {
 }
 
 /**
- * Default models for Fireworks.ai
- */
-export const FIREWORKS_MODELS = {
-  LLAMA_3_8B: 'accounts/fireworks/models/llama-v3-8b',
-  LLAMA_3_70B: 'accounts/fireworks/models/llama-v3-70b',
-  MIXTRAL_8X7B: 'accounts/fireworks/models/mixtral-8x7b-instruct',
-  MIXTRAL_8X22B: 'accounts/fireworks/models/mixtral-8x22b-instruct',
-  CODE_LLAMA_70B: 'accounts/fireworks/models/codellama-70b-instruct',
-  GEMMA_7B: 'accounts/fireworks/models/gemma-7b-it',
-  VICUNA_13B: 'accounts/fireworks/models/vicuna-13b-v1.5',
-  QWE_4X4B: 'accounts/fireworks/models/firefunction-v2',
-};
-
-/**
  * Implementation of Fireworks.ai service provider
  */
 export class FireworksService extends AiServiceProvider {
-  private apiModels: string[] = Object.values(FIREWORKS_MODELS);
+  private apiModels: string[] = [];
   private settingsService: SettingsService;
 
   /**
@@ -121,7 +107,31 @@ export class FireworksService extends AiServiceProvider {
    * Update the API key for Fireworks.ai
    */
   public override updateApiKey(ApiKey: string): void {
+    console.log(`${this.name} Updating API Key: ${ApiKey}`);
     this.config.apiKey = ApiKey;
+    this.setupAuthenticationByProvider();
+  }
+
+  override setupAuthenticationByProvider(): void {
+    const sanitizedApiKey = this.getSanitizedApiKey();
+    
+    if (!sanitizedApiKey) {
+      console.warn(`No API key provided for ${this.name} service`);
+      return;
+    }
+
+    console.log("Sanitized API Key:", sanitizedApiKey);
+
+    this.client.addRequestInterceptor((config) => {
+      if (!config.headers) {
+        config.headers = new AxiosHeaders();
+      }
+      
+      // Set authorization header based on the API key
+      config.headers.set('Authorization', `Bearer ${sanitizedApiKey}`);
+      
+      return config;
+    });
   }
 
   /**
@@ -134,7 +144,7 @@ export class FireworksService extends AiServiceProvider {
     }
 
     const completionOptions = {
-      model: options.model || FIREWORKS_MODELS.LLAMA_3_8B,
+      model: options.model,
       prompt,
       max_tokens: options.max_tokens || options.maxTokens || 1000,
       temperature: options.temperature ?? 0.7,
@@ -190,11 +200,16 @@ export class FireworksService extends AiServiceProvider {
       throw new Error(`API key not configured for ${this.name} service`);
     }
     
+    const messagesForAI = messages.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
     const completionOptions = {
-      model: options.model || FIREWORKS_MODELS.LLAMA_3_8B,
-      messages,
+      model: options.model,
+      messages: messagesForAI,
       max_tokens: options.max_tokens || options.maxTokens || 1000,
-      temperature: options.temperature ?? 0.7,
+      temperature: options.temperature ?? 1.0,
       top_p: options.top_p ?? options.topP ?? 1.0,
       frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
       presence_penalty: options.presence_penalty ?? options.presencePenalty ?? 0,

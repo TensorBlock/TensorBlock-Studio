@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { ChevronRight, Save, AlertCircle } from 'lucide-react';
 import { ProviderSettings } from '../../services/settings-service';
 
-type AIProvider = 'OpenAI' | 'Anthropic' | 'Gemini' | 'Fireworks' | 'Together' | 'OpenRouter' | 'Custom';
+export type AIProvider = 'OpenAI' | 'Anthropic' | 'Gemini' | 'Fireworks.ai' | 'Together' | 'OpenRouter' | 'Custom';
 
 interface ApiManagementProps {
   selectedProvider: AIProvider;
   providerSettings: Record<string, ProviderSettings>;
   onProviderChange: (provider: AIProvider) => void;
   onApiKeyChange: (value: string) => void;
-  onOrgIdChange: (value: string) => void;
   onApiVersionChange: (value: string) => void;
   onBaseUrlChange?: (value: string) => void;
   onEndpointChange?: (endpoint: string, value: string) => void;
@@ -22,7 +21,6 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   providerSettings,
   onProviderChange,
   onApiKeyChange,
-  onOrgIdChange,
   onApiVersionChange,
   onBaseUrlChange,
   onEndpointChange,
@@ -38,7 +36,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
     'OpenAI', 
     'Anthropic', 
     'Gemini', 
-    'Fireworks', 
+    'Fireworks.ai', 
     'Together', 
     'OpenRouter', 
     'Custom'
@@ -129,7 +127,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
             </div>
             
             {/* OpenAI-specific settings */}
-            {selectedProvider === 'OpenAI' && (
+            {/* {selectedProvider === 'OpenAI' && (
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
                   Organization ID (optional)
@@ -142,7 +140,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-            )}
+            )} */}
             
             {/* Anthropic-specific settings */}
             {selectedProvider === 'Anthropic' && (
@@ -192,7 +190,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
             )}
             
             {/* Base URL setting for providers that need it */}
-            {(selectedProvider === 'Fireworks' || 
+            {(selectedProvider === 'Fireworks.ai' || 
               selectedProvider === 'Together' || 
               selectedProvider === 'OpenRouter') && (
               <div>
@@ -204,7 +202,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   value={currentProviderSettings.baseUrl || ''}
                   onChange={(e) => onBaseUrlChange && onBaseUrlChange(e.target.value)}
                   placeholder={
-                    selectedProvider === 'Fireworks' 
+                    selectedProvider === 'Fireworks.ai' 
                       ? 'https://api.fireworks.ai/inference/v1' 
                       : selectedProvider === 'Together'
                         ? 'https://api.together.xyz/v1'

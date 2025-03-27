@@ -1,5 +1,4 @@
 import { HttpClient } from './http-client';
-import { AxiosHeaders } from 'axios';
 import { AxiosError } from 'axios';
 import { Message } from '../../types/chat';
 
@@ -99,6 +98,8 @@ export abstract class AiServiceProvider {
    */
   abstract updateApiKey(ApiKey: string): void;
 
+  abstract setupAuthenticationByProvider(): void;
+
   /**
    * Create a new AI service provider
    */
@@ -114,9 +115,6 @@ export abstract class AiServiceProvider {
       }
     });
     
-    // Set up authentication if API key is provided
-    this.setupAuthentication();
-    
     // Set up rate limit tracking
     this.setupRateLimitTracking();
   }
@@ -130,41 +128,7 @@ export abstract class AiServiceProvider {
     // Trim whitespace and check for common issues
     const apiKey = this.config.apiKey.trim();
     
-    // If the key starts with "sk-" or similar pattern, it's probably valid
-    // Otherwise, log a warning
-    if (apiKey && !apiKey.startsWith('sk-') && this.name === 'OpenAI') {
-      console.warn(`${this.name} API key doesn't follow the expected format (should start with 'sk-')`);
-    }
-    
     return apiKey;
-  }
-
-  /**
-   * Setup authentication for API requests
-   */
-  protected setupAuthentication(): void {
-    const sanitizedApiKey = this.getSanitizedApiKey();
-    
-    if (!sanitizedApiKey) {
-      console.warn(`No API key provided for ${this.name} service`);
-      return;
-    }
-
-    this.client.addRequestInterceptor((config) => {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      
-      // Set authorization header based on the API key
-      config.headers.set('Authorization', `Bearer ${sanitizedApiKey}`);
-      
-      // Set organization if provided (for services like OpenAI)
-      if (this.config.organizationId && this.config.organizationId.trim() !== '') {
-        config.headers.set('OpenAI-Organization', this.config.organizationId.trim());
-      }
-      
-      return config;
-    });
   }
 
   /**

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Server } from 'lucide-react';
 import { SettingsService, ProviderSettings } from '../services/settings-service';
-import { ApiManagement, ModelManagement } from '../components/settings';
+import { ApiManagement, ModelManagement, AIProvider } from '../components/settings';
 import { DatabaseIntegrationService } from '../services/database-integration';
 import { AIService } from '../services/ai-service';
 
@@ -12,7 +12,6 @@ interface SettingsPageProps {
 }
 
 type SettingsTab = 'api' | 'models';
-type AIProvider = 'OpenAI' | 'Anthropic' | 'Gemini' | 'Fireworks' | 'Together' | 'OpenRouter' | 'Custom';
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   isOpen,
@@ -55,7 +54,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setSaveStatus('idle');
       setHasApiKeyChanged(false);
     }
-  }, [isOpen]);
+  }, [isOpen, settingsService]);
   
   // Handle provider change
   const handleProviderChange = (provider: AIProvider) => {
@@ -77,18 +76,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       [selectedProvider]: {
         ...currentProviderSettings,
         apiKey: value
-      }
-    });
-  };
-  
-  // Handle organization ID change (OpenAI specific)
-  const handleOrgIdChange = (value: string) => {
-    const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
-    setProviderSettings({
-      ...providerSettings,
-      [selectedProvider]: {
-        ...currentProviderSettings,
-        organizationId: value
       }
     });
   };
@@ -236,7 +223,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 providerSettings={providerSettings}
                 onProviderChange={handleProviderChange}
                 onApiKeyChange={handleApiKeyChange}
-                onOrgIdChange={handleOrgIdChange}
                 onApiVersionChange={handleApiVersionChange}
                 onBaseUrlChange={handleBaseUrlChange}
                 onEndpointChange={handleEndpointChange}

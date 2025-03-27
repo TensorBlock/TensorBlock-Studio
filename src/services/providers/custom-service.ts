@@ -188,8 +188,28 @@ export class CustomService extends AiServiceProvider {
    */
   public override updateApiKey(ApiKey: string): void {
     this.config.apiKey = ApiKey;
+    this.setupAuthenticationByProvider();
   }
 
+  override setupAuthenticationByProvider(): void {
+    const sanitizedApiKey = this.getSanitizedApiKey();
+    
+    if (!sanitizedApiKey) {
+      console.warn(`No API key provided for ${this.name} service`);
+      return;
+    }
+
+    this.client.addRequestInterceptor((config) => {
+      if (!config.headers) {
+        config.headers = new AxiosHeaders();
+      }
+      
+      // Set authorization header based on the API key
+      config.headers.set('x-api-key', `${sanitizedApiKey}`);
+      
+      return config;
+    });
+  }
 
   /**
    * Implementation of text completion
