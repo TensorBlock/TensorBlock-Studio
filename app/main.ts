@@ -24,7 +24,7 @@ function createWindow(): BrowserWindow {
     height: 800,
     titleBarStyle: 'hidden',
     title: "TensorBlock Desktop",
-    ...(process.platform === 'linux' ? { icon: path.resolve("resources/app.asar.unpacked/dist/assets/icons/favicon.256x256.png") } : {}),
+    ...(process.platform === 'linux' ? { icon: path.resolve("resources/app.asar.unpacked/dist/logos/favicon.256x256.png") } : {}),
     ...(process.platform !== 'linux' ?
       {titleBarOverlay: {
         height: 29,
@@ -160,15 +160,13 @@ function createWindow(): BrowserWindow {
 
     win.webContents.openDevTools();
 
-    // Find the correct index.html path
-    let pathIndex = './index.html';
-
-    if (fs.existsSync(path.join(__dirname, 'dist', 'index.html'))) {
-      pathIndex = path.join('dist', 'index.html');
-    }
-
-    const indexPath = path.join(__dirname, pathIndex);
-    win.loadFile(indexPath);
+    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+    
+    win.loadFile(indexPath).catch(e => {
+      console.error('Failed to load index.html:', e);
+      console.log('Current directory:', __dirname);
+      console.log('Attempted path:', indexPath);
+    });
   }
 
   // Quit app when window is closed

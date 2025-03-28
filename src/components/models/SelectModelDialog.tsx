@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader, Check, ChevronDown } from 'lucide-react';
+import { Search, Loader, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { AIService, ModelOption } from '../../services/ai-service';
 
 interface SelectModelDialogProps {
@@ -19,7 +19,8 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedModelId, setSelectedModelId] = useState<string | undefined>(currentModelId);
-  
+  const [collapsedList, setCollapsedList] = useState<Map<string, boolean>>(new Map());
+
   useEffect(() => {
     if (isOpen) {
       loadModels();
@@ -66,6 +67,13 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
     onSelectModel(model, provider);
   };
   
+  const handleCollapseProvider = (provider: string) => {
+    console.log('handleCollapseProvider', provider);
+    const newCollapsedList = new Map(collapsedList);
+    newCollapsedList.set(provider, !newCollapsedList.has(provider) || !newCollapsedList.get(provider));
+    setCollapsedList(newCollapsedList);
+  };
+
   // Filter models based on search query
   const filteredModels = searchQuery
     ? models.filter(model => 
@@ -141,8 +149,18 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
             <div className="space-y-6">
               {Object.entries(groupedModels).map(([provider, providerModels]) => (
                 <div key={provider} className="mb-6">
-                  <h3 className="mb-2 text-lg font-medium text-white">{provider}</h3>
-                  <div className="space-y-2">
+                  
+                  <div className="flex items-start justify-start">
+                    <h3 className="mb-2 text-lg font-medium text-white">{provider}</h3>
+                    <button 
+                      onClick={() => handleCollapseProvider(provider)}
+                      className="p-1 ml-2 text-gray-400 bg-gray-800 rounded-md hover:text-white"
+                    >
+                      {collapsedList.get(provider) ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                    </button>
+                  </div>
+
+                  <div className="space-y-2" style={{display: (collapsedList.has(provider) && collapsedList.get(provider)) ? 'none' : 'block'}}>
                     {providerModels.map(model => (
                       <div
                         key={model.id}

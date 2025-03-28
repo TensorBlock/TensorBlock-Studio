@@ -3,7 +3,7 @@
   "productName": "TensorBlock Studio",
   "asar": true,
   "asarUnpack": [
-    "dist/assets/icons/**"
+    "dist/logos/**"
   ],
   "directories": {
     "app": "app",
@@ -14,19 +14,20 @@
     "!**/*.ts",
     "!*.map",
     "!package.json",
-    "!package-lock.json"
+    "!package-lock.json",
+    "dist/**/*"
   ],
   "win": {
-    "icon": "app/dist/assets/icons",
+    "icon": "app/dist/logos/icons",
     "target": [
       "portable"
     ]
   },
   "portable": {
-    "splashImage": "app/dist/assets/icons/electron.bmp"
+    "splashImage": "app/dist/logos/electron.bmp"
   },
   "mac": {
-    "icon": "app/dist/assets/icons_mac",
+    "icon": "app/dist/logos_mac",
     "target": [
       {
         "target": "dmg",
@@ -35,7 +36,7 @@
     ]
   },
   "linux": {
-    "icon": "app/dist/assets/icons",
+    "icon": "app/dist/logos",
     "category": "Utility",
     "maintainer": "tensorblock.co",
     "target": [
