@@ -151,6 +151,9 @@ export class OpenRouterService extends AiServiceProvider {
     this.setupAuthenticationByProvider();
   }
 
+  /**
+   * Setup authentication for OpenAI
+   */
   override setupAuthenticationByProvider(): void {
     const sanitizedApiKey = this.getSanitizedApiKey();
     
@@ -165,7 +168,7 @@ export class OpenRouterService extends AiServiceProvider {
       }
       
       // Set authorization header based on the API key
-      config.headers.set('x-api-key', `${sanitizedApiKey}`);
+      config.headers.set('Authorization', `Bearer ${sanitizedApiKey}`);
       
       return config;
     });
