@@ -277,6 +277,17 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   // Show API key missing message if needed
   const isApiKeyMissing = !apiKey && SettingsService.getInstance().getSelectedModel();
 
+  // Handle stopping a streaming response
+  const handleStopStreaming = () => {
+    if (!chatServiceRef.current) return;
+    
+    try {
+      chatServiceRef.current.stopStreaming();
+    } catch (error) {
+      console.error('Error stopping streaming:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
 
@@ -304,7 +315,9 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             error={error ? error.message : null}
             onSendMessage={handleSendMessage}
             onSendStreamingMessage={handleSendStreamingMessage}
+            onStopStreaming={handleStopStreaming}
             isStreamingSupported={isStreamingSupported && useStreaming}
+            isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming() || false}
           />
         </div>
       </div>

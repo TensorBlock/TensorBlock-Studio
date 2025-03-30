@@ -1,6 +1,6 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation } from '../../types/chat';
-import { Send, Loader } from 'lucide-react';
+import { Send, Loader, Square } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 
 interface ChatMessageAreaProps {
@@ -9,7 +9,9 @@ interface ChatMessageAreaProps {
   error: string | null;
   onSendMessage: (content: string) => void;
   onSendStreamingMessage?: (content: string) => void;
+  onStopStreaming?: () => void;
   isStreamingSupported?: boolean;
+  isCurrentlyStreaming?: boolean;
 }
 
 export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
@@ -18,7 +20,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   error,
   onSendMessage,
   onSendStreamingMessage,
+  onStopStreaming,
   isStreamingSupported = false,
+  isCurrentlyStreaming = false,
 }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -41,6 +45,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     
     setInput('');
   };
+
+  const handleStopStreaming = () => {
+    if (onStopStreaming) {
+      onStopStreaming();
+    }
+  };
   
   // If no active conversation is selected
   if (!activeConversation) {
@@ -50,6 +60,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       </div>
     );
   }
+  
+  // Check if there's a streaming message
+  const hasStreamingMessage = activeConversation.messages.some(m => m.id.startsWith('streaming-'));
   
   return (
     <div className="flex flex-col h-full">
@@ -76,7 +89,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           </div>
         ))}
         
-        {isLoading && !activeConversation.messages.some(m => m.id.startsWith('streaming-')) && (
+        {isLoading && !hasStreamingMessage && (
           <div className="flex justify-start">
             <div className="max-w-[80%] rounded-lg p-3 bg-gray-200 text-gray-800 rounded-tl-none">
               <div className="flex items-center space-x-2">
@@ -109,14 +122,27 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
           />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            aria-label="Send message"
-          >
-            <Send size={20} />
-          </button>
+          
+          {isCurrentlyStreaming || hasStreamingMessage ? (
+            <button
+              type="button"
+              onClick={handleStopStreaming}
+              className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              aria-label="Stop response"
+              title="Stop response"
+            >
+              <Square size={20} />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              aria-label="Send message"
+            >
+              <Send size={20} />
+            </button>
+          )}
         </div>
       </form>
     </div>

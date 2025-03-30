@@ -307,7 +307,8 @@ export class AIService {
   public async getStreamingChatCompletion(
     messages: Message[], 
     options?: Partial<CompletionOptions>,
-    onChunk?: (chunk: string) => void
+    onChunk?: (chunk: string) => void,
+    signal?: AbortSignal
   ): Promise<Message | null> {
     this.startRequest();
     
@@ -347,6 +348,7 @@ export class AIService {
           stop: options?.stop,
           user: options?.user,
           stream: true,
+          signal: signal
         },
         onChunk || (() => {})
       );
@@ -354,6 +356,15 @@ export class AIService {
       this.handleSuccess();
       return result;
     } catch (e) {
+      // Don't treat AbortError as an actual error
+      if (e instanceof Error && e.name === 'AbortError') {
+        this.setState({
+          status: 'idle',
+          error: null
+        });
+        return null;
+      }
+
       const error = e instanceof Error ? e : new Error('Unknown error during streaming chat completion');
       this.handleError(error);
       return null;

@@ -385,6 +385,7 @@ export class OpenAIService extends AiServiceProvider {
           ...this.config.headers
         },
         responseType: 'text', // Changed to text instead of stream
+        signal: options.signal, // Pass the abort signal if provided
         onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
           // Safely access the responseText property
           const target = progressEvent.event?.target as { responseText?: string } | undefined;
@@ -412,15 +413,30 @@ export class OpenAIService extends AiServiceProvider {
         provider: this.name,
         model: responseModel
       };
-    } catch (error) {
+    } catch (err) {
+      // Check if this is an abort error
+      const error = err as Error;
+      if (error.name === 'AbortError' || (error as any).code === 'ERR_CANCELED') {
+        console.log('Streaming request was aborted');
+        // Return a partial message with what we've accumulated so far
+        return {
+          id: uuidv4(),
+          role: responseRole as Message['role'],
+          content: accumulatedContent.trim() || '[Response was stopped]',
+          timestamp: new Date(),
+          provider: this.name,
+          model: responseModel
+        };
+      }
+
       // Check for auth errors first
-      if ((error as AxiosError).response?.status === 401 || 
-          (error as AxiosError).response?.status === 403) {
-        throw this.handleAuthError(error);
+      if ((err as AxiosError).response?.status === 401 || 
+          (err as AxiosError).response?.status === 403) {
+        throw this.handleAuthError(err);
       }
       
       // Log detailed error information
-      const axiosError = error as AxiosError;
+      const axiosError = err as AxiosError;
       if (axiosError.response) {
         console.error('OpenAI streaming chat completion error details:', {
           status: axiosError.response.status,
@@ -432,8 +448,8 @@ export class OpenAIService extends AiServiceProvider {
           }
         });
       }
-      console.error('OpenAI streaming chat completion error:', error);
-      throw error;
+      console.error('OpenAI streaming chat completion error:', err);
+      throw err;
     }
   }
 

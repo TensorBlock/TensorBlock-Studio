@@ -13,6 +13,8 @@ export class ChatService {
   private conversations: Conversation[] = [];
   private activeConversationId: string | null = null;
   private isInitialized: boolean = false;
+  private isStreaming: boolean = false;
+  private streamController: AbortController | null = null;
 
   private constructor() {
     this.aiService = AIService.getInstance();
@@ -134,6 +136,12 @@ export class ChatService {
     }
     
     try {
+      // Set streaming flag
+      this.isStreaming = true;
+      
+      // Create a new abort controller for this request
+      this.streamController = new AbortController();
+      
       const settingsService = SettingsService.getInstance();
       const conversationId = this.activeConversationId;
       const provider = settingsService.getSelectedProvider();
@@ -208,6 +216,9 @@ export class ChatService {
           provider: settingsService.getSelectedProvider()
         },
         (chunk) => {
+          // If streaming has been stopped, don't process more chunks
+          if (!this.isStreaming) return;
+          
           // Update the placeholder message with the new content
           const currentConv = this.conversations.find(c => c.id === conversationId);
           if (!currentConv) return;
@@ -238,8 +249,13 @@ export class ChatService {
           if (onChunk) {
             onChunk(chunk);
           }
-        }
+        },
+        this.streamController ? this.streamController.signal : undefined
       );
+
+      // Reset streaming state
+      this.isStreaming = false;
+      this.streamController = null;
 
       if (aiResponse === null) return;
       
@@ -274,10 +290,38 @@ export class ChatService {
 
       conversationUpdate(this.conversations);
 
-    } catch (error) {
-      console.error('Error sending streaming message:', error);
+    } catch (err) {
+      // Reset streaming state even on error
+      this.isStreaming = false;
+      this.streamController = null;
+      
+      console.error('Error sending streaming message:', err);
+      
+      // Don't throw the error if it was an abort error
+      const error = err as Error;
+      if (error.name === 'AbortError') {
+        return;
+      }
       throw error;
     }
+  }
+
+  /**
+   * Stop the currently streaming response
+   */
+  public stopStreaming(): void {
+    if (this.isStreaming && this.streamController) {
+      this.isStreaming = false;
+      this.streamController.abort();
+      this.streamController = null;
+    }
+  }
+
+  /**
+   * Check if a response is currently streaming
+   */
+  public isCurrentlyStreaming(): boolean {
+    return this.isStreaming;
   }
 
   /**

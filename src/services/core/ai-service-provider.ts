@@ -61,6 +61,7 @@ export interface CompletionOptions {
   stop?: string[];
   user?: string;
   stream?: boolean; // Whether to stream the response
+  signal?: AbortSignal; // AbortSignal for cancellation
 }
 
 /**
