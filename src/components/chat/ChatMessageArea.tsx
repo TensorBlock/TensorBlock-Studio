@@ -169,7 +169,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'delete',
                   icon: Trash2,
                   label: 'Delete',
-                  onClick: () => handleDeleteMessage(message.id),
+                  onClick: () => handleActionError('Delete functionality is disabled'),
+                  disabled: true
                 }
               ]
             : [
@@ -195,7 +196,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'delete',
                   icon: Trash2,
                   label: 'Delete',
-                  onClick: () => handleDeleteMessage(message.id),
+                  onClick: () => handleActionError('Delete functionality is disabled'),
+                  disabled: true
                 }
               ];
               
