@@ -77,6 +77,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
   // Listen for settings changes
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleSettingsChange = (event: Event) => {
       const settingsService = SettingsService.getInstance();
       setUseStreaming(settingsService.getUseStreaming());

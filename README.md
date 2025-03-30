@@ -9,7 +9,6 @@ An Electron-based desktop application for interacting with various AI models via
 - Built with React, Vite, TypeScript, and TailwindCSS
 - Electron for cross-platform desktop support
 - Model selection dialog with provider-specific model lists
-- Automatic model caching for improved performance
 
 ## Getting Started
 
@@ -72,7 +71,6 @@ The AI service architecture is designed to be modular and extensible, allowing f
 - **Http Client**: A robust HTTP client built on axios with automatic retry, rate limit tracking, and other features.
 - **AI Service Provider**: Base class for all AI service providers with common functionality.
 - **AI Service Manager**: Central manager for registering and accessing all AI service providers.
-- **Model Cache Service**: Service for fetching, caching, and managing AI models from different providers.
 - **Settings Service**: Central service for managing user settings and API configurations.
 - **Database Integration Service**: Service for persisting conversations, messages, and settings.
 
