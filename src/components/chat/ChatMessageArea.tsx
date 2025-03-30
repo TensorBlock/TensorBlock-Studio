@@ -11,6 +11,7 @@ interface ChatMessageAreaProps {
   onSendMessage: (content: string) => void;
   onSendStreamingMessage?: (content: string) => void;
   onStopStreaming?: () => void;
+  onRegenerateResponse?: () => void;
   isStreamingSupported?: boolean;
   isCurrentlyStreaming?: boolean;
 }
@@ -22,6 +23,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   onSendMessage,
   onSendStreamingMessage,
   onStopStreaming,
+  onRegenerateResponse,
   isStreamingSupported = false,
   isCurrentlyStreaming = false,
 }) => {
@@ -51,6 +53,15 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const handleStopStreaming = () => {
     if (onStopStreaming) {
       onStopStreaming();
+    }
+  };
+
+  // Handle regenerate response
+  const handleRegenerateResponse = () => {
+    if (onRegenerateResponse) {
+      onRegenerateResponse();
+    } else {
+      console.error('Regenerate response function not provided');
     }
   };
 
@@ -125,7 +136,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'regenerate',
                   icon: RotateCcw,
                   label: 'Regenerate',
-                  onClick: () => handleActionError('regenerate response'),
+                  onClick: () => handleRegenerateResponse(),
                 },
                 {
                   id: 'delete',

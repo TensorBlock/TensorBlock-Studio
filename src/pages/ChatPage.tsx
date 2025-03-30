@@ -289,6 +289,20 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     }
   };
 
+  // Handle regenerating the last AI response
+  const handleRegenerateResponse = async () => {
+    if (!isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      // Use the new regenerateLastMessage method
+      await chatServiceRef.current.regenerateLastMessage((updatedConversation) => {
+        setConversations(updatedConversation);
+      });
+    } catch (error) {
+      console.error('Error regenerating response:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
 
@@ -317,6 +331,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             onSendMessage={handleSendMessage}
             onSendStreamingMessage={handleSendStreamingMessage}
             onStopStreaming={handleStopStreaming}
+            onRegenerateResponse={handleRegenerateResponse}
             isStreamingSupported={isStreamingSupported && useStreaming}
             isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming() || false}
           />
