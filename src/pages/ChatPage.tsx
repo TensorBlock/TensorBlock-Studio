@@ -317,6 +317,46 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     }
   };
 
+  // Handle editing a message
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!isServiceInitialized || !chatServiceRef.current || !activeConversation) return;
+    
+    try {
+      // Find the message being edited
+      const message = activeConversation.messages.find(m => m.id === messageId);
+      
+      if (message && message.role === 'user') {
+        // Delete this message and all subsequent messages
+        const messageIndex = activeConversation.messages.findIndex(m => m.id === messageId);
+        
+        // If this is not the last message, we need to delete all subsequent messages
+        if (messageIndex < activeConversation.messages.length - 1) {
+          // Delete from last to first to avoid index shifting issues
+          for (let i = activeConversation.messages.length - 1; i > messageIndex; i--) {
+            const msgToDelete = activeConversation.messages[i];
+            await chatServiceRef.current.deleteMessage(msgToDelete.id, (updatedConversation) => {
+              setConversations(updatedConversation);
+            });
+          }
+        }
+        
+        // Then delete the edited message itself
+        await chatServiceRef.current.deleteMessage(messageId, (updatedConversation) => {
+          setConversations(updatedConversation);
+        });
+        
+        // Finally, send the new message
+        if (isStreamingSupported && useStreaming) {
+          await handleSendStreamingMessage(newContent);
+        } else {
+          await handleSendMessage(newContent);
+        }
+      }
+    } catch (error) {
+      console.error('Error editing message:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
 
@@ -347,6 +387,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             onStopStreaming={handleStopStreaming}
             onRegenerateResponse={handleRegenerateResponse}
             onDeleteMessage={handleDeleteMessage}
+            onEditMessage={handleEditMessage}
             isStreamingSupported={isStreamingSupported && useStreaming}
             isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming() || false}
           />

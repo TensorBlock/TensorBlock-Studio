@@ -830,4 +830,72 @@ export class ChatService {
       throw error;
     }
   }
+
+  /**
+   * Edit a message in a conversation
+   */
+  public async editMessage(messageId: string, newContent: string, conversationUpdate: (conversations: Conversation[]) => void): Promise<void> {
+    if (!this.dbService || !this.activeConversationId) {
+      throw new Error('Database service not initialized or no active conversation');
+    }
+    
+    try {
+      const conversationId = this.activeConversationId;
+      const activeConversation = this.conversations.find(c => c.id === conversationId);
+      
+      if (!activeConversation) {
+        throw new Error('Active conversation not found');
+      }
+      
+      // Find the message
+      const messageIndex = activeConversation.messages.findIndex(m => m.id === messageId);
+      
+      if (messageIndex === -1) {
+        throw new Error('Message not found');
+      }
+      
+      // Check if the message is a user message (only user messages can be edited)
+      if (activeConversation.messages[messageIndex].role !== 'user') {
+        throw new Error('Only user messages can be edited');
+      }
+      
+      // Get the original message
+      const originalMessage = activeConversation.messages[messageIndex];
+      
+      // Update the message in the database
+      await this.dbService.updateChatMessage(messageId, {
+        ...originalMessage,
+        content: newContent
+      }, conversationId);
+      
+      // Create updated messages array with the edited message
+      const updatedMessages = [...activeConversation.messages];
+      updatedMessages[messageIndex] = {
+        ...originalMessage,
+        content: newContent
+      };
+      
+      // Create updated conversation
+      const updatedConversation: Conversation = {
+        ...activeConversation,
+        messages: updatedMessages,
+        updatedAt: new Date()
+      };
+      
+      // Update conversation in database
+      await this.dbService.updateConversation(updatedConversation);
+      
+      // Update in memory
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? updatedConversation : c
+      );
+      
+      // Update UI
+      conversationUpdate(this.conversations);
+      
+    } catch (error) {
+      console.error('Error editing message:', error);
+      throw error;
+    }
+  }
 }

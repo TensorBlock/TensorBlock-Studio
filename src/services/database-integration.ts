@@ -346,6 +346,28 @@ export class DatabaseIntegrationService {
         }
     }
 
+    /**
+     * Update a chat message
+     */
+    public async updateChatMessage(messageId: string, updatedMessage: Message, conversationId: string): Promise<void> {
+        try {
+            const dbMessage: DbChatMessage = {
+                id: parseInt(messageId, 10),
+                conversationId: conversationId,
+                role: updatedMessage.role,
+                content: updatedMessage.content,
+                timestamp: updatedMessage.timestamp,
+                model: updatedMessage.model,
+                provider: updatedMessage.provider
+            };
+            
+            await this.dbService.updateChatMessage(dbMessage);
+        } catch (error) {
+            console.error('Error updating message:', error);
+            throw error;
+        }
+    }
+
     // Mapping helpers
     private mapDbConversationToAppConversation(dbConversation: DbConversation): ChatConversation {
         return {
