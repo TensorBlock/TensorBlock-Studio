@@ -50,6 +50,7 @@ export const TOGETHER_MODELS = {
  * Implementation of Together.ai service provider
  */
 export class TogetherService extends AiServiceProvider {
+
   private apiModels: string[] = Object.values(TOGETHER_MODELS);
   private settingsService: SettingsService;
 
@@ -156,11 +157,11 @@ export class TogetherService extends AiServiceProvider {
     const completionOptions = {
       model: options.model || TOGETHER_MODELS.LLAMA_3_8B,
       prompt,
-      max_tokens: options.max_tokens || options.maxTokens || 1000,
+      max_tokens: options.max_tokens ?? undefined,
       temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? options.topP ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
-      presence_penalty: options.presence_penalty ?? options.presencePenalty ?? 0,
+      top_p: options.top_p ?? 1.0,
+      frequency_penalty: options.frequency_penalty ?? 0,
+      presence_penalty: options.presence_penalty ?? 0,
       stop: options.stop,
       user: options.user,
     };
@@ -218,11 +219,11 @@ export class TogetherService extends AiServiceProvider {
     const completionOptions = {
       model: options.model || TOGETHER_MODELS.LLAMA_3_8B,
       messages: messagesForAI,
-      max_tokens: options.max_tokens || options.maxTokens || 1000,
+      max_tokens: options.max_tokens ?? undefined,
       temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? options.topP ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
-      presence_penalty: options.presence_penalty ?? options.presencePenalty ?? 0,
+      top_p: options.top_p ?? 1.0,
+      frequency_penalty: options.frequency_penalty ?? 0,
+      presence_penalty: options.presence_penalty ?? 0,
       stop: options.stop,
       user: options.user,
     };

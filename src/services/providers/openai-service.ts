@@ -215,11 +215,11 @@ export class OpenAIService extends AiServiceProvider {
     const completionOptions = {
       model: options.model || 'gpt-3.5-turbo',
       prompt,
-      max_tokens: options.max_tokens || options.maxTokens || 1000,
-      temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? options.topP ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
-      presence_penalty: options.presence_penalty ?? options.presencePenalty ?? 0,
+      max_tokens: options.max_tokens ?? undefined,
+      temperature: options.temperature ?? 1.0,
+      top_p: options.top_p ?? 1.0,
+      frequency_penalty: options.frequency_penalty ?? 0,
+      presence_penalty: options.presence_penalty ?? 0,
       stop: options.stop,
       user: options.user,
     };
@@ -279,7 +279,7 @@ export class OpenAIService extends AiServiceProvider {
     const completionOptions = {
       model: options.model,
       messages: messagesForAI,
-      max_tokens: options.max_tokens ?? 2048,
+      max_tokens: options.max_tokens ?? undefined,
       temperature: options.temperature ?? 1.0,
       top_p: options.top_p ?? 1.0,
       frequency_penalty: options.frequency_penalty ?? 0,
@@ -357,7 +357,7 @@ export class OpenAIService extends AiServiceProvider {
     const completionOptions = {
       model: options.model,
       messages: messagesForAI,
-      max_tokens: options.max_tokens ?? 2048,
+      max_tokens: options.max_tokens ?? undefined,
       temperature: options.temperature ?? 1.0,
       top_p: options.top_p ?? 1.0,
       frequency_penalty: options.frequency_penalty ?? 0,
@@ -375,7 +375,7 @@ export class OpenAIService extends AiServiceProvider {
       console.log('OpenAI streaming chat completion options:', completionOptions);
 
       // Use axios directly instead of the client wrapper for streaming
-      const response = await axios({
+      await axios({
         method: 'post',
         url: `${this.config.baseURL}/chat/completions`,
         data: completionOptions,
@@ -416,7 +416,7 @@ export class OpenAIService extends AiServiceProvider {
     } catch (err) {
       // Check if this is an abort error
       const error = err as Error;
-      if (error.name === 'AbortError' || (error as any).code === 'ERR_CANCELED') {
+      if (error.name === 'AbortError' || (error as { code?: string }).code === 'ERR_CANCELED') {
         console.log('Streaming request was aborted');
         // Return a partial message with what we've accumulated so far
         return {
@@ -496,6 +496,7 @@ export class OpenAIService extends AiServiceProvider {
               if (parsedChunk.model) onModel(parsedChunk.model);
             }
           }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
           // If it's not complete JSON, add to buffer
           buffer += jsonLine;
@@ -511,6 +512,7 @@ export class OpenAIService extends AiServiceProvider {
               if (parsedBuffer.model) onModel(parsedBuffer.model);
             }
             buffer = '';
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (bufferError) {
             // Buffer isn't complete JSON yet, keep collecting
           }

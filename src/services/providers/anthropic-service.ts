@@ -33,6 +33,9 @@ export interface AnthropicChatCompletionResponse {
  * Implementation of Anthropic service provider
  */
 export class AnthropicService extends AiServiceProvider {
+  protected streamChatCompletionImplementation(messages: Message[], options: CompletionOptions, onChunk: (chunk: string) => void): Promise<Message> {
+    throw new Error('Method not implemented.');
+  }
   private apiModels: string[] = [];
   private apiVersion: string;
   private settingsService: SettingsService;
@@ -196,9 +199,9 @@ export class AnthropicService extends AiServiceProvider {
       model: options.model || 'claude-3-haiku-20240307',
       messages: formattedMessages,
       system: system,
-      max_tokens: options.max_tokens || options.maxTokens || 1000,
+      max_tokens: options.max_tokens ?? undefined,
       temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? options.topP ?? 1.0,
+      top_p: options.top_p ?? 1.0,
       stop_sequences: options.stop || [],
     };
 

@@ -204,11 +204,11 @@ export class OpenRouterService extends AiServiceProvider {
     const completionOptions = {
       model: options.model || OPENROUTER_MODELS.CLAUDE_3_HAIKU, // More cost-effective default
       messages,
-      max_tokens: options.max_tokens || options.maxTokens || 1000,
+      max_tokens: options.max_tokens ?? undefined,
       temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? options.topP ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
-      presence_penalty: options.presence_penalty ?? options.presencePenalty ?? 0,
+      top_p: options.top_p ?? 1.0,
+      frequency_penalty: options.frequency_penalty ?? 0,
+      presence_penalty: options.presence_penalty ?? 0,
       stop: options.stop,
       user: options.user,
       // OpenRouter specific options

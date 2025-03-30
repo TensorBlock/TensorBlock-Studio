@@ -73,14 +73,14 @@ export interface CompletionOptions {
   model: string;
   provider: string;
   maxTokens?: number;
-  max_tokens?: number; // OpenAI API parameter name
+  max_tokens?: number;
   temperature?: number;
   topP?: number;
-  top_p?: number; // OpenAI API parameter name
+  top_p?: number;
   frequencyPenalty?: number;
-  frequency_penalty?: number; // OpenAI API parameter name
+  frequency_penalty?: number;
   presencePenalty?: number;
-  presence_penalty?: number; // OpenAI API parameter name
+  presence_penalty?: number;
   stop?: string[];
   user?: string;
 }

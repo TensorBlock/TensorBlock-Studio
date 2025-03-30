@@ -193,9 +193,9 @@ export class GeminiService extends AiServiceProvider {
     const completionOptions = {
       contents: formattedMessages,
       generationConfig: {
-        maxOutputTokens: options.max_tokens || options.maxTokens || 1000,
+        maxOutputTokens: options.max_tokens || 1000,
         temperature: options.temperature ?? 1.0,
-        topP: options.top_p ?? options.topP ?? 1.0,
+        topP: options.top_p ?? 1.0,
         stopSequences: options.stop || [],
       },
     };
