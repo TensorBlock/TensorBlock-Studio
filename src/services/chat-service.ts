@@ -801,6 +801,9 @@ export class ChatService {
         throw new Error('Message not found');
       }
       
+      // Delete the message from database
+      await this.dbService.deleteChatMessage(messageId);
+      
       // Create a new conversation with the message removed
       const updatedMessages = [...activeConversation.messages];
       updatedMessages.splice(messageIndex, 1);

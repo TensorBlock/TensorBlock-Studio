@@ -169,6 +169,22 @@ export class DatabaseService {
         });
     }
 
+    /**
+     * Delete a chat message from the database
+     */
+    async deleteChatMessage(messageId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('chatHistory', 'readwrite');
+            const store = transaction.objectStore('chatHistory');
+            const request = store.delete(messageId);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     // API Settings Methods
     async saveApiSettings(provider: string, settings: ApiSettings): Promise<void> {
         return new Promise((resolve, reject) => {
