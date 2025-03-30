@@ -73,7 +73,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div 
-        className="relative p-6 bg-white rounded-lg shadow-xl w-full max-w-md mx-4 focus:outline-none"
+        className="relative w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl focus:outline-none"
         onClick={handleDialogClick}
         ref={dialogRef}
         tabIndex={-1}
@@ -85,7 +85,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         {/* Close button */}
         <button
           onClick={onCancel}
-          className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500"
+          className="absolute p-1 text-gray-400 rounded-md top-2 right-2 hover:text-gray-500 focus:outline-none focus:text-gray-500"
           aria-label="Close"
         >
           <X size={20} />
@@ -115,11 +115,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </div>
 
             {/* Buttons */}
-            <div className="mt-6 flex justify-end space-x-3">
+            <div className="flex justify-end mt-6 space-x-3">
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                className="px-4 py-2 font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
                 {cancelText}
               </button>

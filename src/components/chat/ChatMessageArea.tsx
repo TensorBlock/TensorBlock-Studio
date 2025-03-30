@@ -1,7 +1,8 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation } from '../../types/chat';
-import { Send, Loader, Square } from 'lucide-react';
+import { Send, Loader, Square, Copy, RotateCcw, Share2, Trash2, Pencil } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
+import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -26,6 +27,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
 }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -51,6 +53,19 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       onStopStreaming();
     }
   };
+
+  // Handle copy message action
+  const handleCopyMessage = (content: string) => {
+    navigator.clipboard.writeText(content)
+      .catch(() => {
+        console.error('Failed to copy message');
+      });
+  };
+
+  // Placeholder error handler for other actions
+  const handleActionError = (action: string) => {
+    console.error(`Function not implemented yet: ${action}`);
+  };
   
   // If no active conversation is selected
   if (!activeConversation) {
@@ -68,26 +83,89 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     <div className="flex flex-col h-full">
       {/* Messages area */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-        {activeConversation.messages.filter(m => m.role !== 'system').map((message) => (
-          <div 
-            key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+        {activeConversation.messages.filter(m => m.role !== 'system').map((message) => {
+          const isUserMessage = message.role === 'user';
+          
+          // Define actions based on message type (user or AI)
+          const toolboxActions: ToolboxAction[] = isUserMessage
+            ? [
+                {
+                  id: 'edit',
+                  icon: Pencil,
+                  label: 'Edit',
+                  onClick: () => handleActionError('edit message'),
+                },
+                {
+                  id: 'copy',
+                  icon: Copy,
+                  label: 'Copy',
+                  onClick: () => handleCopyMessage(message.content),
+                },
+                {
+                  id: 'delete',
+                  icon: Trash2,
+                  label: 'Delete',
+                  onClick: () => handleActionError('delete message'),
+                }
+              ]
+            : [
+                {
+                  id: 'copy',
+                  icon: Copy,
+                  label: 'Copy',
+                  onClick: () => handleCopyMessage(message.content),
+                },
+                {
+                  id: 'share',
+                  icon: Share2,
+                  label: 'Share',
+                  onClick: () => handleActionError('share message'),
+                },
+                {
+                  id: 'regenerate',
+                  icon: RotateCcw,
+                  label: 'Regenerate',
+                  onClick: () => handleActionError('regenerate response'),
+                },
+                {
+                  id: 'delete',
+                  icon: Trash2,
+                  label: 'Delete',
+                  onClick: () => handleActionError('delete message'),
+                }
+              ];
+              
+          return (
             <div 
-              className={`max-w-[80%] rounded-lg p-3 ${
-                message.role === 'user' 
-                  ? 'bg-blue-500 text-white rounded-tr-none' 
-                  : 'bg-gray-200 text-gray-800 rounded-tl-none'
-              }`}
+              key={message.id}
+              className={`flex flex-col ${isUserMessage ? 'items-end' : 'items-start'}`}
+              onMouseEnter={() => setHoveredMessageId(message.id)}
+              onMouseLeave={() => setHoveredMessageId(null)}
             >
-              {message.role === 'user' ? (
-                <p className="whitespace-pre-wrap">{message.content}</p>
-              ) : (
-                <MarkdownContent content={message.content} />
-              )}
+              <div 
+                className={`max-w-[80%] rounded-lg p-3 ${
+                  isUserMessage 
+                    ? 'bg-blue-500 text-white rounded-tr-none' 
+                    : 'bg-gray-200 text-gray-800 rounded-tl-none'
+                }`}
+              >
+                {isUserMessage ? (
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                ) : (
+                  <MarkdownContent content={message.content} />
+                )}
+              </div>
+              
+              {/* Message toolbox */}
+              <div className="mt-1">
+                <MessageToolboxMenu 
+                  actions={toolboxActions} 
+                  className={`mr-1 ${hoveredMessageId === message.id ? 'opacity-100' : 'opacity-0'}`}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
         {isLoading && !hasStreamingMessage && (
           <div className="flex justify-start">
