@@ -289,12 +289,72 @@ export class AIService {
         presencePenalty: options?.presencePenalty,
         stop: options?.stop,
         user: options?.user,
+        stream: options?.stream,
       });
       
       this.handleSuccess();
       return result;
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Unknown error during chat completion');
+      this.handleError(error);
+      return null;
+    }
+  }
+
+  /**
+   * Get a streaming chat completion from the AI
+   */
+  public async getStreamingChatCompletion(
+    messages: Message[], 
+    options?: Partial<CompletionOptions>,
+    onChunk?: (chunk: string) => void
+  ): Promise<Message | null> {
+    this.startRequest();
+    
+    try {
+      let provider = null;
+
+      if(!options?.provider) {
+        provider = this.getChatCompletionProvider();
+      }
+      else {
+        provider = this.getProvider(options.provider);
+      }
+      
+      if (!provider) {
+        throw new Error('No chat completion provider available');
+      }
+
+      if (!provider.supportsCapability(AIServiceCapability.StreamingCompletion)) {
+        throw new Error(`Provider ${provider.name} does not support streaming`);
+      }
+
+      const finalModel = options?.model || provider.availableModels?.[0] || 'gpt-3.5-turbo';
+
+      console.log('Using model for streaming:', finalModel);
+      console.log('Using provider for streaming:', provider.name);
+
+      const result = await provider.streamChatCompletion(
+        messages, 
+        {
+          model: finalModel,
+          provider: options?.provider || provider.name || 'OpenAI',
+          maxTokens: options?.maxTokens,
+          temperature: options?.temperature,
+          topP: options?.topP,
+          frequencyPenalty: options?.frequencyPenalty,
+          presencePenalty: options?.presencePenalty,
+          stop: options?.stop,
+          user: options?.user,
+          stream: true,
+        },
+        onChunk || (() => {})
+      );
+      
+      this.handleSuccess();
+      return result;
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error('Unknown error during streaming chat completion');
       this.handleError(error);
       return null;
     }

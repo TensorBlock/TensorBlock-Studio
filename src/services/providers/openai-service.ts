@@ -4,11 +4,12 @@ import {
   AiServiceConfig, 
   CompletionOptions 
 } from '../core/ai-service-provider';
-import { AxiosError, AxiosHeaders } from 'axios';
+import { AxiosError, AxiosHeaders, AxiosProgressEvent } from 'axios';
 import { API_CONFIG, getValidatedApiKey } from '../core/config';
 import { SettingsService } from '../settings-service';
 import { Message } from '../../types/chat';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 /**
  * Response format for text completions
  */
@@ -71,6 +72,24 @@ export interface OpenAIImageGenerationResponse {
 }
 
 /**
+ * Response format for streaming chat completions
+ */
+export interface OpenAIChatCompletionChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    delta: {
+      role?: string;
+      content?: string;
+    };
+    index: number;
+    finish_reason: string | null;
+  }[];
+}
+
+/**
  * Implementation of OpenAI service provider
  */
 export class OpenAIService extends AiServiceProvider {
@@ -128,6 +147,7 @@ export class OpenAIService extends AiServiceProvider {
       AIServiceCapability.ToolUsage,
       AIServiceCapability.VisionAnalysis,
       AIServiceCapability.FineTuning,
+      AIServiceCapability.StreamingCompletion,
     ];
   }
 
@@ -313,6 +333,173 @@ export class OpenAIService extends AiServiceProvider {
       }
       console.error('OpenAI chat completion error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Implementation of streaming chat completion for OpenAI
+   */
+  protected async streamChatCompletionImplementation(
+    messages: Message[],
+    options: CompletionOptions,
+    onChunk: (chunk: string) => void
+  ): Promise<Message> {
+    // Validate API key before making the request
+    if (!this.hasValidApiKey()) {
+      throw new Error(`API key not configured for ${this.name} service`);
+    }
+    
+    const messagesForAI = messages.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    const completionOptions = {
+      model: options.model,
+      messages: messagesForAI,
+      max_tokens: options.max_tokens ?? 2048,
+      temperature: options.temperature ?? 1.0,
+      top_p: options.top_p ?? 1.0,
+      frequency_penalty: options.frequency_penalty ?? 0,
+      presence_penalty: options.presence_penalty ?? 0,
+      stop: options.stop,
+      user: options.user,
+      stream: true,
+    };
+
+    let accumulatedContent = '';
+    let responseRole = 'assistant';
+    let responseModel = options.model;
+
+    try {
+      console.log('OpenAI streaming chat completion options:', completionOptions);
+
+      // Use axios directly instead of the client wrapper for streaming
+      const response = await axios({
+        method: 'post',
+        url: `${this.config.baseURL}/chat/completions`,
+        data: completionOptions,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getSanitizedApiKey()}`,
+          ...this.config.headers
+        },
+        responseType: 'text', // Changed to text instead of stream
+        onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
+          // Safely access the responseText property
+          const target = progressEvent.event?.target as { responseText?: string } | undefined;
+          const responseText = target?.responseText || '';
+          
+          // Process the partial text response
+          this.processStreamData(responseText, (content) => {
+            accumulatedContent += content;
+            onChunk(content);
+          }, (role) => {
+            responseRole = role;
+          }, (model) => {
+            responseModel = model;
+          });
+        }
+      });
+
+      console.log('Streaming response complete');
+
+      return {
+        id: uuidv4(),
+        role: responseRole as Message['role'],
+        content: accumulatedContent.trim(),
+        timestamp: new Date(),
+        provider: this.name,
+        model: responseModel
+      };
+    } catch (error) {
+      // Check for auth errors first
+      if ((error as AxiosError).response?.status === 401 || 
+          (error as AxiosError).response?.status === 403) {
+        throw this.handleAuthError(error);
+      }
+      
+      // Log detailed error information
+      const axiosError = error as AxiosError;
+      if (axiosError.response) {
+        console.error('OpenAI streaming chat completion error details:', {
+          status: axiosError.response.status,
+          statusText: axiosError.response.statusText,
+          data: axiosError.response.data,
+          request: {
+            model: completionOptions.model,
+            messageCount: completionOptions.messages.length
+          }
+        });
+      }
+      console.error('OpenAI streaming chat completion error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Process streaming data from OpenAI
+   */
+  private processStreamData(
+    data: string, 
+    onContent: (content: string) => void,
+    onRole: (role: string) => void,
+    onModel: (model: string) => void
+  ): void {
+    // Split the response by lines and process each SSE line
+    const lines = data.split('\n');
+    let buffer = '';
+
+    for (const line of lines) {
+      // Accumulate lines until we have a complete JSON object
+      if (line.startsWith('data: ')) {
+        const jsonLine = line.replace(/^data: /, '').trim();
+        
+        // Skip [DONE] marker
+        if (jsonLine === '[DONE]') continue;
+        
+        try {
+          // Try to parse the JSON
+          const parsedChunk = JSON.parse(jsonLine);
+          
+          if (parsedChunk.choices && parsedChunk.choices.length > 0) {
+            const choice = parsedChunk.choices[0];
+            
+            // Handle both streaming formats
+            if (choice.delta) {
+              // SSE streaming format
+              const { delta } = choice;
+              if (delta.role) onRole(delta.role);
+              if (delta.content) onContent(delta.content);
+              if (parsedChunk.model) onModel(parsedChunk.model);
+            } else if (choice.message) {
+              // Regular format in a streaming response
+              const { message } = choice;
+              if (message.role) onRole(message.role);
+              if (message.content) onContent(message.content);
+              if (parsedChunk.model) onModel(parsedChunk.model);
+            }
+          }
+        } catch (e) {
+          // If it's not complete JSON, add to buffer
+          buffer += jsonLine;
+          
+          // Try to parse the buffer
+          try {
+            const parsedBuffer = JSON.parse(buffer);
+            // If it parses successfully, process it and clear buffer
+            if (parsedBuffer.choices && parsedBuffer.choices.length > 0) {
+              const { delta } = parsedBuffer.choices[0];
+              if (delta.role) onRole(delta.role);
+              if (delta.content) onContent(delta.content);
+              if (parsedBuffer.model) onModel(parsedBuffer.model);
+            }
+            buffer = '';
+          } catch (bufferError) {
+            // Buffer isn't complete JSON yet, keep collecting
+          }
+        }
+      }
     }
   }
 

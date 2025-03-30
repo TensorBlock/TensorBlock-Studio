@@ -40,6 +40,7 @@ export enum AIServiceCapability {
   ToolUsage = 'toolUsage',
   VisionAnalysis = 'visionAnalysis',
   FineTuning = 'fineTuning',
+  StreamingCompletion = 'streamingCompletion',
 }
 
 /**
@@ -59,6 +60,7 @@ export interface CompletionOptions {
   presence_penalty?: number; // OpenAI API parameter name
   stop?: string[];
   user?: string;
+  stream?: boolean; // Whether to stream the response
 }
 
 /**
@@ -202,6 +204,30 @@ export abstract class AiServiceProvider {
    * Implementation of chat completion - to be overridden by providers
    */
   protected abstract chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message>;
+
+  /**
+   * Get a streaming chat completion
+   */
+  public async streamChatCompletion(
+    messages: Message[], 
+    options: CompletionOptions,
+    onChunk: (chunk: string) => void
+  ): Promise<Message> {
+    if (!this.supportsCapability(AIServiceCapability.StreamingCompletion)) {
+      throw new Error(`${this.name} does not support streaming chat completion`);
+    }
+    
+    return this.streamChatCompletionImplementation(messages, options, onChunk);
+  }
+
+  /**
+   * Implementation of streaming chat completion - to be overridden by providers
+   */
+  protected abstract streamChatCompletionImplementation(
+    messages: Message[], 
+    options: CompletionOptions,
+    onChunk: (chunk: string) => void
+  ): Promise<Message>;
 
   /**
    * Check if the service has a valid API key

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Server } from 'lucide-react';
+import { Server, MessageSquare } from 'lucide-react';
 import { SettingsService, ProviderSettings } from '../services/settings-service';
-import { ApiManagement, ModelManagement, AIProvider } from '../components/settings';
+import { ApiManagement, ModelManagement, ChatSettings, AIProvider } from '../components/settings';
 import { DatabaseIntegrationService } from '../services/database-integration';
 import { AIService } from '../services/ai-service';
 
@@ -11,7 +11,7 @@ interface SettingsPageProps {
   onSave?: () => void; // Optional callback when settings are saved
 }
 
-type SettingsTab = 'api' | 'models';
+type SettingsTab = 'api' | 'models' | 'chat';
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   isOpen,
@@ -22,6 +22,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>('OpenAI');
   const [providerSettings, setProviderSettings] = useState<Record<string, ProviderSettings>>({});
   const [selectedModel, setSelectedModel] = useState('');
+  const [useStreaming, setUseStreaming] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [isDbInitialized, setIsDbInitialized] = useState(false);
   const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
@@ -51,6 +52,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setSelectedProvider(settings.selectedProvider as AIProvider);
       setProviderSettings(settings.providers);
       setSelectedModel(settings.selectedModel);
+      setUseStreaming(settings.useStreaming);
       setSaveStatus('idle');
       setHasApiKeyChanged(false);
     }
@@ -97,6 +99,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setSelectedModel(modelId);
   };
   
+  // Handle streaming setting change
+  const handleStreamingChange = (enabled: boolean) => {
+    setUseStreaming(enabled);
+  };
+  
   // Handle base URL change
   const handleBaseUrlChange = (value: string) => {
     const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
@@ -141,6 +148,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       
       // Update selected model
       settingsService.setSelectedModel(selectedModel);
+      
+      // Update streaming setting
+      settingsService.setUseStreaming(useStreaming);
       
       // Save to database
       const dbService = DatabaseIntegrationService.getInstance();
@@ -191,6 +201,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               API Management
             </button>
             
+            <button
+              className={`flex items-center w-full px-4 py-3 text-left ${
+                activeTab === 'chat' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-200'
+              }`}
+              onClick={() => setActiveTab('chat')}
+            >
+              <MessageSquare size={18} className="mr-2" />
+              Chat Settings
+            </button>
+            
             {/*<button
               className={`flex items-center w-full px-4 py-3 text-left ${
                 activeTab === 'models' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-200'
@@ -226,6 +246,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 onApiVersionChange={handleApiVersionChange}
                 onBaseUrlChange={handleBaseUrlChange}
                 onEndpointChange={handleEndpointChange}
+                saveStatus={saveStatus}
+                onSaveSettings={handleSave}
+              />
+            )}
+            
+            {/* Chat Settings Tab */}
+            {activeTab === 'chat' && (
+              <ChatSettings
+                useStreaming={useStreaming}
+                onStreamingChange={handleStreamingChange}
                 saveStatus={saveStatus}
                 onSaveSettings={handleSave}
               />

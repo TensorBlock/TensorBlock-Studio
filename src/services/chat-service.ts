@@ -1,5 +1,5 @@
 import { DatabaseIntegrationService } from './database-integration';
-import { Conversation } from '../types/chat';
+import { Conversation, Message } from '../types/chat';
 import { AIService } from './ai-service';
 import { SettingsService } from './settings-service';
 
@@ -117,6 +117,165 @@ export class ChatService {
       return newConversation;
     } catch (error) {
       console.error('Failed to create new conversation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send a message in the active conversation with streaming support
+   */
+  public async sendMessageStreaming(
+    content: string, 
+    conversationUpdate: (conversations: Conversation[]) => void,
+    onChunk?: (chunk: string) => void
+  ): Promise<void> {
+    if (!this.dbService || !this.activeConversationId) {
+      throw new Error('Database service not initialized or no active conversation');
+    }
+    
+    try {
+      const settingsService = SettingsService.getInstance();
+      const conversationId = this.activeConversationId;
+      const provider = settingsService.getSelectedProvider();
+      const model = settingsService.getSelectedModel();
+
+      // Save user message to database
+      const userMessage = await this.dbService.saveChatMessage(
+        conversationId,
+        'user',
+        content,
+        'user',
+        'user'
+      );
+      
+      // Get the active conversation
+      const activeConversation = this.conversations.find(c => c.id === conversationId);
+      if (!activeConversation) return;
+
+      // Update conversation title in memory
+      const shouldUpdateTitle = activeConversation.messages.length === 1 && 
+                              activeConversation.messages[0].role === 'system';
+      
+      const title = shouldUpdateTitle 
+        ? content.substring(0, 30) + (content.length > 30 ? '...' : '') 
+        : activeConversation.title;
+      
+      const updatedConversation = {
+        ...activeConversation,
+        title,
+        messages: [...activeConversation.messages, userMessage],
+        updatedAt: new Date()
+      };
+      
+      // Update in database
+      await this.dbService.updateConversation(updatedConversation);
+      
+      // Update in memory
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? updatedConversation : c
+      );
+
+      conversationUpdate(this.conversations);
+
+      // Create a placeholder for the streaming message
+      const placeholderMessage: Message = {
+        id: 'streaming-' + Date.now(),
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        provider: provider,
+        model: model
+      };
+
+      // Add placeholder to conversation and update UI
+      const streamingConversation: Conversation = {
+        ...updatedConversation,
+        messages: [...updatedConversation.messages, placeholderMessage],
+        updatedAt: new Date()
+      };
+
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? streamingConversation : c
+      );
+
+      conversationUpdate(this.conversations);
+
+      // Send Chat Message to AI with streaming
+      const aiResponse = await this.aiService.getStreamingChatCompletion(
+        updatedConversation.messages, 
+        {
+          model: settingsService.getSelectedModel(),
+          provider: settingsService.getSelectedProvider()
+        },
+        (chunk) => {
+          // Update the placeholder message with the new content
+          const currentConv = this.conversations.find(c => c.id === conversationId);
+          if (!currentConv) return;
+
+          const messageIndex = currentConv.messages.length - 1;
+          const updatedMessages = [...currentConv.messages];
+          
+          // Update the streaming message content
+          updatedMessages[messageIndex] = {
+            ...updatedMessages[messageIndex],
+            content: updatedMessages[messageIndex].content + chunk
+          };
+
+          // Update in memory
+          const updatedStreamingConv = {
+            ...currentConv,
+            messages: updatedMessages
+          };
+
+          this.conversations = this.conversations.map(c => 
+            c.id === conversationId ? updatedStreamingConv : c
+          );
+
+          // Update UI
+          conversationUpdate(this.conversations);
+
+          // Call the onChunk callback if provided
+          if (onChunk) {
+            onChunk(chunk);
+          }
+        }
+      );
+
+      if (aiResponse === null) return;
+      
+      // Save final AI response message to database
+      await this.dbService.saveChatMessage(
+        conversationId,
+        'assistant',
+        aiResponse.content,
+        provider,
+        model
+      );
+
+      // Update the final conversation with the complete message
+      const finalConversation: Conversation = {
+        ...streamingConversation,
+        messages: [
+          ...updatedConversation.messages, 
+          {
+            ...aiResponse,
+            id: aiResponse.id // Use the real ID from the response
+          }
+        ],
+        updatedAt: new Date()
+      };
+      
+      await this.dbService.updateConversation(finalConversation);
+
+      // Update in memory
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? finalConversation : c
+      );
+
+      conversationUpdate(this.conversations);
+
+    } catch (error) {
+      console.error('Error sending streaming message:', error);
       throw error;
     }
   }

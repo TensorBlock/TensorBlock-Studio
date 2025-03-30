@@ -20,6 +20,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   const [isServiceInitialized, setIsServiceInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isStreamingSupported, setIsStreamingSupported] = useState(true);
+  const [useStreaming, setUseStreaming] = useState(true);
 
   // Initialize the services
   useEffect(() => {
@@ -47,11 +49,14 @@ export const ChatPage: React.FC<ChatPageProps> = ({
           setActiveConversationId(activeId);
         }
         
+        // Get streaming settings
+        const settingsService = SettingsService.getInstance();
+        setUseStreaming(settingsService.getUseStreaming());
+        
         setIsServiceInitialized(true);
         
         // Get saved model from settings if no initial model provided
         if (!initialSelectedModel) {
-          const settingsService = SettingsService.getInstance();
           const settings = settingsService.getSettings();
           if (settings.selectedModel) {
             settingsService.setSelectedModel(settings.selectedModel);
@@ -69,6 +74,19 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     
     initServices();
   }, [initialSelectedModel]);
+
+  // Listen for settings changes
+  useEffect(() => {
+    const handleSettingsChange = (event: Event) => {
+      const settingsService = SettingsService.getInstance();
+      setUseStreaming(settingsService.getUseStreaming());
+    };
+    
+    window.addEventListener('tensorblock_settings_change', handleSettingsChange);
+    return () => {
+      window.removeEventListener('tensorblock_settings_change', handleSettingsChange);
+    };
+  }, []);
 
   // Load active conversation details when selected
   useEffect(() => {
@@ -144,6 +162,41 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       console.error('Failed to create new conversation:', error);
     }
   }, [SettingsService.getInstance().getSelectedModel(), isServiceInitialized]);
+
+  // Handle sending a message with streaming
+  const handleSendStreamingMessage = async (content: string) => {
+    if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      const chatService = chatServiceRef.current;
+      const selectedModel = SettingsService.getInstance().getSelectedModel();
+      const selectedProvider = SettingsService.getInstance().getSelectedProvider();
+      console.log('Using streaming with provider:', selectedProvider);
+      console.log('Using streaming with model:', selectedModel);
+
+      // Send user message with streaming
+      await chatService.sendMessageStreaming(
+        content, 
+        (updatedConversation) => {
+          setConversations(updatedConversation);
+        },
+        (chunk) => {
+          // Optional callback for each chunk received
+          console.log('Received chunk:', chunk);
+        }
+      );
+      
+    } catch (err) {
+      console.error('Error sending streaming message:', err);
+      
+      // If streaming fails, we'll try to fall back to regular mode
+      const error = err as Error;
+      if (error.message && error.message.includes('does not support streaming')) {
+        setIsStreamingSupported(false);
+        await handleSendMessage(content);
+      }
+    }
+  };
 
   // Handle sending a message
   const handleSendMessage = async (content: string) => {
@@ -250,6 +303,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             isLoading={isLoading}
             error={error ? error.message : null}
             onSendMessage={handleSendMessage}
+            onSendStreamingMessage={handleSendStreamingMessage}
+            isStreamingSupported={isStreamingSupported && useStreaming}
           />
         </div>
       </div>

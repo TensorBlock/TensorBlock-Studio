@@ -1,3 +1,4 @@
-export { default as ApiManagement } from './ApiManagement';
-export { default as ModelManagement } from './ModelManagement'; 
+export * from './ApiManagement';
+export * from './ModelManagement';
+export * from './ChatSettings';
 export type { AIProvider } from './ApiManagement';

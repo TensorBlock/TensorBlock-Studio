@@ -25,6 +25,7 @@ export interface UserSettings {
   };
   selectedProvider: string;
   selectedModel: string;
+  useStreaming: boolean;
 }
 
 /**
@@ -69,6 +70,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   },
   selectedProvider: 'OpenAI',
   selectedModel: 'gpt-3.5-turbo',
+  useStreaming: true,
 };
 
 /**
@@ -126,6 +128,7 @@ export class SettingsService {
             },
             selectedProvider: parsedSettings.selectedProvider || DEFAULT_SETTINGS.selectedProvider,
             selectedModel: parsedSettings.selectedModel || DEFAULT_SETTINGS.selectedModel,
+            useStreaming: parsedSettings.useStreaming !== undefined ? parsedSettings.useStreaming : DEFAULT_SETTINGS.useStreaming,
           };
         }
         
@@ -258,10 +261,25 @@ export class SettingsService {
   }
 
   /**
-   * Clear all settings
+   * Reset all settings to defaults
    */
   public resetSettings(): void {
     this.settings = { ...DEFAULT_SETTINGS };
+    this.saveSettings();
+  }
+
+  /**
+   * Get whether streaming is enabled
+   */
+  public getUseStreaming(): boolean {
+    return this.settings.useStreaming;
+  }
+
+  /**
+   * Set whether streaming is enabled
+   */
+  public setUseStreaming(useStreaming: boolean): void {
+    this.settings.useStreaming = useStreaming;
     this.saveSettings();
   }
 } 

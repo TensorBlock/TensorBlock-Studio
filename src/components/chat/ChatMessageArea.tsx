@@ -8,6 +8,8 @@ interface ChatMessageAreaProps {
   isLoading: boolean;
   error: string | null;
   onSendMessage: (content: string) => void;
+  onSendStreamingMessage?: (content: string) => void;
+  isStreamingSupported?: boolean;
 }
 
 export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
@@ -15,6 +17,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   isLoading,
   error,
   onSendMessage,
+  onSendStreamingMessage,
+  isStreamingSupported = false,
 }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -29,7 +33,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     
     if (!input.trim() || isLoading) return;
     
-    onSendMessage(input);
+    if (isStreamingSupported && onSendStreamingMessage) {
+      onSendStreamingMessage(input);
+    } else {
+      onSendMessage(input);
+    }
+    
     setInput('');
   };
   
@@ -67,7 +76,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           </div>
         ))}
         
-        {isLoading && (
+        {isLoading && !activeConversation.messages.some(m => m.id.startsWith('streaming-')) && (
           <div className="flex justify-start">
             <div className="max-w-[80%] rounded-lg p-3 bg-gray-200 text-gray-800 rounded-tl-none">
               <div className="flex items-center space-x-2">
