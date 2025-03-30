@@ -15,51 +15,81 @@ An Electron-based desktop application for interacting with various AI models via
 ### Prerequisites
 
 - Node.js (v18+)
-- npm or yarn
+- npm
+- pnpm (v10.x)
 
 ### Installation
 
 1. Clone the repository:
-   ```
+   ```bash
    git clone https://github.com/TensorBlock/TensorBlock-Studio.git
    cd tensorblock-studio
    ```
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
-
-3. Create a `.env` file in the root directory (based on `.env.example`):
-   ```
-   cp .env.example .env
+2. Install pnpm globally (If you don't have it installed)
+   ```bash
+   npm install -g pnpm@latest-10
    ```
 
-4. Add your OpenAI API key to the `.env` file:
+3. Install dependencies:
+   ```bash
+   pnpm install
    ```
-   VITE_OPENAI_API_KEY=your_openai_api_key_here
+
+### Migrate from npm
+
+1. Remove current `node_modules` folder. (If you have it)
+
+2. Remove `package-lock.json` file from the root. (If you have it)
+
+3. Install pnpm globally (If you don't have it installed)
+   ```bash
+   npm install -g pnpm@latest-10
    ```
+
+4. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+5. If you receive the warning:
+  ```base
+  ╭ Warning ───────────────────────────────────────────────────────────────────────────────────╮
+  │                                                                                            │
+  │   Ignored build scripts: electron, esbuild.                                                │
+  │   Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.   │
+  │                                                                                            │
+  ╰────────────────────────────────────────────────────────────────────────────────────────────╯
+  ```
+  Run ```pnpm approve-builds``` and allow all build scripts.
 
 ### Development
 
 Run the application in development mode:
 
+```bash
+pnpm run dev
 ```
-npm run dev
+
+Or:
+
+```bash
+npm run dev  # This will also use pnpm to run the scripts
 ```
+
 
 ### Building for Production
 
-Build the application for production:
-
-```
-npm run build:prod
-```
-
 Package the application for your current platform:
 
+```bash
+pnpm run electron:build:current_platform
 ```
-npm run electron:build:current_platform
+
+Or:
+
+```bash
+npm run electron:build:current_platform  # This will also use pnpm to run the scripts
 ```
 
 ## Architecture
