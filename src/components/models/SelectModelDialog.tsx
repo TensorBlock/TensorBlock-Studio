@@ -16,45 +16,46 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   currentModelId
 }) => {
   const [models, setModels] = useState<ModelOption[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedModelId, setSelectedModelId] = useState<string | undefined>(currentModelId);
   const [collapsedList, setCollapsedList] = useState<Map<string, boolean>>(new Map());
+  const [aiService] = useState(() => AIService.getInstance());
 
   useEffect(() => {
     if (isOpen) {
       loadModels();
     }
-  }, [isOpen]);
+    
+    // Subscribe to AIService changes to get isCachingModels updates
+    const unsubscribe = aiService.subscribe(() => {
+      setIsLoading(aiService.isCachingModels);
+    });
+    
+    return () => unsubscribe();
+  }, [isOpen, aiService]);
   
   useEffect(() => {
     setSelectedModelId(currentModelId);
   }, [currentModelId]);
   
   const loadModels = async () => {
-    setIsLoading(true);
     try {
       const aiService = AIService.getInstance();
-      const models = await aiService.refreshGetAllModels();
+      const models = await aiService.getCachedAllModels();
       setModels(models);
     } catch (error) {
       console.error("Error loading models:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
   
   const handleRefresh = async () => {
-    setIsLoading(true);
     try {
-      const aiService = AIService.getInstance();
       await aiService.refreshModels();
-      const refreshedModels = await aiService.refreshGetAllModels();
+      const refreshedModels = await aiService.getCachedAllModels();
       setModels(refreshedModels);
     } catch (error) {
       console.error("Error refreshing models:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -68,7 +69,6 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   };
   
   const handleCollapseProvider = (provider: string) => {
-    console.log('handleCollapseProvider', provider);
     const newCollapsedList = new Map(collapsedList);
     newCollapsedList.set(provider, !newCollapsedList.has(provider) || !newCollapsedList.get(provider));
     setCollapsedList(newCollapsedList);

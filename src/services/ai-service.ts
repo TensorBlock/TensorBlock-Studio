@@ -22,6 +22,7 @@ export type AIRequestStatus = 'idle' | 'loading' | 'success' | 'error';
 interface AIState {
   status: AIRequestStatus;
   error: Error | null;
+  isCachingModels: boolean;
 }
 
 /**
@@ -37,7 +38,8 @@ export class AIService {
   private providers: Map<string, AiServiceProvider> = new Map();
   private state: AIState = {
     status: 'idle',
-    error: null
+    error: null,
+    isCachingModels: false
   };
   private listeners: Set<() => void> = new Set();
   private modelCache: Map<string, ModelOption[]> = new Map();
@@ -73,7 +75,6 @@ export class AIService {
       if (typeof ProviderClass === 'function') {
         const provider = new ProviderClass();
         const apiKey = settingsService.getApiKey(provider.name);
-        console.log(`${provider.name} API Key: ${apiKey}`);
         provider.updateApiKey(apiKey);
         this.providers.set(provider.name, provider);
       }
@@ -448,14 +449,26 @@ export class AIService {
     return this;
   }
 
-  public async refreshGetAllModels(): Promise<ModelOption[]> {
-    const allModels: ModelOption[] = [];
-    for (const [providerName] of this.providers) {
-      const models = await this.getModelsForProvider(providerName);
-      allModels.push(...models);
+  /**
+   * Get whether models are currently being cached
+   */
+  public get isCachingModels(): boolean {
+    return this.state.isCachingModels;
+  }
+
+  public async getCachedAllModels(): Promise<ModelOption[]> {
+    this.setState({ isCachingModels: true });
+    try {
+      const allModels: ModelOption[] = [];
+      for (const [providerName] of this.providers) {
+        const models = await this.getModelsForProvider(providerName);
+        allModels.push(...models);
+      }
+      
+      return allModels;
+    } finally {
+      this.setState({ isCachingModels: false });
     }
-    
-    return allModels;
   }
 
   public async getModelsForProvider(providerName: string): Promise<ModelOption[]> {
@@ -505,10 +518,15 @@ export class AIService {
     // Clear cache
     this.modelCache.clear();
     this.lastFetchTime.clear();
-
-    // Fetch models for all providers
-    for (const providerName of this.providers.keys()) {
-      await this.getModelsForProvider(providerName);
+    
+    this.setState({ isCachingModels: true });
+    try {
+      // Fetch models for all providers
+      for (const providerName of this.providers.keys()) {
+        await this.getModelsForProvider(providerName);
+      }
+    } finally {
+      this.setState({ isCachingModels: false });
     }
   }
 } 

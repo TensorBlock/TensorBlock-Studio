@@ -3,6 +3,7 @@ import { SettingsService, ProviderSettings } from './settings-service';
 import { Conversation as ChatConversation, Message } from '../types/chat';
 import { Conversation as DbConversation, DbChatMessage, ApiSettings } from './api-settings';
 import { v4 as uuidv4 } from 'uuid';
+import { AIProvider } from '../components/settings';
 
 /**
  * Service for integrating database operations with app components
@@ -241,9 +242,14 @@ export class DatabaseIntegrationService {
      */
     private async loadApiSettings(): Promise<void> {
         try {
-            const providers = [
-                'OpenAI', 'Anthropic', 'Gemini', 'Fireworks', 
-                'Together', 'OpenRouter', 'Custom'
+            const providers: AIProvider[] = [
+                'OpenAI', 
+                'Anthropic', 
+                'Gemini', 
+                'Fireworks.ai', 
+                'Together.ai', 
+                'OpenRouter', 
+                'Custom'
             ];
             
             const settings = this.settingsService.getSettings();

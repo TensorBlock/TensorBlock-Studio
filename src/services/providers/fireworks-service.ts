@@ -107,7 +107,6 @@ export class FireworksService extends AiServiceProvider {
    * Update the API key for Fireworks.ai
    */
   public override updateApiKey(ApiKey: string): void {
-    console.log(`${this.name} Updating API Key: ${ApiKey}`);
     this.config.apiKey = ApiKey;
     this.setupAuthenticationByProvider();
   }
@@ -119,8 +118,6 @@ export class FireworksService extends AiServiceProvider {
       console.warn(`No API key provided for ${this.name} service`);
       return;
     }
-
-    console.log("Sanitized API Key:", sanitizedApiKey);
 
     this.client.addRequestInterceptor((config) => {
       if (!config.headers) {
