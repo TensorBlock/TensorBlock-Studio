@@ -238,6 +238,18 @@ export class DatabaseIntegrationService {
     }
 
     /**
+     * Delete a chat message
+     */
+    public async deleteChatMessage(messageId: string): Promise<void> {
+        try {
+            await this.dbService.deleteChatMessage(parseInt(messageId, 10));
+        } catch (error) {
+            console.error('Error deleting message:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Load API settings from database to settings service
      */
     private async loadApiSettings(): Promise<void> {
@@ -330,6 +342,28 @@ export class DatabaseIntegrationService {
             }
         } catch (error) {
             console.error('Error saving API settings:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update a chat message
+     */
+    public async updateChatMessage(messageId: string, updatedMessage: Message, conversationId: string): Promise<void> {
+        try {
+            const dbMessage: DbChatMessage = {
+                id: parseInt(messageId, 10),
+                conversationId: conversationId,
+                role: updatedMessage.role,
+                content: updatedMessage.content,
+                timestamp: updatedMessage.timestamp,
+                model: updatedMessage.model,
+                provider: updatedMessage.provider
+            };
+            
+            await this.dbService.updateChatMessage(dbMessage);
+        } catch (error) {
+            console.error('Error updating message:', error);
             throw error;
         }
     }

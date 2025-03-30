@@ -11,6 +11,9 @@ interface ChatMessageAreaProps {
   onSendMessage: (content: string) => void;
   onSendStreamingMessage?: (content: string) => void;
   onStopStreaming?: () => void;
+  onRegenerateResponse?: () => void;
+  onDeleteMessage?: (messageId: string) => void;
+  onEditMessage?: (messageId: string, newContent: string) => void;
   isStreamingSupported?: boolean;
   isCurrentlyStreaming?: boolean;
 }
@@ -22,12 +25,17 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   onSendMessage,
   onSendStreamingMessage,
   onStopStreaming,
+  onRegenerateResponse,
+  onDeleteMessage,
+  onEditMessage,
   isStreamingSupported = false,
   isCurrentlyStreaming = false,
 }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -52,6 +60,61 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     if (onStopStreaming) {
       onStopStreaming();
     }
+  };
+
+  // Handle regenerate response
+  const handleRegenerateResponse = () => {
+    if (onRegenerateResponse) {
+      onRegenerateResponse();
+    } else {
+      console.error('Regenerate response function not provided');
+    }
+  };
+
+  // Handle delete message
+  const handleDeleteMessage = (messageId: string) => {
+    if (onDeleteMessage) {
+      onDeleteMessage(messageId);
+    } else {
+      console.error('Delete message function not provided');
+    }
+  };
+
+  // Handle edit message
+  const handleEditMessage = (messageId: string, content: string) => {
+    setEditingMessageId(messageId);
+    setEditingContent(content);
+  };
+
+  // Handle save edit
+  const handleSaveEdit = () => {
+    if (editingMessageId && onEditMessage && editingContent.trim()) {
+      onEditMessage(editingMessageId, editingContent);
+      setEditingMessageId(null);
+      setEditingContent('');
+    }
+  };
+
+  // Handle send edited message
+  const handleSendEditedMessage = () => {
+    if (editingMessageId && editingContent.trim()) {
+      // First cancel the edit mode
+      setEditingMessageId(null);
+      setEditingContent('');
+      
+      // Then send the edited content as a new message
+      if (isStreamingSupported && onSendStreamingMessage) {
+        onSendStreamingMessage(editingContent);
+      } else {
+        onSendMessage(editingContent);
+      }
+    }
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent('');
   };
 
   // Handle copy message action
@@ -85,6 +148,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {activeConversation.messages.filter(m => m.role !== 'system').map((message) => {
           const isUserMessage = message.role === 'user';
+          const isEditing = editingMessageId === message.id;
           
           // Define actions based on message type (user or AI)
           const toolboxActions: ToolboxAction[] = isUserMessage
@@ -93,7 +157,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'edit',
                   icon: Pencil,
                   label: 'Edit',
-                  onClick: () => handleActionError('edit message'),
+                  onClick: () => handleEditMessage(message.id, message.content),
                 },
                 {
                   id: 'copy',
@@ -105,7 +169,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'delete',
                   icon: Trash2,
                   label: 'Delete',
-                  onClick: () => handleActionError('delete message'),
+                  onClick: () => handleDeleteMessage(message.id),
                 }
               ]
             : [
@@ -125,13 +189,13 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'regenerate',
                   icon: RotateCcw,
                   label: 'Regenerate',
-                  onClick: () => handleActionError('regenerate response'),
+                  onClick: () => handleRegenerateResponse(),
                 },
                 {
                   id: 'delete',
                   icon: Trash2,
                   label: 'Delete',
-                  onClick: () => handleActionError('delete message'),
+                  onClick: () => handleDeleteMessage(message.id),
                 }
               ];
               
@@ -142,27 +206,56 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               onMouseEnter={() => setHoveredMessageId(message.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
-              <div 
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  isUserMessage 
-                    ? 'bg-blue-500 text-white rounded-tr-none' 
-                    : 'bg-gray-200 text-gray-800 rounded-tl-none'
-                }`}
-              >
-                {isUserMessage ? (
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                ) : (
-                  <MarkdownContent content={message.content} />
-                )}
-              </div>
-              
-              {/* Message toolbox */}
-              <div className="mt-1">
-                <MessageToolboxMenu 
-                  actions={toolboxActions} 
-                  className={`mr-1 ${hoveredMessageId === message.id ? 'opacity-100' : 'opacity-0'}`}
-                />
-              </div>
+              {isEditing && isUserMessage ? (
+                <div className="w-[80%]">
+                  <textarea 
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    className="w-full px-3 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    autoFocus
+                  />
+                  <div className="flex justify-end mt-2 space-x-2">
+                    <button 
+                      onClick={handleCancelEdit} 
+                      className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleSendEditedMessage} 
+                      className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
+                      disabled={!editingContent.trim()}
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div 
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      isUserMessage 
+                        ? 'bg-blue-500 text-white rounded-tr-none' 
+                        : 'bg-gray-200 text-gray-800 rounded-tl-none'
+                    }`}
+                  >
+                    {isUserMessage ? (
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <MarkdownContent content={message.content} />
+                    )}
+                  </div>
+                  
+                  {/* Message toolbox */}
+                  <div className="mt-1">
+                    <MessageToolboxMenu 
+                      actions={toolboxActions} 
+                      className={`mr-1 ${hoveredMessageId === message.id ? 'opacity-100' : 'opacity-0'}`}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
