@@ -158,7 +158,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       
       // Refresh models if API key has changed
       if (hasApiKeyChanged) {
-        await aiService.refreshModels();
+        void aiService.refreshModels();
         setHasApiKeyChanged(false);
       }
       
