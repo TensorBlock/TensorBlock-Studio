@@ -379,7 +379,8 @@ export class ChatService {
       // Send Chat Message to AI
       const aiResponse = await this.aiService.getChatCompletion(updatedConversation.messages, {
         model: settingsService.getSelectedModel(),
-        provider: settingsService.getSelectedProvider()
+        provider: settingsService.getSelectedProvider(),
+        stream: settingsService.getUseStreaming()
       });
 
       if (aiResponse === null) return;
