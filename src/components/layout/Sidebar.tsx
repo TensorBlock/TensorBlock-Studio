@@ -1,6 +1,6 @@
 import React from 'react';
 import { MessageSquare, Settings } from 'lucide-react';
-import tensorBlockLogo from '../../public/logos/TensorBlock_logo_dark.svg';
+import tensorBlockLogo from '/logos/TensorBlock_logo_dark.svg';
 
 interface SidebarProps {
   activePage: string;
