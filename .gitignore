@@ -12,6 +12,7 @@ lerna-debug.log*
 /dist-ssr
 /release
 /app/dist
+/app/out-tsc
 *.local
 
 # Editor directories and files
