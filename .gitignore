@@ -25,3 +25,5 @@ lerna-debug.log*
 *.sln
 *.sw?
 .env
+
+.vscode-upload.json
