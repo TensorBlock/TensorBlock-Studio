@@ -12,6 +12,7 @@ interface ChatMessageAreaProps {
   onSendStreamingMessage?: (content: string) => void;
   onStopStreaming?: () => void;
   onRegenerateResponse?: () => void;
+  onDeleteMessage?: (messageId: string) => void;
   isStreamingSupported?: boolean;
   isCurrentlyStreaming?: boolean;
 }
@@ -24,6 +25,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   onSendStreamingMessage,
   onStopStreaming,
   onRegenerateResponse,
+  onDeleteMessage,
   isStreamingSupported = false,
   isCurrentlyStreaming = false,
 }) => {
@@ -62,6 +64,15 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       onRegenerateResponse();
     } else {
       console.error('Regenerate response function not provided');
+    }
+  };
+
+  // Handle delete message
+  const handleDeleteMessage = (messageId: string) => {
+    if (onDeleteMessage) {
+      onDeleteMessage(messageId);
+    } else {
+      console.error('Delete message function not provided');
     }
   };
 
@@ -116,7 +127,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'delete',
                   icon: Trash2,
                   label: 'Delete',
-                  onClick: () => handleActionError('delete message'),
+                  onClick: () => handleDeleteMessage(message.id),
                 }
               ]
             : [
@@ -142,7 +153,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'delete',
                   icon: Trash2,
                   label: 'Delete',
-                  onClick: () => handleActionError('delete message'),
+                  onClick: () => handleDeleteMessage(message.id),
                 }
               ];
               

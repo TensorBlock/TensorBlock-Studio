@@ -303,6 +303,20 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     }
   };
 
+  // Handle deleting a message
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      // Delete the message
+      await chatServiceRef.current.deleteMessage(messageId, (updatedConversation) => {
+        setConversations(updatedConversation);
+      });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
 
@@ -332,6 +346,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             onSendStreamingMessage={handleSendStreamingMessage}
             onStopStreaming={handleStopStreaming}
             onRegenerateResponse={handleRegenerateResponse}
+            onDeleteMessage={handleDeleteMessage}
             isStreamingSupported={isStreamingSupported && useStreaming}
             isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming() || false}
           />

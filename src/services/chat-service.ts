@@ -777,4 +777,54 @@ export class ChatService {
       throw error;
     }
   }
+
+  /**
+   * Delete a message from a conversation
+   */
+  public async deleteMessage(messageId: string, conversationUpdate: (conversations: Conversation[]) => void): Promise<void> {
+    if (!this.dbService || !this.activeConversationId) {
+      throw new Error('Database service not initialized or no active conversation');
+    }
+    
+    try {
+      const conversationId = this.activeConversationId;
+      const activeConversation = this.conversations.find(c => c.id === conversationId);
+      
+      if (!activeConversation) {
+        throw new Error('Active conversation not found');
+      }
+      
+      // Find the message index
+      const messageIndex = activeConversation.messages.findIndex(m => m.id === messageId);
+      
+      if (messageIndex === -1) {
+        throw new Error('Message not found');
+      }
+      
+      // Create a new conversation with the message removed
+      const updatedMessages = [...activeConversation.messages];
+      updatedMessages.splice(messageIndex, 1);
+      
+      const updatedConversation: Conversation = {
+        ...activeConversation,
+        messages: updatedMessages,
+        updatedAt: new Date()
+      };
+      
+      // Update in database
+      await this.dbService.updateConversation(updatedConversation);
+      
+      // Update in memory
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? updatedConversation : c
+      );
+      
+      // Update UI
+      conversationUpdate(this.conversations);
+      
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      throw error;
+    }
+  }
 }
