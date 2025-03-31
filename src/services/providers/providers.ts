@@ -8,19 +8,18 @@ import { AiServiceProvider } from '../core/ai-service-provider';
 import { OpenAIService } from './openai-service';
 import { AnthropicService } from './anthropic-service';
 import { SettingsService } from '../settings-service';
-
-export type ProviderName = 'OpenAI' | 'Anthropic' | 'Gemini' | 'Fireworks' | 'Together' | 'OpenRouter' | 'Custom';
+import { AIProvider } from '../../components/settings';
 
 /**
  * Factory for creating provider instances
  */
 export class ProviderFactory {
-  private static providers = new Map<ProviderName, AiServiceProvider>();
+  private static providers = new Map<AIProvider, AiServiceProvider>();
   
   /**
    * Get a provider instance
    */
-  public static getProvider(name: ProviderName): AiServiceProvider | undefined {
+  public static getProvider(name: AIProvider): AiServiceProvider | undefined {
     // Return cached provider if available
     if (this.providers.has(name)) {
       return this.providers.get(name);
