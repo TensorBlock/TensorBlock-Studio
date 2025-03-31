@@ -7,18 +7,21 @@ interface SelectModelDialogProps {
   onClose: () => void;
   onSelectModel: (model: ModelOption, provider: string) => void;
   currentModelId?: string;
+  currentProviderName?: string;
 }
 
 export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   isOpen,
   onClose,
   onSelectModel,
-  currentModelId
+  currentModelId,
+  currentProviderName
 }) => {
   const [models, setModels] = useState<ModelOption[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedModelId, setSelectedModelId] = useState<string | undefined>(currentModelId);
+  const [selectedProviderName, setSelectedProviderName] = useState<string | undefined>(currentProviderName);
   const [collapsedList, setCollapsedList] = useState<Map<string, boolean>>(new Map());
   const [aiService] = useState(() => AIService.getInstance());
 
@@ -38,6 +41,10 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   useEffect(() => {
     setSelectedModelId(currentModelId);
   }, [currentModelId]);
+
+  useEffect(() => {
+    setSelectedProviderName(currentProviderName);
+  }, [currentProviderName]);
   
   const loadModels = async () => {
     try {
@@ -65,6 +72,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   
   const handleSelectModel = (model: ModelOption, provider: string) => {
     setSelectedModelId(model.id);
+    setSelectedProviderName(provider);
     onSelectModel(model, provider);
   };
   
@@ -166,7 +174,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
                         key={model.id}
                         onClick={() => handleSelectModel(model, provider)}
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${
-                          selectedModelId === model.id
+                          (selectedModelId === model.id && selectedProviderName === model.provider)
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
                         }`}

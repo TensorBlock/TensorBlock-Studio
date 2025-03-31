@@ -55,6 +55,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <TopBar 
             onSelectModel={handleSelectModel}
             selectedModel={SettingsService.getInstance().getSelectedModel()}
+            selectedProvider={SettingsService.getInstance().getSelectedProvider()}
             onOpenSettingsDialog={handleOpenSettingsDialog}
           />
 

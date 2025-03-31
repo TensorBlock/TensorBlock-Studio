@@ -9,6 +9,7 @@ import { OpenAIService } from './openai-service';
 import { AnthropicService } from './anthropic-service';
 import { SettingsService } from '../settings-service';
 import { AIProvider } from '../../components/settings';
+import { ForgeService } from './forge-service';
 
 /**
  * Factory for creating provider instances
@@ -29,6 +30,9 @@ export class ProviderFactory {
     
     // Create provider based on name
     switch (name) {
+      case 'Forge':
+        provider = new ForgeService();
+        break;
       case 'OpenAI':
         provider = new OpenAIService();
         break;

@@ -6,10 +6,11 @@ import { ModelOption } from '../../services/ai-service';
 interface TopBarProps {
   onSelectModel: (model: string, provider: string) => void;
   selectedModel?: string;
+  selectedProvider?: string;
   onOpenSettingsDialog: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel, onOpenSettingsDialog }) => {
+const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel, selectedProvider, onOpenSettingsDialog }) => {
   const [isModelDialogOpen, setIsModelDialogOpen] = useState(false);
   
   const handleOpenModelDialog = () => {
@@ -48,6 +49,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel, onOpenSet
         onClose={handleCloseModelDialog}
         onSelectModel={handleSelectModel}
         currentModelId={selectedModel}
+        currentProviderName={selectedProvider}
       />
     </div>
   );

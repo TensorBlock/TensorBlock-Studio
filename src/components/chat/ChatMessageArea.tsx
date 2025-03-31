@@ -1,6 +1,6 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation } from '../../types/chat';
-import { Send, Loader, Square, Copy, RotateCcw, Share2, Trash2, Pencil } from 'lucide-react';
+import { Send, Square, Copy, RotateCcw, Share2, Pencil, Loader2 } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 
@@ -143,13 +143,6 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   icon: Copy,
                   label: 'Copy',
                   onClick: () => handleCopyMessage(message.content),
-                },
-                {
-                  id: 'delete',
-                  icon: Trash2,
-                  label: 'Delete',
-                  onClick: () => handleActionError('Delete functionality is disabled'),
-                  disabled: true
                 }
               ]
             : [
@@ -170,13 +163,6 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   icon: RotateCcw,
                   label: 'Regenerate',
                   onClick: () => handleRegenerateResponse(),
-                },
-                {
-                  id: 'delete',
-                  icon: Trash2,
-                  label: 'Delete',
-                  onClick: () => handleActionError('Delete functionality is disabled'),
-                  disabled: true
                 }
               ];
               
@@ -224,7 +210,11 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     {isUserMessage ? (
                       <p className="whitespace-pre-wrap">{message.content}</p>
                     ) : (
-                      <MarkdownContent content={message.content} />
+                      message.content === '' ? (
+                        <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"></div>
+                      ) : (
+                        <MarkdownContent content={message.content} />
+                      )
                     )}
                   </div>
                   
@@ -245,7 +235,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           <div className="flex justify-start">
             <div className="max-w-[80%] rounded-lg p-3 bg-gray-200 text-gray-800 rounded-tl-none">
               <div className="flex items-center space-x-2">
-                <Loader size={16} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" />
                 <span>AI is thinking...</span>
               </div>
             </div>

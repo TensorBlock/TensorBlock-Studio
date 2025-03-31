@@ -62,6 +62,7 @@ export class AIService {
   private constructor() {
     // Initialize with default providers
     this.addOpenAIProvider();
+    this.addForgeProvider();
     this.setupSettingsListener();
   }
 
@@ -69,6 +70,13 @@ export class AIService {
     const openaiProvider = ProviderFactory.getProvider('OpenAI');
     if (openaiProvider) {
       this.providers.set('OpenAI', openaiProvider);
+    }
+  }
+
+  private addForgeProvider(): void {
+    const forgeProvider = ProviderFactory.getProvider('Forge');
+    if (forgeProvider) {
+      this.providers.set('Forge', forgeProvider);
     }
   }
 
@@ -376,6 +384,8 @@ export class AIService {
         provider: providerName
       }));
       
+      console.log('Models for provider', providerName, modelOptions);
+
       // Cache results
       this.modelCache.set(providerName, modelOptions);
       this.lastFetchTime.set(providerName, now);
