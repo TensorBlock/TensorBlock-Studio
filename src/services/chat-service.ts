@@ -274,7 +274,7 @@ export class ChatService {
         {
           model: settingsService.getSelectedModel(),
           provider: settingsService.getSelectedProvider(),
-          stream: provider === 'Forge' ? false : true
+          stream: isStreaming
         },
         streamController
       );
