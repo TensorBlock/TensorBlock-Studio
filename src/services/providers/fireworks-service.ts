@@ -225,7 +225,7 @@ export class FireworksService extends AiServiceProvider {
         return { 
           role: role as Message['role'], 
           content: content.trim(),
-          id: uuidv4(),
+          messageId: uuidv4(),
           timestamp: new Date(),
           provider: this.name,
           model: options.model

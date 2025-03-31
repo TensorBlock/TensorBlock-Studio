@@ -9,8 +9,6 @@ function App() {
   // State for settings
   const [apiKey, setApiKey] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isCachingModels, setIsCachingModels] = useState(false);
   
   // Load settings when app starts
   useEffect(() => {
@@ -34,11 +32,6 @@ function App() {
   useEffect(() => {
     const aiService = AIService.getInstance();
     
-    // Subscribe to AI service state changes
-    const unsubscribe = aiService.subscribe(() => {
-      setIsCachingModels(aiService.isCachingModels);
-    });
-    
     // Start caching models
     const cacheModels = async () => {
       try {
@@ -50,7 +43,7 @@ function App() {
     
     cacheModels();
     
-    return () => unsubscribe();
+    return () => {};
   }, []);
 
   return (

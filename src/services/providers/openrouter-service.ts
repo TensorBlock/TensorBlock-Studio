@@ -183,7 +183,7 @@ export class OpenRouterService extends AiServiceProvider {
     const chatMessage: Message = { 
       role: 'user', 
       content: prompt, 
-      id: uuidv4(), 
+      messageId: uuidv4(), 
       timestamp: new Date(), 
       provider: this.name, 
       model: options.model 
@@ -227,7 +227,7 @@ export class OpenRouterService extends AiServiceProvider {
         return { 
           role: role as Message['role'], 
           content: content.trim(),
-          id: uuidv4(),
+          messageId: uuidv4(),
           timestamp: new Date(),
           provider: this.name,
           model: options.model

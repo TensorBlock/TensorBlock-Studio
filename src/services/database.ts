@@ -1,4 +1,5 @@
-import { ApiSettings, Conversation, DbChatMessage } from './api-settings';
+import { ApiSettings } from './api-settings';
+import { Conversation, Message } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 // database.ts
@@ -59,7 +60,7 @@ export class DatabaseService {
                 title,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                
+                messages: [],
             };
 
             const transaction = this.db.transaction('conversations', 'readwrite');
@@ -125,7 +126,7 @@ export class DatabaseService {
     }
 
     // Chat History Methods
-    async saveChatMessage(message: Omit<DbChatMessage, 'id'>): Promise<number> {
+    async saveChatMessage(message: Omit<Message, 'id'>): Promise<string> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
@@ -150,12 +151,12 @@ export class DatabaseService {
                 }
             };
 
-            chatRequest.onsuccess = () => resolve(chatRequest.result as number);
+            chatRequest.onsuccess = () => resolve(chatRequest.result as string);
             chatRequest.onerror = () => reject(chatRequest.error);
         });
     }
 
-    async getChatHistory(conversationId: string): Promise<DbChatMessage[]> {
+    async getChatHistory(conversationId: string): Promise<Message[]> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
@@ -172,7 +173,7 @@ export class DatabaseService {
     /**
      * Update a chat message in the database
      */
-    async updateChatMessage(message: DbChatMessage): Promise<void> {
+    async updateChatMessage(message: Message): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
@@ -188,7 +189,7 @@ export class DatabaseService {
     /**
      * Delete a chat message from the database
      */
-    async deleteChatMessage(messageId: number): Promise<void> {
+    async deleteChatMessage(messageId: string): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 

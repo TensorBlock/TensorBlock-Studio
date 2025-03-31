@@ -151,7 +151,7 @@ export class GeminiService extends AiServiceProvider {
     const chatMessage: Message = { 
       role: 'user', 
       content: prompt, 
-      id: uuidv4(), 
+      messageId: uuidv4(), 
       timestamp: new Date(), 
       provider: this.name, 
       model: options.model 
@@ -221,7 +221,7 @@ export class GeminiService extends AiServiceProvider {
       return { 
         role: 'assistant', 
         content: content.trim(),
-        id: uuidv4(),
+        messageId: uuidv4(),
         timestamp: new Date(),
         provider: this.name,
         model: options.model

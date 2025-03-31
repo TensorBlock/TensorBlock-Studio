@@ -93,15 +93,6 @@ export const API_CONFIG = {
 };
 
 /**
- * Feature flags configuration
- */
-export const FEATURES = {
-  enableImageGeneration: true,
-  enableAdvancedOptions: true,
-  debugMode: import.meta.env.DEV,
-};
-
-/**
  * Get API key with validation
  * @param key API key to validate
  * @returns Validated key or undefined if invalid

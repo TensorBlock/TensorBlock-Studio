@@ -20,8 +20,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   const [isServiceInitialized, setIsServiceInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [isStreamingSupported, setIsStreamingSupported] = useState(true);
-  const [useStreaming, setUseStreaming] = useState(true);
 
   // Initialize the services
   useEffect(() => {
@@ -51,7 +49,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         
         // Get streaming settings
         const settingsService = SettingsService.getInstance();
-        setUseStreaming(settingsService.getUseStreaming());
         
         setIsServiceInitialized(true);
         
@@ -74,20 +71,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     
     initServices();
   }, [initialSelectedModel]);
-
-  // Listen for settings changes
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleSettingsChange = (event: Event) => {
-      const settingsService = SettingsService.getInstance();
-      setUseStreaming(settingsService.getUseStreaming());
-    };
-    
-    window.addEventListener('tensorblock_settings_change', handleSettingsChange);
-    return () => {
-      window.removeEventListener('tensorblock_settings_change', handleSettingsChange);
-    };
-  }, []);
 
   // Load active conversation details when selected
   useEffect(() => {
@@ -165,7 +148,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   }, [SettingsService.getInstance().getSelectedModel(), isServiceInitialized]);
 
   // Handle sending a message with streaming
-  const handleSendStreamingMessage = async (content: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
     
     try {
@@ -176,14 +159,12 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       console.log('Using streaming with model:', selectedModel);
 
       // Send user message with streaming
-      await chatService.sendMessageStreaming(
+      await chatService.sendMessage(
         content, 
+        activeConversationId,
+        true,
         (updatedConversation) => {
           setConversations(updatedConversation);
-        },
-        (chunk) => {
-          // Optional callback for each chunk received
-          console.log('Received chunk:', chunk);
         }
       );
       
@@ -193,30 +174,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       // If streaming fails, we'll try to fall back to regular mode
       const error = err as Error;
       if (error.message && error.message.includes('does not support streaming')) {
-        setIsStreamingSupported(false);
         await handleSendMessage(content);
       }
-    }
-  };
-
-  // Handle sending a message
-  const handleSendMessage = async (content: string) => {
-    if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
-    
-    try {
-      const chatService = chatServiceRef.current;
-      const selectedModel = SettingsService.getInstance().getSelectedModel();
-      const selectedProvider = SettingsService.getInstance().getSelectedProvider();
-      console.log('selectedProvider', selectedProvider);
-      console.log('selectedModel', selectedModel);
-
-      // Send user message
-      await chatService.sendMessage(content, (updatedConversation) => {
-        setConversations(updatedConversation);
-      });
-      
-    } catch (error) {
-      console.error('Error sending message:', error);
     }
   };
 
@@ -283,7 +242,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     if (!chatServiceRef.current) return;
     
     try {
-      chatServiceRef.current.stopStreaming();
+      chatServiceRef.current.stopStreaming(activeConversationId);
     } catch (error) {
       console.error('Error stopping streaming:', error);
     }
@@ -302,39 +261,25 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       console.error('Error regenerating response:', error);
     }
   };
-
-  // Handle deleting a message
-  const handleDeleteMessage = async (messageId: string) => {
-    if (!isServiceInitialized || !chatServiceRef.current) return;
-    
-    try {
-      // Delete the message
-      await chatServiceRef.current.deleteMessage(messageId, (updatedConversation) => {
-        setConversations(updatedConversation);
-      });
-    } catch (error) {
-      console.error('Error deleting message:', error);
-    }
-  };
-
+  
   // Handle editing a message
   const handleEditMessage = async (messageId: string, newContent: string) => {
     if (!isServiceInitialized || !chatServiceRef.current || !activeConversation) return;
     
     try {
       // Find the message being edited
-      const message = activeConversation.messages.find(m => m.id === messageId);
+      const message = activeConversation.messages.find(m => m.messageId === messageId);
       
       if (message && message.role === 'user') {
         // Delete this message and all subsequent messages
-        const messageIndex = activeConversation.messages.findIndex(m => m.id === messageId);
+        const messageIndex = activeConversation.messages.findIndex(m => m.messageId === messageId);
         
         // If this is not the last message, we need to delete all subsequent messages
         if (messageIndex < activeConversation.messages.length - 1) {
           // Delete from last to first to avoid index shifting issues
           for (let i = activeConversation.messages.length - 1; i > messageIndex; i--) {
             const msgToDelete = activeConversation.messages[i];
-            await chatServiceRef.current.deleteMessage(msgToDelete.id, (updatedConversation) => {
+            await chatServiceRef.current.deleteMessage(msgToDelete.messageId, (updatedConversation) => {
               setConversations(updatedConversation);
             });
           }
@@ -346,11 +291,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         });
         
         // Finally, send the new message
-        if (isStreamingSupported && useStreaming) {
-          await handleSendStreamingMessage(newContent);
-        } else {
-          await handleSendMessage(newContent);
-        }
+        await handleSendMessage(newContent);
       }
     } catch (error) {
       console.error('Error editing message:', error);
@@ -383,13 +324,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             isLoading={isLoading}
             error={error ? error.message : null}
             onSendMessage={handleSendMessage}
-            onSendStreamingMessage={handleSendStreamingMessage}
             onStopStreaming={handleStopStreaming}
             onRegenerateResponse={handleRegenerateResponse}
-            onDeleteMessage={handleDeleteMessage}
             onEditMessage={handleEditMessage}
-            isStreamingSupported={isStreamingSupported && useStreaming}
-            isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming() || false}
+            isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming(activeConversationId) || false}
           />
         </div>
       </div>

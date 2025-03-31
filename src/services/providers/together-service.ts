@@ -237,7 +237,7 @@ export class TogetherService extends AiServiceProvider {
       if (response.choices && response.choices.length > 0) {
         const { role, content } = response.choices[0].message;
         return { 
-          id: uuidv4(),
+          messageId: uuidv4(),
           role: role as Message['role'], 
           content: content.trim(),
           timestamp: new Date(),

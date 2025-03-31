@@ -9,12 +9,9 @@ interface ChatMessageAreaProps {
   isLoading: boolean;
   error: string | null;
   onSendMessage: (content: string) => void;
-  onSendStreamingMessage?: (content: string) => void;
   onStopStreaming?: () => void;
   onRegenerateResponse?: () => void;
-  onDeleteMessage?: (messageId: string) => void;
   onEditMessage?: (messageId: string, newContent: string) => void;
-  isStreamingSupported?: boolean;
   isCurrentlyStreaming?: boolean;
 }
 
@@ -23,12 +20,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   isLoading,
   error,
   onSendMessage,
-  onSendStreamingMessage,
   onStopStreaming,
   onRegenerateResponse,
-  onDeleteMessage,
   onEditMessage,
-  isStreamingSupported = false,
   isCurrentlyStreaming = false,
 }) => {
   const [input, setInput] = useState('');
@@ -39,7 +33,10 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    console.log('scrolling to bottom');
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
   }, [activeConversation?.messages]);
   
   const handleSubmit = (e: FormEvent) => {
@@ -47,11 +44,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     
     if (!input.trim() || isLoading) return;
     
-    if (isStreamingSupported && onSendStreamingMessage) {
-      onSendStreamingMessage(input);
-    } else {
-      onSendMessage(input);
-    }
+    onSendMessage(input);
     
     setInput('');
   };
@@ -59,6 +52,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const handleStopStreaming = () => {
     if (onStopStreaming) {
       onStopStreaming();
+      isCurrentlyStreaming = false;
     }
   };
 
@@ -68,15 +62,6 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       onRegenerateResponse();
     } else {
       console.error('Regenerate response function not provided');
-    }
-  };
-
-  // Handle delete message
-  const handleDeleteMessage = (messageId: string) => {
-    if (onDeleteMessage) {
-      onDeleteMessage(messageId);
-    } else {
-      console.error('Delete message function not provided');
     }
   };
 
@@ -102,12 +87,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       setEditingMessageId(null);
       setEditingContent('');
       
-      // Then send the edited content as a new message
-      if (isStreamingSupported && onSendStreamingMessage) {
-        onSendStreamingMessage(editingContent);
-      } else {
-        onSendMessage(editingContent);
-      }
+      onSendMessage(input);
     }
   };
 
@@ -140,7 +120,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   }
   
   // Check if there's a streaming message
-  const hasStreamingMessage = activeConversation.messages.some(m => m.id.startsWith('streaming-'));
+  const hasStreamingMessage = activeConversation.messages.some(m => m.messageId.startsWith('streaming-'));
   
   return (
     <div className="flex flex-col h-full">
@@ -148,7 +128,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {activeConversation.messages.filter(m => m.role !== 'system').map((message) => {
           const isUserMessage = message.role === 'user';
-          const isEditing = editingMessageId === message.id;
+          const isEditing = editingMessageId === message.messageId;
           
           // Define actions based on message type (user or AI)
           const toolboxActions: ToolboxAction[] = isUserMessage
@@ -157,7 +137,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'edit',
                   icon: Pencil,
                   label: 'Edit',
-                  onClick: () => handleEditMessage(message.id, message.content),
+                  onClick: () => handleEditMessage(message.messageId, message.content),
                 },
                 {
                   id: 'copy',
@@ -203,9 +183,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               
           return (
             <div 
-              key={message.id}
+              key={message.messageId}
               className={`flex flex-col ${isUserMessage ? 'items-end' : 'items-start'}`}
-              onMouseEnter={() => setHoveredMessageId(message.id)}
+              onMouseEnter={() => setHoveredMessageId(message.messageId)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
               {isEditing && isUserMessage ? (
@@ -253,7 +233,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   <div className="mt-1">
                     <MessageToolboxMenu 
                       actions={toolboxActions} 
-                      className={`mr-1 ${hoveredMessageId === message.id ? 'opacity-100' : 'opacity-0'}`}
+                      className={`mr-1 ${hoveredMessageId === message.messageId ? 'opacity-100' : 'opacity-0'}`}
                     />
                   </div>
                 </>

@@ -1,8 +1,7 @@
-import { AiServiceProvider, AIServiceCapability, CompletionOptions } from './core/ai-service-provider';
-import { OpenAIService } from './providers/openai-service';
-import { SettingsService } from './settings-service';
-import * as providersList from './providers/providers';
+import { AiServiceProvider, CompletionOptions } from './core/ai-service-provider';
+import { ProviderFactory, ProviderName } from './providers/providers';
 import { Message } from '../types/chat';
+import { StreamControlHandler } from './streaming-control';
 
 export interface ModelOption {
   id: string;
@@ -61,24 +60,7 @@ export class AIService {
    */
   private constructor() {
     // Initialize with default providers
-    this.configureProviders();
     this.setupSettingsListener();
-  }
-
-  /**
-   * Configure API key from settings
-   */
-  private configureProviders(): void {
-    const settingsService = SettingsService.getInstance();
-    
-    Object.values(providersList).forEach(ProviderClass => {
-      if (typeof ProviderClass === 'function') {
-        const provider = new ProviderClass();
-        const apiKey = settingsService.getApiKey(provider.name);
-        provider.updateApiKey(apiKey);
-        this.providers.set(provider.name, provider);
-      }
-    });
   }
 
   /**
@@ -86,7 +68,7 @@ export class AIService {
    */
   private setupSettingsListener(): void {
     const handleSettingsChange = () => {
-      this.configureProviders();
+      ProviderFactory.refreshProviders();
       // Refresh models when settings change
       this.refreshModels();
     };
@@ -161,9 +143,17 @@ export class AIService {
    * Get a specific provider by name
    */
   public getProvider(name: string): AiServiceProvider | undefined {
-    if(this.providers.has(name)) {
+    if (this.providers.has(name)) {
       return this.providers.get(name);
     }
+    
+    // If provider not in cache, try to create it
+    const provider = ProviderFactory.getProvider(name as ProviderName);
+    if (provider) {
+      this.providers.set(name, provider);
+      return provider;
+    }
+    
     return undefined;
   }
 
@@ -175,197 +165,52 @@ export class AIService {
   }
 
   /**
-   * Find providers that support a specific capability
-   */
-  public getProvidersByCapability(capability: AIServiceCapability): AiServiceProvider[] {
-    return this.getAllProviders().filter(provider => 
-      provider.supportsCapability(capability)
-    );
-  }
-
-  /**
-   * Get the OpenAI service provider
-   */
-  public getOpenAI(): OpenAIService | undefined {
-    const provider = this.getProvider('OpenAI');
-    return provider ? provider as OpenAIService : undefined;
-  }
-
-  /**
-   * Utility method to get a suitable provider for text completion
-   */
-  public getTextCompletionProvider(): AiServiceProvider | undefined {
-    const providers = this.getProvidersByCapability(AIServiceCapability.TextCompletion);
-    return providers.length > 0 ? providers[0] : undefined;
-  }
-
-  /**
-   * Utility method to get a suitable provider for chat completion
-   */
-  public getChatCompletionProvider(): AiServiceProvider | undefined {
-    const providers = this.getProvidersByCapability(AIServiceCapability.ChatCompletion);
-    return providers.length > 0 ? providers[0] : undefined;
-  }
-
-  /**
-   * Utility method to get a suitable provider for image generation
-   */
-  public getImageGenerationProvider(): AiServiceProvider | undefined {
-    const providers = this.getProvidersByCapability(AIServiceCapability.ImageGeneration);
-    return providers.length > 0 ? providers[0] : undefined;
-  }
-
-  /**
-   * Get a text completion from the AI
-   */
-  public async getCompletion(
-    prompt: string, 
-    options?: Partial<CompletionOptions>
-  ): Promise<string | null> {
-    this.startRequest();
-    
-    try {
-      const provider = this.getTextCompletionProvider();
-      
-      if (!provider) {
-        throw new Error('No text completion provider available');
-      }
-      
-      const result = await provider.getCompletion(prompt, {
-        model: options?.model || provider.availableModels?.[0] || 'gpt-3.5-turbo',
-        provider: options?.provider || provider.name || 'OpenAI',
-        max_tokens: options?.max_tokens,
-        temperature: options?.temperature,
-        top_p: options?.top_p,
-        frequency_penalty: options?.frequency_penalty,
-        presence_penalty: options?.presence_penalty,
-        stop: options?.stop,
-        user: options?.user,
-      });
-      
-      this.handleSuccess();
-      return result;
-    } catch (e) {
-      const error = e instanceof Error ? e : new Error('Unknown error during completion');
-      this.handleError(error);
-      return null;
-    }
-  }
-
-  /**
-   * Get a chat completion from the AI
+   * Get a streaming chat completion from the AI
    */
   public async getChatCompletion(
     messages: Message[], 
-    options?: Partial<CompletionOptions>
+    options: CompletionOptions,
+    streamController: StreamControlHandler
   ): Promise<Message | null> {
-    this.startRequest();
-    
     try {
-      let provider = null;
-
-      if(!options?.provider) {
-        provider = this.getChatCompletionProvider();
-      }
-      else {
-        provider = this.getProvider(options.provider);
-      }
+      // Get provider and model
+      const providerName = options.provider;
+      const modelName = options.model;
+      const useStreaming = options.stream;
+      
+      // Get provider instance
+      const provider = this.getProvider(providerName);
       
       if (!provider) {
-        throw new Error('No chat completion provider available');
-      }
-
-      const finalModel = options?.model || provider.availableModels?.[0] || 'gpt-3.5-turbo';
-
-      console.log('Using model:', finalModel);
-      console.log('Using provider:', provider.name);
-
-      const result = await provider.getChatCompletion(messages, {
-        model: finalModel,
-        provider: options?.provider || provider.name || 'OpenAI',
-        max_tokens: options?.max_tokens,
-        temperature: options?.temperature,
-        top_p: options?.top_p,
-        frequency_penalty: options?.frequency_penalty,
-        presence_penalty: options?.presence_penalty,
-        stop: options?.stop,
-        user: options?.user,
-        stream: options?.stream,
-      });
-      
-      this.handleSuccess();
-      return result;
-    } catch (e) {
-      const error = e instanceof Error ? e : new Error('Unknown error during chat completion');
-      this.handleError(error);
-      return null;
-    }
-  }
-
-  /**
-   * Get a streaming chat completion from the AI
-   */
-  public async getStreamingChatCompletion(
-    messages: Message[], 
-    options?: Partial<CompletionOptions>,
-    onChunk?: (chunk: string) => void,
-    signal?: AbortSignal
-  ): Promise<Message | null> {
-    this.startRequest();
-    
-    try {
-      let provider = null;
-
-      if(!options?.provider) {
-        provider = this.getChatCompletionProvider();
-      }
-      else {
-        provider = this.getProvider(options.provider);
+        throw new Error(`Provider ${providerName} not available`);
       }
       
-      if (!provider) {
-        throw new Error('No chat completion provider available');
-      }
-
-      if (!provider.supportsCapability(AIServiceCapability.StreamingCompletion)) {
-        throw new Error(`Provider ${provider.name} does not support streaming`);
-      }
-
-      const finalModel = options?.model || provider.availableModels?.[0] || 'gpt-3.5-turbo';
-
-      console.log('Using model for streaming:', finalModel);
-      console.log('Using provider for streaming:', provider.name);
-
-      const result = await provider.streamChatCompletion(
+      const result = await provider.getChatCompletion(
         messages, 
         {
-          model: finalModel,
-          provider: options?.provider || provider.name || 'OpenAI',
+          model: modelName,
+          provider: providerName,
           max_tokens: options?.max_tokens,
           temperature: options?.temperature,
           top_p: options?.top_p,
           frequency_penalty: options?.frequency_penalty,
           presence_penalty: options?.presence_penalty,
-          stop: options?.stop,
           user: options?.user,
-          stream: true,
-          signal: signal
+          stream: useStreaming,
+          signal: streamController.getAbortSignal(),
         },
-        onChunk || (() => {})
+        streamController
       );
       
-      this.handleSuccess();
+
       return result;
     } catch (e) {
-      // Don't treat AbortError as an actual error
+      // Don't treat aborted requests as errors
       if (e instanceof Error && e.name === 'AbortError') {
-        this.setState({
-          status: 'idle',
-          error: null
-        });
+        this.handleSuccess();
         return null;
       }
-
+      
       const error = e instanceof Error ? e : new Error('Unknown error during streaming chat completion');
       this.handleError(error);
       return null;
@@ -373,38 +218,42 @@ export class AIService {
   }
 
   /**
-   * Generate an image from the AI
+   * Generate an image from a prompt
    */
   public async generateImage(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     prompt: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options?: {
       size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792';
       style?: 'vivid' | 'natural';
       quality?: 'standard' | 'hd';
     }
   ): Promise<string[] | null> {
-    this.startRequest();
+    throw new Error('Not implemented');
+
+    // this.startRequest();
     
-    try {
-      const openai = this.getOpenAI();
+    // try {
+    //   const provider = this.getImageGenerationProvider();
       
-      if (!openai) {
-        throw new Error('OpenAI provider not available');
-      }
+    //   if (!provider) {
+    //     throw new Error('No image generation provider available');
+    //   }
       
-      const images = await openai.generateImage(prompt, {
-        size: options?.size,
-        style: options?.style,
-        quality: options?.quality,
-      });
+    //   if (!provider.generateImage) {
+    //     throw new Error(`Provider ${provider.name} does not support image generation`);
+    //   }
       
-      this.handleSuccess();
-      return images;
-    } catch (e) {
-      const error = e instanceof Error ? e : new Error('Unknown error during image generation');
-      this.handleError(error);
-      return null;
-    }
+    //   const result = await provider.generateImage(prompt, options);
+      
+    //   this.handleSuccess();
+    //   return result;
+    // } catch (e) {
+    //   const error = e instanceof Error ? e : new Error('Unknown error during image generation');
+    //   this.handleError(error);
+    //   return null;
+    // }
   }
 
   /**
@@ -422,111 +271,124 @@ export class AIService {
   }
 
   /**
-   * Check if currently loading
+   * Check if a request is loading
    */
   public get isLoading(): boolean {
     return this.state.status === 'loading';
   }
 
   /**
-   * Check if there was an error
+   * Check if a request has errored
    */
   public get isError(): boolean {
     return this.state.status === 'error';
   }
 
   /**
-   * Check if the request was successful
+   * Check if a request was successful
    */
   public get isSuccess(): boolean {
     return this.state.status === 'success';
   }
 
   /**
-   * Get the service manager (now the service itself as they're merged)
-   */
-  public getServiceManager(): AIService {
-    return this;
-  }
-
-  /**
-   * Get whether models are currently being cached
+   * Check if models are being cached
    */
   public get isCachingModels(): boolean {
     return this.state.isCachingModels;
   }
 
+  /**
+   * Get all available models across all providers
+   */
   public async getCachedAllModels(): Promise<ModelOption[]> {
-    this.setState({ isCachingModels: true });
-    try {
-      const allModels: ModelOption[] = [];
-      for (const [providerName] of this.providers) {
-        const models = await this.getModelsForProvider(providerName);
-        allModels.push(...models);
-      }
-      
-      return allModels;
-    } finally {
-      this.setState({ isCachingModels: false });
+    // Check if we already have a cached result
+    const cacheKey = 'all_providers';
+    const cachedTime = this.lastFetchTime.get(cacheKey) || 0;
+    const now = Date.now();
+    
+    // Return cached models if they're still valid
+    if (this.modelCache.has(cacheKey) && now - cachedTime < this.CACHE_TTL) {
+      return this.modelCache.get(cacheKey) || [];
     }
+    
+    // Otherwise, collect models from all providers
+    const allModels: ModelOption[] = [];
+    const providerPromises = [];
+    
+    for (const provider of this.getAllProviders()) {
+      providerPromises.push(this.getModelsForProvider(provider.name));
+    }
+    
+    const results = await Promise.all(providerPromises);
+    
+    // Flatten results and filter out duplicates
+    results.forEach(models => {
+      allModels.push(...models);
+    });
+    
+    // Cache and return results
+    this.modelCache.set(cacheKey, allModels);
+    this.lastFetchTime.set(cacheKey, now);
+    
+    return allModels;
   }
 
+  /**
+   * Get models for a specific provider
+   */
   public async getModelsForProvider(providerName: string): Promise<ModelOption[]> {
-    if(!this.providers.has(providerName)) {
-      return [];
-    }
-
-    if(!this.providers.get(providerName)!.hasValidApiKey()) {
-      return [];
-    }
-
-    // Check cache first
-    const cachedModels = this.modelCache.get(providerName);
-    const lastFetch = this.lastFetchTime.get(providerName) || 0;
+    // Check if we already have a cached result
+    const cachedTime = this.lastFetchTime.get(providerName) || 0;
+    const now = Date.now();
     
-    if (cachedModels && Date.now() - lastFetch < this.CACHE_TTL) {
-      return cachedModels;
+    // Return cached models if they're still valid
+    if (this.modelCache.has(providerName) && now - cachedTime < this.CACHE_TTL) {
+      return this.modelCache.get(providerName) || [];
     }
-
-    // Fetch fresh models
-    const provider = this.providers.get(providerName);
+    
+    // Get provider instance
+    const provider = this.getProvider(providerName);
     if (!provider) {
+      console.warn(`Provider ${providerName} not available`);
       return [];
     }
-
+    
+    this.setState({ isCachingModels: true });
+    
     try {
+      // Fetch models from provider
       const models = await provider.fetchAvailableModels();
-      const modelOptions: ModelOption[] = models.map(modelId => ({
-        id: modelId,
-        name: modelId,
-        provider: providerName,
-        description: `Model from ${providerName}`
+      
+      // Convert to ModelOption format
+      const modelOptions: ModelOption[] = models.map(model => ({
+        id: model,
+        name: model,
+        provider: providerName
       }));
-
-      // Update cache
+      
+      // Cache results
       this.modelCache.set(providerName, modelOptions);
-      this.lastFetchTime.set(providerName, Date.now());
-
+      this.lastFetchTime.set(providerName, now);
+      
+      this.setState({ isCachingModels: false });
       return modelOptions;
     } catch (error) {
-      console.error(`Failed to fetch models for ${providerName}:`, error);
+      console.error(`Error fetching models for ${providerName}:`, error);
+      this.setState({ isCachingModels: false });
       return [];
     }
   }
 
+  /**
+   * Refresh all models
+   */
   public async refreshModels(): Promise<void> {
     // Clear cache
     this.modelCache.clear();
     this.lastFetchTime.clear();
     
-    this.setState({ isCachingModels: true });
-    try {
-      // Fetch models for all providers
-      for (const providerName of this.providers.keys()) {
-        await this.getModelsForProvider(providerName);
-      }
-    } finally {
-      this.setState({ isCachingModels: false });
-    }
+    // Re-fetch all models
+    await this.getCachedAllModels();
   }
 } 

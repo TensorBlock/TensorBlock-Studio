@@ -1,83 +1,44 @@
-import { 
-  AiServiceProvider, 
-  AIServiceCapability, 
-  AiServiceConfig, 
-  CompletionOptions 
-} from '../core/ai-service-provider';
-import { AxiosError, AxiosHeaders } from 'axios';
-import { API_CONFIG, getValidatedApiKey } from '../core/config';
-import { SettingsService } from '../settings-service';
-import { Message } from '../../types/chat';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { generateText, streamText } from 'ai';
 import { v4 as uuidv4 } from 'uuid';
-/**
- * Response format for chat completions from Anthropic
- */
-export interface AnthropicChatCompletionResponse {
-  id: string;
-  type: string;
-  model: string;
-  role: string;
-  content: Array<{
-    type: string;
-    text: string;
-  }>;
-  usage: {
-    input_tokens: number;
-    output_tokens: number;
-  };
-  stop_reason: string;
-  stop_sequence: string | null;
-}
+import { Message } from '../../types/chat';
+import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
+import { AIServiceCapability, mapModelCapabilities } from '../core/capabilities';
+import { SettingsService } from '../settings-service';
 
 /**
- * Implementation of Anthropic service provider
+ * Implementation of Anthropic service provider using the AI SDK
  */
-export class AnthropicService extends AiServiceProvider {
-  protected streamChatCompletionImplementation(messages: Message[], options: CompletionOptions, onChunk: (chunk: string) => void): Promise<Message> {
-    throw new Error('Method not implemented.');
-  }
-  private apiModels: string[] = [];
-  private apiVersion: string;
+export class AnthropicService implements AiServiceProvider {
   private settingsService: SettingsService;
+  private anthropic: ReturnType<typeof createAnthropic>;
+  private _apiKey: string = '';
+  private _apiVersion: string = '';
+  private _baseUrl: string = 'https://api.anthropic.com';
+  private _apiModels: string[] = [];
 
   /**
    * Create a new Anthropic service provider
    */
-  constructor(config?: Partial<AiServiceConfig>) {
-    // Get settings from settings service
-    const settingsService = SettingsService.getInstance();
-    const anthropicSettings = settingsService.getProviderSettings('Anthropic');
+  constructor() {
+    this.settingsService = SettingsService.getInstance();
+    const anthropicSettings = this.settingsService.getProviderSettings('Anthropic');
     
-    // Default configuration for Anthropic
-    const defaultConfig = {
-      baseURL: API_CONFIG.anthropic.baseUrl,
-      apiKey: getValidatedApiKey(anthropicSettings.apiKey || API_CONFIG.anthropic.apiKey),
-      timeout: API_CONFIG.anthropic.defaultTimeout,
-    };
+    this._apiKey = anthropicSettings.apiKey || '';
+    this._apiVersion = anthropicSettings.apiVersion || '2023-06-01';
+    this._baseUrl = anthropicSettings.baseUrl || 'https://api.anthropic.com';
+    
+    this.anthropic = this.createAnthropicClient();
+  }
 
-    // Apply default configuration and override with provided config
-    super({
-      ...defaultConfig,
-      ...config,
-    });
-    
-    // Store services
-    this.settingsService = settingsService;
-
-    // Set API version with default
-    this.apiVersion = anthropicSettings.apiVersion || 
-                      config?.headers?.['anthropic-version'] || 
-                      API_CONFIG.anthropic.apiVersion;
-    
-    // Add Anthropic-specific headers
-    this.client.addRequestInterceptor((config) => {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      
-      config.headers['anthropic-version'] = this.apiVersion;
-      
-      return config;
+  /**
+   * Create the Anthropic client with current settings
+   */
+  private createAnthropicClient() {
+    return createAnthropic({
+      apiKey: this._apiKey,
+      baseURL: this._baseUrl,
+      // version is handled internally in the library
     });
   }
 
@@ -89,164 +50,199 @@ export class AnthropicService extends AiServiceProvider {
   }
 
   /**
-   * Get the capabilities supported by Anthropic
+   * Get the capabilities supported by this provider
    */
   get capabilities(): AIServiceCapability[] {
     return [
+      AIServiceCapability.TextCompletion,
       AIServiceCapability.ChatCompletion,
       AIServiceCapability.VisionAnalysis,
-      AIServiceCapability.ToolUsage,
+      AIServiceCapability.StreamingCompletion,
+      AIServiceCapability.ToolUsage
     ];
   }
 
   /**
-   * Get the available models for Anthropic
+   * Get the available models for this provider
    */
-  get availableModels(): string[] {
-    return this.apiModels;
+  get availableModels(): string[] | undefined {
+    return this._apiModels.length > 0 
+      ? this._apiModels 
+      : ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'];
   }
 
   /**
-   * Fetch the list of available models from OpenAI
+   * Fetch the list of available models from Anthropic
    */
-  public override async fetchAvailableModels(): Promise<string[]> {
+  public async fetchAvailableModels(): Promise<string[]> {
     try {
-      const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-      this.apiModels = response.data.map(model => model.id);
-      return this.apiModels;
+      // Hardcoded list of models as Anthropic doesn't have a free models endpoint
+      this._apiModels = [
+        'claude-3-opus-20240229',
+        'claude-3-sonnet-20240229',
+        'claude-3-haiku-20240307', 
+        'claude-3-5-sonnet-20240620'
+      ];
+      
+      return this._apiModels;
     } catch (error) {
-      console.error('Failed to fetch OpenAI models:', error);
-      return this.apiModels;
+      console.error('Failed to fetch Anthropic models:', error);
+      return this._apiModels;
     }
   }
 
   /**
-   * Update the API key for OpenRouter
+   * Update the API key for Anthropic
    */
-  public override updateApiKey(ApiKey: string): void {
-    this.config.apiKey = ApiKey;
-    this.setupAuthenticationByProvider();
-  }
-
-  override setupAuthenticationByProvider(): void {
-    const sanitizedApiKey = this.getSanitizedApiKey();
-    
-    if (!sanitizedApiKey) {
-      console.warn(`No API key provided for ${this.name} service`);
-      return;
-    }
-
-    this.client.addRequestInterceptor((config) => {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      
-      // Set authorization header based on the API key
-      config.headers.set('x-api-key', `${sanitizedApiKey}`);
-      config.headers.set('anthropic-version', this.apiVersion);
-      config.headers.set('Access-Control-Allow-Origin', '*');
-      
-      console.log("Request Headers:", config.headers);
-      config.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      config.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, anthropic-version');
-
-      return config;
-    });
+  public updateApiKey(apiKey: string): void {
+    this._apiKey = apiKey;
+    this.setupAuthentication();
   }
 
   /**
-   * Implementation of text completion for Anthropic
-   * Note: Anthropic doesn't support traditional text completion API,
-   * so we adapt the chat completion API for this purpose
+   * Setup authentication for Anthropic
    */
-  protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
-    // Convert to chat completion since Anthropic doesn't have a dedicated completion endpoint
-    const chatMessage: Message = { role: 'user', content: prompt, id: uuidv4(), timestamp: new Date(), provider: this.name, model: options.model };
-    const response = await this.chatCompletionImplementation([chatMessage], options);
-    return response.content;
+  public setupAuthentication(): void {
+    this.anthropic = this.createAnthropicClient();
   }
 
   /**
-   * Implementation of chat completion for Anthropic
+   * Check if the service has a valid API key
    */
-  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
-    // Validate API key before making the request
+  public hasValidApiKey(): boolean {
+    return !!this._apiKey && this._apiKey.length > 0;
+  }
+
+  /**
+   * Check if the provider supports a specific capability
+   */
+  public supportsCapability(capability: AIServiceCapability): boolean {
+    return this.capabilities.includes(capability);
+  }
+
+  /**
+   * Get a text completion
+   */
+  public async getCompletion(prompt: string, options: CompletionOptions): Promise<string> {
     if (!this.hasValidApiKey()) {
-      throw new Error(`API key not configured for ${this.name} service`);
+      throw new Error('No API key provided for Anthropic');
     }
-    
-    // Anthropic uses "human" and "assistant" roles instead of "user" and "assistant"
-    // We need to convert messages to Anthropic format
-    const systemMessage = messages.find(m => m.role === 'system');
-    const nonSystemMessages = messages.filter(m => m.role !== 'system');
-    
-    // Prepare messages in Anthropic format
-    const formattedMessages = [];
-    
-    // Handle system message differently since Anthropic expects it as a parameter
-    const system = systemMessage?.content || '';
-    
-    // Format other messages
-    for (const message of nonSystemMessages) {
-      formattedMessages.push({
-        role: message.role === 'user' ? 'user' : 'assistant',
-        content: message.content,
-      });
-    }
-    
-    // Prepare completion options
-    const completionOptions = {
-      model: options.model || 'claude-3-haiku-20240307',
-      messages: formattedMessages,
-      system: system,
-      max_tokens: options.max_tokens ?? undefined,
-      temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? 1.0,
-      stop_sequences: options.stop || [],
-    };
 
     try {
-      const response = await this.client.post<AnthropicChatCompletionResponse>(
-        '/v1/messages',
-        completionOptions
-      );
+      const model = this.anthropic(options.model || 'claude-3-haiku-20240307');
+      
+      const response = await generateText({
+        model,
+        prompt,
+        temperature: options.temperature,
+        maxTokens: options.max_tokens,
+        topP: options.top_p,
+        stop: options.stop,
+      });
 
-      // Extract the response content
-      const content = response.content
-        .filter(item => item.type === 'text')
-        .map(item => item.text)
-        .join('');
+      return response.text;
+    } catch (error) {
+      console.error('Anthropic completion error:', error);
+      throw new Error(`Anthropic completion failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 
-      return { 
-        id: uuidv4(),
-        role: 'assistant', 
-        content: content.trim(),
+  /**
+   * Get a chat completion
+   */
+  public async getChatCompletion(messages: Message[], options: CompletionOptions): Promise<Message> {
+    if (!this.hasValidApiKey()) {
+      throw new Error('No API key provided for Anthropic');
+    }
+
+    try {
+      const model = this.anthropic(options.model || 'claude-3-haiku-20240307');
+      
+      const formattedMessages = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      const response = await generateText({
+        model,
+        messages: formattedMessages,
+        temperature: options.temperature,
+        maxTokens: options.max_tokens,
+        topP: options.top_p,
+        stop: options.stop,
+      });
+
+      return {
+        messageId: uuidv4(),
+        role: 'assistant',
+        content: response.text,
         timestamp: new Date(),
         provider: this.name,
-        model: completionOptions.model
+        model: options.model || 'claude-3-haiku-20240307'
       };
     } catch (error) {
-      // Check for auth errors
-      if ((error as AxiosError).response?.status === 401 || 
-          (error as AxiosError).response?.status === 403) {
-        throw this.handleAuthError(error);
+      console.error('Anthropic chat completion error:', error);
+      throw new Error(`Anthropic chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Get a streaming chat completion
+   */
+  public async streamChatCompletion(
+    messages: Message[],
+    options: CompletionOptions,
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
+  ): Promise<Message> {
+    if (!this.hasValidApiKey()) {
+      throw new Error('No API key provided for Anthropic');
+    }
+
+    try {
+      const model = this.anthropic(options.model || 'claude-3-haiku-20240307');
+      
+      const formattedMessages = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      let fullText = '';
+
+      await streamText({
+        model,
+        messages: formattedMessages,
+        temperature: options.temperature,
+        maxTokens: options.max_tokens,
+        topP: options.top_p,
+        stop: options.stop,
+        onStreamStart: () => {
+          fullText = '';
+        },
+        onToken: (token) => {
+          fullText += token;
+          onChunk(token);
+        },
+        signal
+      });
+
+      return {
+        messageId: uuidv4(),
+        conversationId: messages[0].conversationId,
+        role: 'assistant',
+        content: fullText,
+        timestamp: new Date(),
+        provider: this.name,
+        model: options.model || 'claude-3-haiku-20240307'
+      };
+    } catch (error) {
+      // If the error is an AbortError, we don't need to log it
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw error;
       }
       
-      // Log detailed error information
-      const axiosError = error as AxiosError;
-      if (axiosError.response) {
-        console.error('Anthropic chat completion error details:', {
-          status: axiosError.response.status,
-          statusText: axiosError.response.statusText,
-          data: axiosError.response.data,
-          request: {
-            model: completionOptions.model,
-            messageCount: completionOptions.messages.length
-          }
-        });
-      }
-      console.error('Anthropic chat completion error:', error);
-      throw error;
+      console.error('Anthropic streaming chat completion error:', error);
+      throw new Error(`Anthropic streaming chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 } 

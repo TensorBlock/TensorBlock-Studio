@@ -1,7 +1,7 @@
 import { DatabaseService } from './database';
 import { SettingsService, ProviderSettings } from './settings-service';
-import { Conversation as ChatConversation, Message } from '../types/chat';
-import { Conversation as DbConversation, DbChatMessage, ApiSettings } from './api-settings';
+import { Conversation, Message } from '../types/chat';
+import { ApiSettings } from './api-settings';
 import { v4 as uuidv4 } from 'uuid';
 import { AIProvider } from '../components/settings';
 
@@ -52,7 +52,7 @@ export class DatabaseIntegrationService {
     /**
      * Load conversations list for the sidebar
      */
-    public async loadConversationsList(): Promise<ChatConversation[]> {
+    public async loadConversationsList(): Promise<Conversation[]> {
         try {
             const dbConversations = await this.dbService.getConversations();
             return dbConversations.map((conv) => this.mapDbConversationToAppConversation(conv));
@@ -65,7 +65,7 @@ export class DatabaseIntegrationService {
     /**
      * Load a specific conversation including all messages
      */
-    public async loadConversation(conversationId: string): Promise<ChatConversation | null> {
+    public async loadConversation(conversationId: string): Promise<Conversation | null> {
         try {
             // Get conversation details
             const dbConversations = await this.dbService.getConversations();
@@ -91,13 +91,13 @@ export class DatabaseIntegrationService {
     /**
      * Create a new conversation
      */
-    public async createConversation(title: string): Promise<ChatConversation> {
+    public async createConversation(title: string): Promise<Conversation> {
         try {
             // Create in database
             const dbConversation = await this.dbService.createConversation(title);
             
             // Create app conversation object
-            const appConversation: ChatConversation = {
+            const appConversation: Conversation = {
                 id: dbConversation.id,
                 title: dbConversation.title,
                 messages: [],
@@ -106,7 +106,8 @@ export class DatabaseIntegrationService {
             };
 
             // Create system message
-            const systemMessage: Omit<DbChatMessage, 'id'> = {
+            const systemMessage: Message = {
+                messageId: uuidv4(),
                 conversationId: dbConversation.id,
                 role: 'system',
                 content: 'You are a helpful assistant. Be concise in your responses.',
@@ -120,7 +121,8 @@ export class DatabaseIntegrationService {
             
             // Add system message to the conversation
             appConversation.messages = [{
-                id: uuidv4(),
+                messageId: systemMessage.messageId,
+                conversationId: dbConversation.id,
                 role: 'system',
                 content: systemMessage.content,
                 timestamp: systemMessage.timestamp,
@@ -139,6 +141,7 @@ export class DatabaseIntegrationService {
      * Save a chat message and update conversation
      */
     public async saveChatMessage(
+        messageId: string,
         conversationId: string, 
         role: 'user' | 'assistant' | 'system', 
         content: string,
@@ -147,7 +150,8 @@ export class DatabaseIntegrationService {
     ): Promise<Message> {
         try {
             // Create message object
-            const dbMessage: Omit<DbChatMessage, 'id'> = {
+            const dbMessage: Message = {
+                messageId,
                 conversationId,
                 role,
                 content,
@@ -157,17 +161,10 @@ export class DatabaseIntegrationService {
             };
             
             // Save to database
-            const messageId = await this.dbService.saveChatMessage(dbMessage);
+            await this.dbService.saveChatMessage(dbMessage);
             
             // Return app message format
-            return {
-                id: messageId.toString(),
-                role,
-                content,
-                timestamp: dbMessage.timestamp,
-                provider,
-                model
-            };
+            return dbMessage;
         } catch (error) {
             console.error('Error saving chat message:', error);
             throw error;
@@ -177,17 +174,15 @@ export class DatabaseIntegrationService {
     /**
      * Update conversation details
      */
-    public async updateConversation(conversation: ChatConversation): Promise<void> {
+    public async updateConversation(conversation: Conversation): Promise<void> {
         try {
             // Map to database format
-            const dbConversation: DbConversation = {
+            const dbConversation: Conversation = {
                 id: conversation.id,
                 title: conversation.title,
                 createdAt: conversation.createdAt,
                 updatedAt: new Date(),
-                lastMessage: conversation.messages.length > 0 
-                    ? conversation.messages[conversation.messages.length - 1].content 
-                    : undefined
+                messages: conversation.messages
             };
             
             // Update in database
@@ -211,7 +206,7 @@ export class DatabaseIntegrationService {
             }
             
             // Update the title
-            const updatedConversation: DbConversation = {
+            const updatedConversation: Conversation = {
                 ...conversation,
                 title: newTitle,
                 updatedAt: new Date()
@@ -242,7 +237,7 @@ export class DatabaseIntegrationService {
      */
     public async deleteChatMessage(messageId: string): Promise<void> {
         try {
-            await this.dbService.deleteChatMessage(parseInt(messageId, 10));
+            await this.dbService.deleteChatMessage(messageId);
         } catch (error) {
             console.error('Error deleting message:', error);
             throw error;
@@ -351,8 +346,8 @@ export class DatabaseIntegrationService {
      */
     public async updateChatMessage(messageId: string, updatedMessage: Message, conversationId: string): Promise<void> {
         try {
-            const dbMessage: DbChatMessage = {
-                id: parseInt(messageId, 10),
+            const dbMessage: Message = {
+                messageId: messageId,
                 conversationId: conversationId,
                 role: updatedMessage.role,
                 content: updatedMessage.content,
@@ -369,7 +364,7 @@ export class DatabaseIntegrationService {
     }
 
     // Mapping helpers
-    private mapDbConversationToAppConversation(dbConversation: DbConversation): ChatConversation {
+    private mapDbConversationToAppConversation(dbConversation: Conversation): Conversation {
         return {
             id: dbConversation.id,
             title: dbConversation.title,
@@ -379,9 +374,10 @@ export class DatabaseIntegrationService {
         };
     }
 
-    private mapDbMessageToAppMessage(dbMessage: DbChatMessage): Message {
+    private mapDbMessageToAppMessage(dbMessage: Message): Message {
         return {
-            id: dbMessage.id.toString(),
+            messageId: dbMessage.messageId.toString(),
+            conversationId: dbMessage.conversationId,
             role: dbMessage.role,
             content: dbMessage.content,
             timestamp: dbMessage.timestamp,
