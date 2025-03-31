@@ -11,7 +11,6 @@ export class ChatService {
   private static instance: ChatService;
   private dbService: DatabaseService;
   private aiService: AIService;
-  private state: ChatState;
   private listeners: Set<() => void>;
 
   // Singleton Access
@@ -19,9 +18,7 @@ export class ChatService {
   private constructor();
 
   // State Management
-  private setState(newState: Partial<ChatState>): void;
   private notifyListeners(): void;
-  public getState(): ChatState;
   public subscribe(listener: () => void): () => void;
 
   // Conversation Management
@@ -46,19 +43,6 @@ export class ChatService {
 ```
 
 ## Interfaces
-
-### `ChatState`
-
-Represents the current state of chat functionality.
-
-```typescript
-export interface ChatState {
-  conversations: Conversation[];
-  activeConversationId: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-```
 
 ## Message Processing
 

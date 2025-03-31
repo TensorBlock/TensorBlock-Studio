@@ -38,10 +38,10 @@ export class ProviderFactory {
       case 'Gemini':
         // Will be implemented with other providers
         break;
-      case 'Fireworks':
+      case 'Fireworks.ai':
         // Will be implemented with other providers
         break;
-      case 'Together':
+      case 'Together.ai':
         // Will be implemented with other providers
         break;
       case 'OpenRouter':
@@ -63,7 +63,7 @@ export class ProviderFactory {
   /**
    * Create an SDK client instance for a specific provider
    */
-  public static createSdkClient(name: ProviderName, model: string) {
+  public static createSdkClient(name: AIProvider, model: string) {
     const settingsService = SettingsService.getInstance();
     const settings = settingsService.getProviderSettings(name);
     
@@ -87,13 +87,13 @@ export class ProviderFactory {
           apiKey: settings.apiKey
         })(model);
         
-      case 'Fireworks':
+      case 'Fireworks.ai':
         return createFireworks({
           apiKey: settings.apiKey,
           baseURL: settings.baseUrl || 'https://api.fireworks.ai/inference/v1'
         })(model);
         
-      case 'Together':
+      case 'Together.ai':
         return createTogetherAI({
           apiKey: settings.apiKey,
           baseURL: settings.baseUrl || 'https://api.together.xyz/v1'

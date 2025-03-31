@@ -33,7 +33,6 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   
   // Scroll to bottom when messages change
   useEffect(() => {
-    console.log('scrolling to bottom');
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);

@@ -43,19 +43,6 @@ export interface Conversation {
 }
 ```
 
-### `ChatState`
-
-Defines the state structure for the chat functionality.
-
-```typescript
-export interface ChatState {
-  conversations: Conversation[];
-  activeConversationId: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-```
-
 ## API Settings Types
 
 Located in `src/services/api-settings.ts`, these types define structures for API configuration.
