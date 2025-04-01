@@ -1,274 +1,115 @@
-import { 
-  AiServiceProvider, 
-  AIServiceCapability, 
-  AiServiceConfig,
-  CompletionOptions 
-} from '../core/ai-service-provider';
-import { AxiosError, AxiosHeaders } from 'axios';
-import { API_CONFIG, getValidatedApiKey } from '../core/config';
-import { SettingsService } from '../settings-service';
 import { Message } from '../../types/chat';
-import { v4 as uuidv4 } from 'uuid';
+import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
+import { StreamControlHandler } from '../streaming-control';
+import { CommonProviderHelper } from './common-provider-service';
+import { Provider } from 'ai';
+import { createTogetherAI } from '@ai-sdk/togetherai';
+export const TOGETHER_PROVIDER_NAME = 'Together.ai';
 
 /**
- * Response format for chat completions
- * Together.ai uses OpenAI-compatible API, so we reuse the same response format
+ * Implementation of OpenAI service provider using the AI SDK
  */
-export interface TogetherCompletionResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
+export class TogetherService implements AiServiceProvider {
 
-/**
- * Default models for Together.ai
- */
-export const TOGETHER_MODELS = {
-  LLAMA_3_8B: 'meta-llama/Llama-3-8b-chat',
-  LLAMA_3_70B: 'meta-llama/Llama-3-70b-chat',
-  MIXTRAL_8X7B: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
-  QWEN_72B: 'Qwen/Qwen1.5-72B-Chat',
-  YI_34B: 'zero-one-ai/Yi-34B-Chat',
-  CODELLAMA_34B: 'codellama/CodeLlama-34b-Instruct',
-};
-
-/**
- * Implementation of Together.ai service provider
- */
-export class TogetherService extends AiServiceProvider {
-
-  private apiModels: string[] = Object.values(TOGETHER_MODELS);
-  private settingsService: SettingsService;
+  private commonProviderHelper: CommonProviderHelper;
+  private apiModels: string[] = [];
 
   /**
-   * Create a new Together.ai service provider
+   * Create a new OpenAI service provider
    */
-  constructor(config?: Partial<AiServiceConfig>) {
-    // Get settings from settings service
-    const settingsService = SettingsService.getInstance();
-    const togetherSettings = settingsService.getProviderSettings('Together');
-    
-    // Default configuration for Together.ai
-    const baseURL = togetherSettings.baseUrl || config?.baseURL || API_CONFIG.together.baseUrl;
-    
-    // Apply default configuration and override with provided config
-    super({
-      baseURL: baseURL,
-      apiKey: config?.apiKey || getValidatedApiKey(togetherSettings.apiKey || API_CONFIG.together.apiKey),
-      timeout: config?.timeout || API_CONFIG.together.defaultTimeout,
-      ...config,
+  constructor() {
+    this.commonProviderHelper = new CommonProviderHelper(TOGETHER_PROVIDER_NAME, this.createClient);
+  }
+
+  private createClient(apiKey: string): Provider {
+    return createTogetherAI({
+      apiKey: apiKey,
     });
-    
-    // Store services
-    this.settingsService = settingsService;
   }
 
   /**
    * Get the name of the service provider
    */
   get name(): string {
-    return 'Together.ai';
+    return TOGETHER_PROVIDER_NAME;
   }
 
   /**
-   * Get the capabilities supported by Together.ai
+   * Get the available models for this provider
    */
-  get capabilities(): AIServiceCapability[] {
-    return [
-      AIServiceCapability.TextCompletion,
-      AIServiceCapability.ChatCompletion,
-      AIServiceCapability.Embedding,
-      AIServiceCapability.FunctionCalling,
-    ];
+  get availableModels(): string[] | undefined {
+    return this.apiModels.length > 0 
+      ? this.apiModels 
+      : ['meta-llama/Meta-Llama-3.3-70B-Instruct-Turbo', 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo', 'deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-72B-Instruct-Turbo'];
   }
 
   /**
-   * Get the available models for Together.ai
-   */
-  get availableModels(): string[] {
-    return this.apiModels;
-  }
-
-  /**
-   * Fetch the list of available models from Together.ai
+   * Fetch the list of available models from OpenAI
    */
   public async fetchAvailableModels(): Promise<string[]> {
-    try {
-      const response = await this.client.get<{id: string, display_name: string}[]>('/models');
-      this.apiModels = response.map(model => model.id);
-      return this.apiModels;
-    } catch (error) {
-      console.error('Failed to fetch Together.ai models:', error);
-      return this.apiModels;
-    }
+    this.apiModels = [
+      'meta-llama/Meta-Llama-3.3-70B-Instruct-Turbo',
+      'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+      'deepseek-ai/DeepSeek-V3',
+      'Qwen/Qwen2.5-72B-Instruct-Turbo'
+    ];
+
+    return this.apiModels;
+    
+    // try {
+    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
+    //   this.apiModels = response.data.map(model => model.id);
+    //   return this.apiModels;
+    // } catch (error) {
+    //   console.error('Failed to fetch OpenAI models:', error);
+    //   return this.apiModels;
+    // }
   }
 
   /**
-   * Update the API key for Together.ai
+   * Update the API key for OpenAI
    */
-  public override updateApiKey(ApiKey: string): void {
-    this.config.apiKey = ApiKey;
-    this.setupAuthenticationByProvider();
-  }
-
-  override setupAuthenticationByProvider(): void {
-    const sanitizedApiKey = this.getSanitizedApiKey();
-    
-    if (!sanitizedApiKey) {
-      console.warn(`No API key provided for ${this.name} service`);
-      return;
-    }
-
-    this.client.addRequestInterceptor((config) => {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      
-      // Set authorization header based on the API key
-      config.headers.set('Authorization', `Bearer ${sanitizedApiKey}`);
-      
-      return config;
-    });
+  public updateApiKey(apiKey: string): void {
+    this.commonProviderHelper.updateApiKey(apiKey);
   }
 
   /**
-   * Implementation of text completion for Together.ai
+   * Setup authentication for OpenAI
    */
-  protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
-    // Validate API key before making the request
-    if (!this.hasValidApiKey()) {
-      throw new Error(`API key not configured for ${this.name} service`);
-    }
-
-    const completionOptions = {
-      model: options.model || TOGETHER_MODELS.LLAMA_3_8B,
-      prompt,
-      max_tokens: options.max_tokens ?? undefined,
-      temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? 0,
-      presence_penalty: options.presence_penalty ?? 0,
-      stop: options.stop,
-      user: options.user,
-    };
-
-    try {
-      const response = await this.client.post<TogetherCompletionResponse>(
-        '/completions',
-        completionOptions
-      );
-
-      if (response.choices && response.choices.length > 0) {
-        return response.choices[0].message.content.trim();
-      }
-
-      throw new Error('No completion choices returned from Together.ai API');
-    } catch (error) {
-      // Check for auth errors
-      if ((error as AxiosError).response?.status === 401 || 
-          (error as AxiosError).response?.status === 403) {
-        throw this.handleAuthError(error);
-      }
-      
-      // Log detailed error information
-      const axiosError = error as AxiosError;
-      if (axiosError.response) {
-        console.error('Together.ai text completion error details:', {
-          status: axiosError.response.status,
-          statusText: axiosError.response.statusText,
-          data: axiosError.response.data,
-          request: {
-            model: completionOptions.model,
-            prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : '')
-          }
-        });
-      }
-      console.error('Together.ai completion error:', error);
-      throw error;
-    }
+  public recreateClient(): void {
+    this.commonProviderHelper.recreateClient();
   }
 
   /**
-   * Implementation of chat completion for Together.ai
+   * Check if the service has a valid API key
    */
-  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
-    // Validate API key before making the request
-    if (!this.hasValidApiKey()) {
-      throw new Error(`API key not configured for ${this.name} service`);
-    }
-    
-    const messagesForAI = messages.map(m => ({
-      role: m.role,
-      content: m.content
-    }));
-    
-    const completionOptions = {
-      model: options.model || TOGETHER_MODELS.LLAMA_3_8B,
-      messages: messagesForAI,
-      max_tokens: options.max_tokens ?? undefined,
-      temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? 0,
-      presence_penalty: options.presence_penalty ?? 0,
-      stop: options.stop,
-      user: options.user,
-    };
+  public hasValidApiKey(): boolean {
+    return this.commonProviderHelper.hasValidApiKey();
+  }
 
-    try {
-      const response = await this.client.post<TogetherCompletionResponse>(
-        '/chat/completions',
-        completionOptions
-      );
+  /**
+   * Get a streaming chat completion
+   */
+  public async getChatCompletion(
+    messages: Message[],
+    options: CompletionOptions,
+    streamController: StreamControlHandler
+  ): Promise<Message> {
+    return this.commonProviderHelper.getChatCompletion(messages, options, streamController);
+  }
 
-      if (response.choices && response.choices.length > 0) {
-        const { role, content } = response.choices[0].message;
-        return { 
-          messageId: uuidv4(),
-          role: role as Message['role'], 
-          content: content.trim(),
-          timestamp: new Date(),
-          provider: this.name,
-          model: completionOptions.model
-        };
-      }
-
-      throw new Error('No chat completion choices returned from Together.ai API');
-    } catch (error) {
-      // Check for auth errors
-      if ((error as AxiosError).response?.status === 401 || 
-          (error as AxiosError).response?.status === 403) {
-        throw this.handleAuthError(error);
-      }
-      
-      // Log detailed error information
-      const axiosError = error as AxiosError;
-      if (axiosError.response) {
-        console.error('Together.ai chat completion error details:', {
-          status: axiosError.response.status,
-          statusText: axiosError.response.statusText,
-          data: axiosError.response.data,
-          request: {
-            model: completionOptions.model,
-            messageCount: completionOptions.messages.length
-          }
-        });
-      }
-      console.error('Together.ai chat completion error:', error);
-      throw error;
-    }
+  /**
+   * Generate an image
+   */
+  public async getImageGeneration(
+    prompt: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    options: {
+      size?: `${number}x${number}`;
+      style?: string;
+      quality?: string;
+    } = {}
+  ): Promise<string[]> {
+    throw new Error('Not implemented');
   }
 } 

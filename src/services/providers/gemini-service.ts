@@ -1,261 +1,123 @@
-import { 
-  AiServiceProvider, 
-  AIServiceCapability, 
-  AiServiceConfig, 
-  CompletionOptions 
-} from '../core/ai-service-provider';
-import { AxiosError, AxiosHeaders } from 'axios';
-import { API_CONFIG, getValidatedApiKey } from '../core/config';
-import { SettingsService } from '../settings-service';
+import { GoogleGenerativeAIProvider, createGoogleGenerativeAI } from '@ai-sdk/google';
 import { Message } from '../../types/chat';
-import { v4 as uuidv4 } from 'uuid';  
+import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
+import { StreamControlHandler } from '../streaming-control';
+import { CommonProviderHelper } from './common-provider-service';
+import { SettingsService } from '../settings-service';
+
+export const GEMINI_PROVIDER_NAME = 'Gemini';
 
 /**
- * Response format for chat completions from Google's Gemini API
+ * Implementation of Anthropic service provider using the AI SDK
  */
-export interface GeminiChatCompletionResponse {
-  candidates: {
-    content: {
-      parts: {
-        text?: string;
-      }[];
-      role: string;
-    };
-    finishReason: string;
-    index: number;
-    safetyRatings: {
-      category: string;
-      probability: string;
-    }[];
-  }[];
-  promptFeedback?: {
-    safetyRatings: {
-      category: string;
-      probability: string;
-    }[];
-  };
-  usage?: {
-    promptTokenCount: number;
-    candidatesTokenCount: number;
-    totalTokenCount: number;
-  };
-}
-
-/**
- * Implementation of Gemini service provider
- */
-export class GeminiService extends AiServiceProvider {
-  private apiModels: string[] = [];
-  private apiVersion: string;
+export class GeminiService implements AiServiceProvider {
   private settingsService: SettingsService;
+  private _apiKey: string = '';
+  private ProviderInstance: GoogleGenerativeAIProvider;
+
+  private apiModels: string[] = [];
 
   /**
-   * Create a new Gemini service provider
+   * Create a new Anthropic service provider
    */
-  constructor(config?: Partial<AiServiceConfig>) {
-    // Get settings from settings service
-    const settingsService = SettingsService.getInstance();
-    const geminiSettings = settingsService.getProviderSettings('Gemini');
+  constructor() {
+    this.settingsService = SettingsService.getInstance();
+    const providerSettings = this.settingsService.getProviderSettings(GEMINI_PROVIDER_NAME);
     
-    // Default configuration
-    const apiVersion = geminiSettings.apiVersion || config?.headers?.['x-goog-api-version'] || API_CONFIG.gemini.apiVersion;
-    const baseURL = geminiSettings.baseUrl || config?.baseURL || API_CONFIG.gemini.baseUrl;
-    
-    super({
-      baseURL: `${baseURL}/${apiVersion}`,
-      apiKey: config?.apiKey || getValidatedApiKey(geminiSettings.apiKey || API_CONFIG.gemini.apiKey),
-      timeout: config?.timeout || API_CONFIG.gemini.defaultTimeout,
-      ...config,
+    this._apiKey = providerSettings.apiKey || '';
+
+    this.ProviderInstance = createGoogleGenerativeAI({
+      apiKey: this._apiKey
     });
-    
-    // Store services and settings
-    this.settingsService = settingsService;
-    this.apiVersion = apiVersion;
   }
 
   /**
    * Get the name of the service provider
    */
   get name(): string {
-    return 'Gemini';
+    return GEMINI_PROVIDER_NAME;
   }
 
   /**
-   * Get the capabilities supported by Gemini
+   * Get the available models for this provider
    */
-  get capabilities(): AIServiceCapability[] {
-    return [
-      AIServiceCapability.ChatCompletion,
-      AIServiceCapability.VisionAnalysis,
+  get availableModels(): string[] | undefined {
+    return this.apiModels.length > 0 
+      ? this.apiModels 
+      : ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-2.0-flash-001', 'gemini-2.5-pro-exp-03-25'];
+  }
+
+  /**
+   * Fetch the list of available models from OpenAI
+   */
+  public async fetchAvailableModels(): Promise<string[]> {
+    this.apiModels = [
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro-latest',
+      'gemini-2.0-flash-001',
+      'gemini-2.5-pro-exp-03-25'
     ];
-  }
 
-  /**
-   * Get the available models for Gemini
-   */
-  get availableModels(): string[] {
     return this.apiModels;
-  }
-
-  /**
-   * Fetch the list of available models from Gemini
-   */
-  public override async fetchAvailableModels(): Promise<string[]> {
-    try {
-      const response = await this.client.get<{models: {name: string, displayName: string}[]}>(
-        `${this.client.getBaseURL()}/models?key=${this.getSanitizedApiKey()}`
-      );
-      this.apiModels = response.models.map(model => model.name.replace('models/', ''));
-      return this.apiModels;
-    } catch (error) {
-      console.error('Failed to fetch Gemini models:', error);
-      return this.apiModels;
-    }
-  }
-
-  /**
-   * Update the API key for Gemini
-   */
-  public override updateApiKey(ApiKey: string): void {
-    this.config.apiKey = ApiKey;
-    this.setupAuthenticationByProvider();
-  }
-
-  /**
-   * Setup authentication for Gemini
-   */
-  override setupAuthenticationByProvider(): void {
-    const sanitizedApiKey = this.getSanitizedApiKey();
     
-    if (!sanitizedApiKey) {
-      console.warn(`No API key provided for ${this.name} service`);
-      return;
-    }
+    // try {
+    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
+    //   this.apiModels = response.data.map(model => model.id);
+    //   return this.apiModels;
+    // } catch (error) {
+    //   console.error('Failed to fetch OpenAI models:', error);
+    //   return this.apiModels;
+    // }
+  }
 
-    this.client.addRequestInterceptor((config) => {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      
-      return config;
+  /**
+   * Update the API key for OpenAI
+   */
+  public updateApiKey(apiKey: string): void {
+    this._apiKey = apiKey;
+    this.recreateClient();
+  }
+
+  /**
+   * Setup authentication for OpenAI
+   */
+  public recreateClient(): void {
+    this.ProviderInstance = createGoogleGenerativeAI({
+      apiKey: this._apiKey
     });
   }
 
   /**
-   * Implementation of text completion for Gemini
-   * Note: Gemini doesn't support traditional text completion API,
-   * so we adapt the chat completion API for this purpose
+   * Check if the service has a valid API key
    */
-  protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
-    // Convert to chat completion since Gemini doesn't have a dedicated completion endpoint
-    const chatMessage: Message = { 
-      role: 'user', 
-      content: prompt, 
-      messageId: uuidv4(), 
-      timestamp: new Date(), 
-      provider: this.name, 
-      model: options.model 
-    };
-    const response = await this.chatCompletionImplementation([chatMessage], options);
-    return response.content;
+  public hasValidApiKey(): boolean {
+    return !!this._apiKey && this._apiKey.length > 0;
   }
 
   /**
-   * Implementation of chat completion for Gemini
+   * Get a streaming chat completion
    */
-  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
-    // Validate API key before making the request
-    if (!this.hasValidApiKey()) {
-      throw new Error(`API key not configured for ${this.name} service`);
-    }
-    
-    // Prepare messages in Gemini format
-    const formattedMessages = [];
-    
-    // Format messages for Gemini API
-    for (const message of messages) {
-      formattedMessages.push({
-        role: message.role === 'assistant' ? 'model' : (message.role === 'system' ? 'user' : message.role),
-        parts: [{ text: message.content }],
-      });
-    }
-    
-    // Handle special case: If the first message is a system message, we need to combine it with the first user message
-    // since Gemini doesn't have a dedicated system message concept
-    // if (messages.length > 1 && messages[0].role === 'system' && messages[1].role === 'user') {
-    //   formattedMessages[1].parts[0].text = `${messages[0].content}\n\n${messages[1].content}`;
-    //   formattedMessages.shift(); // Remove the system message
-    // }
-    
-    const model = options.model;
-    
-    // Prepare completion options
-    const completionOptions = {
-      contents: formattedMessages,
-      generationConfig: {
-        maxOutputTokens: options.max_tokens || 1000,
-        temperature: options.temperature ?? 1.0,
-        topP: options.top_p ?? 1.0,
-        stopSequences: options.stop || [],
-      },
-    };
-
-    try {
-      // Note the specific URL format with API key as a query parameter
-      const apiKey = this.getSanitizedApiKey();
-      const response = await this.client.post<GeminiChatCompletionResponse>(
-        `/models/${model}:generateContent?key=${apiKey}`,
-        completionOptions
-      );
-
-      if (!response.candidates || response.candidates.length === 0) {
-        throw new Error('No completion candidates returned from Gemini API');
-      }
-
-      // Extract the response content
-      const candidate = response.candidates[0];
-      const content = candidate.content.parts
-        .map(part => part.text || '')
-        .join('');
-
-      return { 
-        role: 'assistant', 
-        content: content.trim(),
-        messageId: uuidv4(),
-        timestamp: new Date(),
-        provider: this.name,
-        model: options.model
-      };
-    } catch (error) {
-      // Check for auth errors
-      if ((error as AxiosError).response?.status === 401 || 
-          (error as AxiosError).response?.status === 403) {
-        throw this.handleAuthError(error);
-      }
-      
-      // Log detailed error information
-      const axiosError = error as AxiosError;
-      if (axiosError.response) {
-        console.error('Gemini chat completion error details:', {
-          status: axiosError.response.status,
-          statusText: axiosError.response.statusText,
-          data: axiosError.response.data,
-          request: {
-            model: model,
-            messageCount: completionOptions.contents.length
-          }
-        });
-      }
-      console.error('Gemini chat completion error:', error);
-      throw error;
-    }
+  public async getChatCompletion(
+    messages: Message[],
+    options: CompletionOptions,
+    streamController: StreamControlHandler
+  ): Promise<Message> {
+    const modelInstance = this.ProviderInstance.languageModel(options.model);
+    return CommonProviderHelper.getChatCompletionByModel(modelInstance, messages, options, streamController);
   }
 
   /**
-   * Override the default authentication method since Gemini uses API key as a query parameter
+   * Generate an image
    */
-  protected setupAuthentication(): void {
-    // Gemini API uses API key as a query parameter, not in headers
-    // We override the parent method to avoid setting Authorization header
+  public async getImageGeneration(
+    prompt: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    options: {
+      size?: `${number}x${number}`;
+      style?: string;
+      quality?: string;
+    } = {}
+  ): Promise<string[]> {
+    throw new Error('Not implemented');
   }
 } 

@@ -455,7 +455,7 @@ export class ChatService {
       // Update UI
       conversationUpdate(this.conversations);
       
-      const settingsService = SettingsService.getInstance();
+      // const settingsService = SettingsService.getInstance();
       
       // TODO: Uncomment this when we have a way to handle streaming
 

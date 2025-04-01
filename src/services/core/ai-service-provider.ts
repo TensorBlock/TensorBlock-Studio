@@ -52,7 +52,7 @@ export interface AiServiceProvider {
   /**
    * Set up authentication for this provider
    */
-  setupAuthentication(): void;
+  recreateClient(): void;
   
   /**
    * Check if the provider has a valid API key

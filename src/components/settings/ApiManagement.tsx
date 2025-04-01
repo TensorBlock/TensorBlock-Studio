@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronRight, Save, AlertCircle } from 'lucide-react';
 import { ProviderSettings } from '../../services/settings-service';
+import { AIProvider } from '../../types/ai-providers';
 
-export type AIProvider = 'Forge' | 'OpenAI' | 'Anthropic' | 'Gemini' | 'Fireworks.ai' | 'Together.ai' | 'OpenRouter' | 'Custom';
 
 interface ApiManagementProps {
   selectedProvider: AIProvider;
@@ -33,7 +33,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
   
   const providers: AIProvider[] = [
-    'Forge', 
+    'TensorBlock', 
     'OpenAI', 
     'Anthropic', 
     'Gemini', 

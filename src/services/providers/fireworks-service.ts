@@ -1,260 +1,115 @@
-import { 
-  AiServiceProvider, 
-  AIServiceCapability, 
-  AiServiceConfig, 
-  CompletionOptions 
-} from '../core/ai-service-provider';
-import { AxiosError, AxiosHeaders } from 'axios';
-import { API_CONFIG, getValidatedApiKey } from '../core/config';
-import { SettingsService } from '../settings-service';
+import { createFireworks } from '@ai-sdk/fireworks';
 import { Message } from '../../types/chat';
-import { v4 as uuidv4 } from 'uuid';
+import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
+import { StreamControlHandler } from '../streaming-control';
+import { CommonProviderHelper } from './common-provider-service';
+import { Provider } from 'ai';
+
+export const FIREWORKS_PROVIDER_NAME = 'Fireworks.ai';
 
 /**
- * Response format for chat completions
- * Fireworks.ai uses OpenAI-compatible API, so we reuse the same response format
+ * Implementation of OpenAI service provider using the AI SDK
  */
-export interface FireworksCompletionResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
+export class FireworksService implements AiServiceProvider {
 
-/**
- * Implementation of Fireworks.ai service provider
- */
-export class FireworksService extends AiServiceProvider {
+  private commonProviderHelper: CommonProviderHelper;
   private apiModels: string[] = [];
-  private settingsService: SettingsService;
 
   /**
-   * Create a new Fireworks service provider
+   * Create a new OpenAI service provider
    */
-  constructor(config?: Partial<AiServiceConfig>) {
-    // Get settings from settings service
-    const settingsService = SettingsService.getInstance();
-    const fireworksSettings = settingsService.getProviderSettings('Fireworks');
-    
-    // Default configuration for Fireworks
-    const baseURL = fireworksSettings.baseUrl || config?.baseURL || API_CONFIG.fireworks.baseUrl;
-    
-    // Apply default configuration and override with provided config
-    super({
-      baseURL: baseURL,
-      apiKey: config?.apiKey || getValidatedApiKey(fireworksSettings.apiKey || API_CONFIG.fireworks.apiKey),
-      timeout: config?.timeout || API_CONFIG.fireworks.defaultTimeout,
-      ...config,
+  constructor() {
+    this.commonProviderHelper = new CommonProviderHelper(FIREWORKS_PROVIDER_NAME, this.createClient);
+  }
+
+  private createClient(apiKey: string): Provider {
+    return createFireworks({
+      apiKey: apiKey,
     });
-    
-    // Store services
-    this.settingsService = settingsService;
   }
 
   /**
    * Get the name of the service provider
    */
   get name(): string {
-    return 'Fireworks.ai';
+    return FIREWORKS_PROVIDER_NAME;
   }
 
   /**
-   * Get the capabilities supported by Fireworks.ai
+   * Get the available models for this provider
    */
-  get capabilities(): AIServiceCapability[] {
-    return [
-      AIServiceCapability.TextCompletion,
-      AIServiceCapability.ChatCompletion,
-      AIServiceCapability.FunctionCalling,
-    ];
+  get availableModels(): string[] | undefined {
+    return this.apiModels.length > 0 
+      ? this.apiModels 
+      : ['accounts/fireworks/models/deepseek-r1', 'accounts/fireworks/models/deepseek-v3', 'accounts/fireworks/models/qwen2p5-coder-32b-instruct'];
   }
 
   /**
-   * Get the available models for Fireworks.ai
-   */
-  get availableModels(): string[] {
-    return this.apiModels;
-  }
-
-  /**
-   * Fetch the list of available models from Fireworks.ai
+   * Fetch the list of available models from OpenAI
    */
   public async fetchAvailableModels(): Promise<string[]> {
-    try {
-      const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-      this.apiModels = response.data.map(model => model.id);
-      return this.apiModels;
-    } catch (error) {
-      console.error('Failed to fetch Fireworks.ai models:', error);
-      return this.apiModels;
-    }
-  }
+    this.apiModels = [
+      'accounts/fireworks/models/deepseek-r1',
+      'accounts/fireworks/models/deepseek-v3',
+      'accounts/fireworks/models/qwen2p5-coder-32b-instruct'
+    ];
 
-  /**
-   * Update the API key for Fireworks.ai
-   */
-  public override updateApiKey(ApiKey: string): void {
-    this.config.apiKey = ApiKey;
-    this.setupAuthenticationByProvider();
-  }
-
-  override setupAuthenticationByProvider(): void {
-    const sanitizedApiKey = this.getSanitizedApiKey();
+    return this.apiModels;
     
-    if (!sanitizedApiKey) {
-      console.warn(`No API key provided for ${this.name} service`);
-      return;
-    }
-
-    this.client.addRequestInterceptor((config) => {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      
-      // Set authorization header based on the API key
-      config.headers.set('Authorization', `Bearer ${sanitizedApiKey}`);
-      
-      return config;
-    });
+    // try {
+    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
+    //   this.apiModels = response.data.map(model => model.id);
+    //   return this.apiModels;
+    // } catch (error) {
+    //   console.error('Failed to fetch OpenAI models:', error);
+    //   return this.apiModels;
+    // }
   }
 
   /**
-   * Implementation of text completion for Fireworks.ai
+   * Update the API key for OpenAI
    */
-  protected async completionImplementation(prompt: string, options: CompletionOptions): Promise<string> {
-    // Validate API key before making the request
-    if (!this.hasValidApiKey()) {
-      throw new Error(`API key not configured for ${this.name} service`);
-    }
-
-    const completionOptions = {
-      model: options.model,
-      prompt,
-      max_tokens: options.max_tokens || options.maxTokens || 1000,
-      temperature: options.temperature ?? 0.7,
-      top_p: options.top_p ?? options.topP ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
-      presence_penalty: options.presence_penalty ?? options.presencePenalty ?? 0,
-      stop: options.stop,
-      user: options.user,
-    };
-
-    try {
-      const response = await this.client.post<FireworksCompletionResponse>(
-        '/completions',
-        completionOptions
-      );
-
-      if (response.choices && response.choices.length > 0) {
-        return response.choices[0].message.content.trim();
-      }
-
-      throw new Error('No completion choices returned from Fireworks.ai API');
-    } catch (error) {
-      // Check for auth errors
-      if ((error as AxiosError).response?.status === 401 || 
-          (error as AxiosError).response?.status === 403) {
-        throw this.handleAuthError(error);
-      }
-      
-      // Log detailed error information
-      const axiosError = error as AxiosError;
-      if (axiosError.response) {
-        console.error('Fireworks.ai text completion error details:', {
-          status: axiosError.response.status,
-          statusText: axiosError.response.statusText,
-          data: axiosError.response.data,
-          request: {
-            model: completionOptions.model,
-            prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : '')
-          }
-        });
-      }
-      console.error('Fireworks.ai completion error:', error);
-      throw error;
-    }
+  public updateApiKey(apiKey: string): void {
+    this.commonProviderHelper.updateApiKey(apiKey);
   }
 
   /**
-   * Implementation of chat completion for Fireworks.ai
+   * Setup authentication for OpenAI
    */
-  protected async chatCompletionImplementation(messages: Message[], options: CompletionOptions): Promise<Message> {
-    // Validate API key before making the request
-    if (!this.hasValidApiKey()) {
-      throw new Error(`API key not configured for ${this.name} service`);
-    }
-    
-    const messagesForAI = messages.map(m => ({
-      role: m.role,
-      content: m.content
-    }));
+  public recreateClient(): void {
+    this.commonProviderHelper.recreateClient();
+  }
 
-    const completionOptions = {
-      model: options.model,
-      messages: messagesForAI,
-      max_tokens: options.max_tokens || options.maxTokens || 1000,
-      temperature: options.temperature ?? 1.0,
-      top_p: options.top_p ?? options.topP ?? 1.0,
-      frequency_penalty: options.frequency_penalty ?? options.frequencyPenalty ?? 0,
-      presence_penalty: options.presence_penalty ?? options.presencePenalty ?? 0,
-      stop: options.stop,
-      user: options.user,
-    };
+  /**
+   * Check if the service has a valid API key
+   */
+  public hasValidApiKey(): boolean {
+    return this.commonProviderHelper.hasValidApiKey();
+  }
 
-    try {
-      const response = await this.client.post<FireworksCompletionResponse>(
-        '/chat/completions',
-        completionOptions
-      );
+  /**
+   * Get a streaming chat completion
+   */
+  public async getChatCompletion(
+    messages: Message[],
+    options: CompletionOptions,
+    streamController: StreamControlHandler
+  ): Promise<Message> {
+    return this.commonProviderHelper.getChatCompletion(messages, options, streamController);
+  }
 
-      if (response.choices && response.choices.length > 0) {
-        const { role, content } = response.choices[0].message;
-        return { 
-          role: role as Message['role'], 
-          content: content.trim(),
-          messageId: uuidv4(),
-          timestamp: new Date(),
-          provider: this.name,
-          model: options.model
-        };
-      }
-
-      throw new Error('No chat completion choices returned from Fireworks.ai API');
-    } catch (error) {
-      // Check for auth errors
-      if ((error as AxiosError).response?.status === 401 || 
-          (error as AxiosError).response?.status === 403) {
-        throw this.handleAuthError(error);
-      }
-      
-      // Log detailed error information
-      const axiosError = error as AxiosError;
-      if (axiosError.response) {
-        console.error('Fireworks.ai chat completion error details:', {
-          status: axiosError.response.status,
-          statusText: axiosError.response.statusText,
-          data: axiosError.response.data,
-          request: {
-            model: completionOptions.model,
-            messageCount: completionOptions.messages.length
-          }
-        });
-      }
-      console.error('Fireworks.ai chat completion error:', error);
-      throw error;
-    }
+  /**
+   * Generate an image
+   */
+  public async getImageGeneration(
+    prompt: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    options: {
+      size?: `${number}x${number}`;
+      style?: string;
+      quality?: string;
+    } = {}
+  ): Promise<string[]> {
+    throw new Error('Not implemented');
   }
 } 

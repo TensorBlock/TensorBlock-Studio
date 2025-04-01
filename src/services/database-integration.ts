@@ -3,7 +3,7 @@ import { SettingsService, ProviderSettings } from './settings-service';
 import { Conversation, Message } from '../types/chat';
 import { ApiSettings } from './api-settings';
 import { v4 as uuidv4 } from 'uuid';
-import { AIProvider } from '../components/settings';
+import { AIProvider } from '../types/ai-providers';
 
 /**
  * Service for integrating database operations with app components

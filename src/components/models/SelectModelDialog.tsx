@@ -187,7 +187,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
                             </div>
                           )}
                         </div>
-                        {selectedModelId === model.id && (
+                        {(selectedModelId === model.id && selectedProviderName === model.provider) && (
                           <div className="ml-4 text-white">
                             <Check size={16} />
                           </div>

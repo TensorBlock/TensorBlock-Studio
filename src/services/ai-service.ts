@@ -1,8 +1,9 @@
 import { AiServiceProvider, CompletionOptions } from './core/ai-service-provider';
-import { ProviderFactory } from './providers/providers';
+import { ProviderFactory } from './providers/provider-factory';
 import { Message } from '../types/chat';
 import { StreamControlHandler } from './streaming-control';
-import { AIProvider } from '../components/settings/';
+import { AIProvider } from '../types/ai-providers';
+import { SettingsService } from './settings-service';
 
 export interface ModelOption {
   id: string;
@@ -61,22 +62,22 @@ export class AIService {
    */
   private constructor() {
     // Initialize with default providers
-    this.addOpenAIProvider();
-    this.addForgeProvider();
+    this.addProviders();
     this.setupSettingsListener();
   }
 
-  private addOpenAIProvider(): void {
-    const openaiProvider = ProviderFactory.getProvider('OpenAI');
-    if (openaiProvider) {
-      this.providers.set('OpenAI', openaiProvider);
-    }
-  }
-
-  private addForgeProvider(): void {
-    const forgeProvider = ProviderFactory.getProvider('Forge');
-    if (forgeProvider) {
-      this.providers.set('Forge', forgeProvider);
+  private addProviders(): void {
+    const settingsService = SettingsService.getInstance();
+    const settings = settingsService.getSettings();
+    for (const provider of Object.keys(settings.providers)) {
+      const providerSettings = settings.providers[provider];
+      console.log('Provider: ', provider, ' Provider settings: ', providerSettings);
+      if (providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
+        const providerInstance = ProviderFactory.getNewProvider(provider as AIProvider);
+        if (providerInstance) {
+          this.providers.set(provider, providerInstance);
+        }
+      }
     }
   }
 
@@ -85,7 +86,7 @@ export class AIService {
    */
   private setupSettingsListener(): void {
     const handleSettingsChange = () => {
-      ProviderFactory.refreshProviders();
+      // ProviderFactory.refreshProviders();
       // Refresh models when settings change
       this.refreshModels();
     };
@@ -165,7 +166,7 @@ export class AIService {
     }
     
     // If provider not in cache, try to create it
-    const provider = ProviderFactory.getProvider(name as AIProvider);
+    const provider = ProviderFactory.getNewProvider(name as AIProvider);
     if (provider) {
       this.providers.set(name, provider);
       return provider;
@@ -383,8 +384,6 @@ export class AIService {
         name: model,
         provider: providerName
       }));
-      
-      console.log('Models for provider', providerName, modelOptions);
 
       // Cache results
       this.modelCache.set(providerName, modelOptions);

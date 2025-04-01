@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Server, MessageSquare } from 'lucide-react';
 import { SettingsService, ProviderSettings } from '../services/settings-service';
-import { ApiManagement, ModelManagement, ChatSettings, AIProvider } from '../components/settings';
+import { ApiManagement, ModelManagement, ChatSettings } from '../components/settings';
+import { AIProvider } from '../types/ai-providers';
 import { DatabaseIntegrationService } from '../services/database-integration';
 import { AIService } from '../services/ai-service';
 

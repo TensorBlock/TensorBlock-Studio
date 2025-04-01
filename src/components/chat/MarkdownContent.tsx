@@ -21,7 +21,7 @@ type CodeProps = React.ClassAttributes<HTMLElement> &
 export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => {
   const [processedContent, setProcessedContent] = useState('');
   const [thinkContent, setThinkContent] = useState<string | null>(null);
-  const [isThinkExpanded, setIsThinkExpanded] = useState(false);
+  const [isThinkExpanded, setIsThinkExpanded] = useState(true);
   
   // Process content and check for thinking blocks
   useEffect(() => {
@@ -48,7 +48,13 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => 
       
       // Process the actual content
       processed = actualContent;
-    } else {
+    } 
+    else if (content.startsWith('<think>')) {
+      setThinkContent(content.substring(7));
+
+      processed = "";
+    }
+    else {
       setThinkContent(null);
     }
     

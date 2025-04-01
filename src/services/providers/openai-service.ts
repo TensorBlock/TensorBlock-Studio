@@ -1,10 +1,9 @@
-import { createOpenAI, OpenAIProvider } from '@ai-sdk/openai';
-import { generateText, streamText } from 'ai';
-import { v4 as uuidv4 } from 'uuid';
-import { Message, MessageRole } from '../../types/chat';
+import { createOpenAI } from '@ai-sdk/openai';
+import { Message } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
-import { SettingsService } from '../settings-service';
 import { StreamControlHandler } from '../streaming-control';
+import { CommonProviderHelper } from './common-provider-service';
+import { Provider } from 'ai';
 
 export const OPENAI_PROVIDER_NAME = 'OpenAI';
 
@@ -12,33 +11,22 @@ export const OPENAI_PROVIDER_NAME = 'OpenAI';
  * Implementation of OpenAI service provider using the AI SDK
  */
 export class OpenAIService implements AiServiceProvider {
-  private settingsService: SettingsService;
-  private OpenAiProviderInstance: OpenAIProvider;
-  private _apiKey: string = '';
+
+  private commonProviderHelper: CommonProviderHelper;
   private apiModels: string[] = [];
 
   /**
    * Create a new OpenAI service provider
    */
   constructor() {
-    this.settingsService = SettingsService.getInstance();
-    const openaiSettings = this.settingsService.getProviderSettings(OPENAI_PROVIDER_NAME);
-    
-    this._apiKey = openaiSettings.apiKey || '';
-    
-    this.OpenAiProviderInstance = this.createOpenAIClient();
+    this.commonProviderHelper = new CommonProviderHelper(OPENAI_PROVIDER_NAME, this.createClient);
   }
 
-  /**
-   * Create the OpenAI client with current settings
-   */
-  private createOpenAIClient() {
-    console.log('Creating OpenAI client');
-    console.log(this._apiKey);
+  private createClient(apiKey: string): Provider {
     return createOpenAI({
-      apiKey: this._apiKey,
+      apiKey: apiKey,
       compatibility: 'strict',
-      name: OPENAI_PROVIDER_NAME
+      name: OPENAI_PROVIDER_NAME,
     });
   }
 
@@ -85,22 +73,21 @@ export class OpenAIService implements AiServiceProvider {
    * Update the API key for OpenAI
    */
   public updateApiKey(apiKey: string): void {
-    this._apiKey = apiKey;
-    this.setupAuthentication();
+    this.commonProviderHelper.updateApiKey(apiKey);
   }
 
   /**
    * Setup authentication for OpenAI
    */
-  public setupAuthentication(): void {
-    this.OpenAiProviderInstance = this.createOpenAIClient();
+  public recreateClient(): void {
+    this.commonProviderHelper.recreateClient();
   }
 
   /**
    * Check if the service has a valid API key
    */
   public hasValidApiKey(): boolean {
-    return !!this._apiKey && this._apiKey.length > 0;
+    return this.commonProviderHelper.hasValidApiKey();
   }
 
   /**
@@ -111,83 +98,7 @@ export class OpenAIService implements AiServiceProvider {
     options: CompletionOptions,
     streamController: StreamControlHandler
   ): Promise<Message> {
-    if (!this.hasValidApiKey()) {
-      throw new Error('No API key provided for OpenAI');
-    }
-
-    try {
-      const model = this.OpenAiProviderInstance(options.model);
-      console.log('Model:', model.modelId);
-      
-      const formattedMessages = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-      console.log('Formatted messages:', formattedMessages);
-
-      let fullText = '';
-
-      if (options.stream) {
-        console.log('Streaming OpenAI response');
-        const { textStream } = await streamText({
-          model,
-          abortSignal: streamController.getAbortSignal(),
-          messages: formattedMessages,
-          temperature: options.temperature,
-          maxTokens: options.max_tokens,
-          topP: options.top_p,
-          frequencyPenalty: options.frequency_penalty,
-          presencePenalty: options.presence_penalty,
-          onFinish: () => {
-            console.log('OpenAI streaming chat completion finished');
-            streamController.onFinish();
-          },
-          
-          onError: (error) => {
-            console.error('OpenAI streaming chat completion error:', error);
-            throw new Error(`OpenAI streaming chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
-          }
-        });
-
-        for await (const textPart of textStream) {
-          fullText += textPart;
-          streamController.onChunk(fullText);
-        }
-      }
-      else{
-        const { text } = await generateText({
-          model,
-          messages: formattedMessages,
-          temperature: options.temperature,
-          maxTokens: options.max_tokens,
-          topP: options.top_p,
-          frequencyPenalty: options.frequency_penalty,
-          presencePenalty: options.presence_penalty
-        });
-
-        fullText = text;
-        streamController.onFinish();
-      }
-
-      return {
-        messageId: uuidv4(),
-        conversationId: messages[0].conversationId,
-        role: 'assistant' as MessageRole,
-        content: fullText,
-        timestamp: new Date(),
-        provider: this.name,
-        model: options.model
-      };
-
-    } catch (error) {
-      // If the error is an AbortError, we don't need to log it
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw error;
-      }
-      
-      console.error('OpenAI streaming chat completion error:', error);
-      throw new Error(`OpenAI streaming chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    return this.commonProviderHelper.getChatCompletion(messages, options, streamController);
   }
 
   /**
@@ -203,30 +114,5 @@ export class OpenAIService implements AiServiceProvider {
     } = {}
   ): Promise<string[]> {
     throw new Error('Not implemented');
-
-    // if (!this.hasValidApiKey()) {
-    //   throw new Error('No API key provided for OpenAI');
-    // }
-
-    // try {
-    //   const response = await generateImage({
-    //     model: 'dall-e-3',
-    //     prompt,
-    //     n: 1,
-    //     size: options.size || '1024x1024',
-    //     style: options.style || 'vivid',
-    //   });
-
-    //   if (!response.ok) {
-    //     const errorData = await response.json();
-    //     throw new Error(`Image generation failed: ${errorData.error?.message || response.statusText}`);
-    //   }
-
-    //   const data = await response.json();
-    //   return data.data.map((item: any) => item.url);
-    // } catch (error) {
-    //   console.error('OpenAI image generation error:', error);
-    //   throw new Error(`OpenAI image generation failed: ${error instanceof Error ? error.message : String(error)}`);
-    // }
   }
 } 
