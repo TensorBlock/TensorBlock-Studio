@@ -4,6 +4,8 @@ import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provide
 import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { SettingsService } from '../settings-service';
+import { mapModelCapabilities } from '../core/capabilities';
+import { AIServiceCapability } from '../core/capabilities';
 
 export const ANTHROPIC_PROVIDER_NAME = 'Anthropic';
 
@@ -65,6 +67,20 @@ export class AnthropicService implements AiServiceProvider {
     //   console.error('Failed to fetch OpenAI models:', error);
     //   return this.apiModels;
     // }
+  }
+
+  /**
+   * Get the capabilities of a model with this provider
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getModelCapabilities(model: string): AIServiceCapability[] {
+    return mapModelCapabilities(
+      false,
+      false,
+      false,
+      false,
+      false
+    );
   }
 
   /**

@@ -1,16 +1,18 @@
-import { generateText, LanguageModelV1, LanguageModelUsage, Provider, streamText } from 'ai';
+import { generateText, LanguageModelV1, LanguageModelUsage, Provider, streamText, ToolSet, ToolChoice } from 'ai';
 import { v4 as uuidv4 } from 'uuid';
 import { Message, MessageRole } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
 import { SettingsService } from '../settings-service';
 import { StreamControlHandler } from '../streaming-control';
+import { AIServiceCapability } from '../core/capabilities';
+import { mapModelCapabilities } from '../core/capabilities';
 
 /**
  * Implementation of OpenAI service provider using the AI SDK
  */
 export class CommonProviderHelper implements AiServiceProvider {
   private settingsService: SettingsService;
-  private ProviderInstance: Provider;
+  public ProviderInstance: Provider;
   private _apiKey: string = '';
   private apiModels: string[] = [];
 
@@ -89,6 +91,20 @@ export class CommonProviderHelper implements AiServiceProvider {
   }
 
   /**
+   * Get the capabilities of a model with this provider
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getModelCapabilities(model: string): AIServiceCapability[] {
+    return mapModelCapabilities(
+      false,
+      false,
+      false,
+      false,
+      true
+    );
+  }
+
+  /**
    * Update the API key for OpenAI
    */
   public updateApiKey(apiKey: string): void {
@@ -133,7 +149,9 @@ export class CommonProviderHelper implements AiServiceProvider {
     modelInstance: LanguageModelV1,
     messages: Message[],
     options: CompletionOptions,
-    streamController: StreamControlHandler
+    streamController: StreamControlHandler,
+    tools: ToolSet | undefined = undefined,
+    toolChoice: ToolChoice<ToolSet> | undefined = undefined
   ): Promise<Message> {
     try {
       const formattedMessages = messages.map(msg => ({
@@ -154,6 +172,8 @@ export class CommonProviderHelper implements AiServiceProvider {
           topP: options.top_p,
           frequencyPenalty: options.frequency_penalty,
           presencePenalty: options.presence_penalty,
+          tools: tools,
+          toolChoice: toolChoice,
           onFinish: (result: { usage: LanguageModelUsage }) => {
             console.log('OpenAI streaming chat completion finished');
             streamController.onFinish(result.usage);
@@ -168,21 +188,25 @@ export class CommonProviderHelper implements AiServiceProvider {
           fullText += textPart;
           streamController.onChunk(fullText);
         }
-
-        
       }
       else{
-        const { text, usage } = await generateText({
+        console.log(`Generating ${options.provider}/${options.model} response`);
+        const { text, usage, toolResults } = await generateText({
           model: modelInstance,
           messages: formattedMessages,
           temperature: options.temperature,
           maxTokens: options.max_tokens,
           topP: options.top_p,
           frequencyPenalty: options.frequency_penalty,
-          presencePenalty: options.presence_penalty
+          presencePenalty: options.presence_penalty,
+          tools: tools,
+          toolChoice: toolChoice,
         });
 
+        console.log('toolResults: ', toolResults);
+
         fullText = text;
+        streamController.onChunk(fullText);
         streamController.onFinish(usage);
       }
 

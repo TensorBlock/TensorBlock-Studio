@@ -1,10 +1,11 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation, Message } from '../../types/chat';
-import { Send, Square, Copy, RotateCcw, Share2, Pencil, Loader2 } from 'lucide-react';
+import { Send, Square, Copy, RotateCcw, Share2, Pencil, Loader2, Globe } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
 import { DatabaseIntegrationService } from '../../services/database-integration';
+import { SettingsService } from '../../services/settings-service';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -33,6 +34,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [messagesList, setMessagesList] = useState<Message[]>([]);
+  const [webSearchActive, setWebSearchActive] = useState(false);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -44,6 +46,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation));
     }
   }, [activeConversation, activeConversation?.messages]);
+
+  useEffect(() => {
+    const webSearchActive = SettingsService.getInstance().getWebSearchEnabled();
+    setWebSearchActive(webSearchActive);
+    
+  }, [SettingsService.getInstance().getWebSearchEnabled()]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -168,6 +176,11 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       return fatherMessage.childrenMessageIds.length;
     }
     return 0;
+  }
+
+  const handleToggleWebSearch = () => {
+    setWebSearchActive(!webSearchActive);
+    SettingsService.getInstance().setWebSearchEnabled(!webSearchActive);
   }
 
   // If no active conversation is selected
@@ -319,7 +332,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       </div>
       
       {/* Input form */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 px-4 pt-4 pb-2 m-2 mb-4 border border-gray-200 rounded-lg">
         <div className="flex space-x-2">
           <input
             type="text"
@@ -329,12 +342,26 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
           />
-          
+        </div>
+
+        <div className="flex flex-row items-center justify-between">
+          <button
+            type="button"
+            onClick={handleToggleWebSearch}
+            className={`flex items-center justify-center w-fit h-8 p-2 ml-2 transition-all duration-200 rounded-full outline outline-2 hover:outline
+              ${webSearchActive ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
+            aria-label="Toggle Web Search"
+            title="Toggle Web Search"
+          >
+            <Globe className={`mr-1 ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
+            <span className={`text-sm font-light ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>Web Search</span>
+          </button>
+
           {isCurrentlyStreaming || hasStreamingMessage ? (
             <button
               type="button"
               onClick={handleStopStreaming}
-              className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="flex items-center justify-center w-10 h-10 text-white bg-red-500 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
               aria-label="Stop response"
               title="Stop response"
             >
@@ -344,7 +371,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="flex items-center justify-center w-10 h-10 text-white bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               aria-label="Send message"
             >
               <Send size={20} />

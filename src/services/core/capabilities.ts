@@ -3,7 +3,6 @@
  */
 export enum AIServiceCapability {
   TextCompletion = 'textCompletion',
-  ChatCompletion = 'chatCompletion',
   ImageGeneration = 'imageGeneration',
   ImageEditing = 'imageEditing',
   AudioTranscription = 'audioTranscription',
@@ -17,6 +16,7 @@ export enum AIServiceCapability {
   VisionAnalysis = 'visionAnalysis',
   FineTuning = 'fineTuning',
   StreamingCompletion = 'streamingCompletion',
+  WebSearch = 'webSearch',
 }
 
 /**
@@ -26,11 +26,11 @@ export const mapModelCapabilities = (
   supportsImages: boolean,
   supportsAudio: boolean,
   supportsObjectGeneration: boolean,
-  supportsToolUsage: boolean
+  supportsToolUsage: boolean,
+  supportsWebSearch: boolean
 ): AIServiceCapability[] => {
   const capabilities: AIServiceCapability[] = [
     AIServiceCapability.TextCompletion,
-    AIServiceCapability.ChatCompletion,
     AIServiceCapability.StreamingCompletion
   ];
 
@@ -48,6 +48,10 @@ export const mapModelCapabilities = (
 
   if (supportsToolUsage) {
     capabilities.push(AIServiceCapability.ToolUsage);
+  }
+
+  if (supportsWebSearch) {
+    capabilities.push(AIServiceCapability.WebSearch);
   }
 
   return capabilities;

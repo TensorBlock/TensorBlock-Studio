@@ -1,9 +1,11 @@
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI, openai, OpenAIProvider } from '@ai-sdk/openai';
 import { Message } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
 import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
-import { Provider } from 'ai';
+import { Provider, ToolChoice, ToolSet } from 'ai';
+import { SettingsService } from '../settings-service';
+import { AIServiceCapability, mapModelCapabilities } from '../core/capabilities';
 
 export const OPENAI_PROVIDER_NAME = 'OpenAI';
 
@@ -70,6 +72,20 @@ export class OpenAIService implements AiServiceProvider {
   }
 
   /**
+   * Get the capabilities of a model with this provider
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getModelCapabilities(model: string): AIServiceCapability[] {
+    return mapModelCapabilities(
+      false,
+      false,
+      false,
+      false,
+      true
+    );
+  }
+
+  /**
    * Update the API key for OpenAI
    */
   public updateApiKey(apiKey: string): void {
@@ -98,7 +114,45 @@ export class OpenAIService implements AiServiceProvider {
     options: CompletionOptions,
     streamController: StreamControlHandler
   ): Promise<Message> {
+    console.log("OPEN AI Getting chat completion");
+    const isWebSearchActive = SettingsService.getInstance().getWebSearchEnabled();
+
+    if (isWebSearchActive) {
+      console.log("Web search is active");
+      return this.getChatCompletionWithWebSearch(messages, options, streamController);
+    }
+
     return this.commonProviderHelper.getChatCompletion(messages, options, streamController);
+  }
+
+  public async getChatCompletionWithWebSearch(
+    messages: Message[],
+    options: CompletionOptions,
+    streamController: StreamControlHandler
+  ): Promise<Message> {
+
+    const tools: ToolSet = {
+      web_search_preview: openai.tools.webSearchPreview({
+        // optional configuration:
+        searchContextSize: 'high',
+        userLocation: {
+          type: 'approximate',
+          city: 'San Francisco',
+          region: 'California',
+        },
+      }),
+    };
+
+    const toolChoice: ToolChoice<ToolSet> = {
+      type: 'tool',
+      toolName: 'web_search_preview',
+    }
+    
+    const modelInstance = (this.commonProviderHelper.ProviderInstance as OpenAIProvider).responses(options.model);
+
+    options.stream = false;
+
+    return CommonProviderHelper.getChatCompletionByModel(modelInstance, messages, options, streamController, tools, toolChoice);
   }
 
   /**

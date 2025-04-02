@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Conversation } from '../../types/chat';
-import { PlusCircle, MessageSquare, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { MessageSquare, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, MessageSquarePlus, FolderPlus } from 'lucide-react';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
@@ -251,24 +251,22 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
       
-      <div className={`p-4 border-b border-gray-200 ${isCollapsed ? 'flex justify-center opacity-0 pointer-events-none' : ''}`}>
-        {isCollapsed ? (
-          <button
-            onClick={onCreateNewChat}
-            className="w-0 p-0 transition-colors bg-white border border-gray-300 rounded-full hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            title="New Chat"
-            aria-label="Create new chat"
-          >
-          </button>
-        ) : (
-          <button
-            onClick={onCreateNewChat}
-            className="flex items-center justify-center w-full p-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <PlusCircle size={16} className="mr-2" />
-            New Chat
-          </button>
-        )}
+      <div className={`p-2 border-b border-gray-200 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'flex justify-between items-center'}`}>
+        <button
+          onClick={onCreateNewChat}
+          className="flex items-center justify-center p-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md aspect-square hover:bg-gray-50 checked:outline-none checked:ring-2 checked:ring-blue-500"
+        >
+          <FolderPlus size={16}/>
+        </button>
+        
+        <button
+          onClick={onCreateNewChat}
+          className="flex items-center justify-center gap-1 p-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:bg-gray-50 checked:outline-none checked:ring-2 checked:ring-blue-500"
+        >
+          <MessageSquarePlus size={16}/>
+          <span className="text-sm">New Chat</span>
+        </button>
+        
       </div>
       
       <div className="flex-1 overflow-y-auto">

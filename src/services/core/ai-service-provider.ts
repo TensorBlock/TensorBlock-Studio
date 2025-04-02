@@ -1,5 +1,6 @@
 import { Message } from '../../types/chat';
 import { StreamControlHandler } from '../streaming-control';
+import { AIServiceCapability } from './capabilities';
 
 /**
  * Configuration for AI service providers
@@ -39,6 +40,11 @@ export interface AiServiceProvider {
    */
   availableModels?: string[];
   
+  /**
+   * Get the capabilities of a model with this provider
+   */
+  getModelCapabilities(model: string): AIServiceCapability[];
+
   /**
    * Fetch available models from the provider API
    */

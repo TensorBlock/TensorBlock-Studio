@@ -4,6 +4,8 @@ import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { SettingsService } from '../settings-service';
 import { createOpenRouter, OpenRouterProvider } from '@openrouter/ai-sdk-provider';
+import { mapModelCapabilities } from '../core/capabilities';
+import { AIServiceCapability } from '../core/capabilities';
 
 export const OPENROUTER_PROVIDER_NAME = 'OpenRouter';
 
@@ -66,6 +68,20 @@ export class OpenRouterService implements AiServiceProvider {
     //   console.error('Failed to fetch OpenAI models:', error);
     //   return this.apiModels;
     // }
+  }
+
+  /**
+   * Get the capabilities of a model with this provider
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getModelCapabilities(model: string): AIServiceCapability[] {
+    return mapModelCapabilities(
+      false,
+      false,
+      false,
+      false,
+      false
+    );
   }
 
   /**

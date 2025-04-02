@@ -26,6 +26,7 @@ export interface UserSettings {
   selectedProvider: string;
   selectedModel: string;
   useStreaming: boolean;
+  webSearchEnabled: boolean;
 }
 
 /**
@@ -71,6 +72,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   selectedProvider: 'OpenAI',
   selectedModel: 'gpt-3.5-turbo',
   useStreaming: true,
+  webSearchEnabled: true,
 };
 
 /**
@@ -129,6 +131,7 @@ export class SettingsService {
             selectedProvider: parsedSettings.selectedProvider || DEFAULT_SETTINGS.selectedProvider,
             selectedModel: parsedSettings.selectedModel || DEFAULT_SETTINGS.selectedModel,
             useStreaming: parsedSettings.useStreaming !== undefined ? parsedSettings.useStreaming : DEFAULT_SETTINGS.useStreaming,
+            webSearchEnabled: parsedSettings.webSearchEnabled !== undefined ? parsedSettings.webSearchEnabled : DEFAULT_SETTINGS.webSearchEnabled,
           };
         }
         
@@ -198,6 +201,21 @@ export class SettingsService {
       this.settings.providers[providerKey].apiKey = apiKey;
     }
     
+    this.saveSettings();
+  }
+
+  /**
+   * Get whether web search is enabled
+   */
+  public getWebSearchEnabled(): boolean {
+    return this.settings.webSearchEnabled;
+  }
+
+  /**
+   * Set whether web search is enabled
+   */
+  public setWebSearchEnabled(webSearchEnabled: boolean): void {
+    this.settings.webSearchEnabled = webSearchEnabled;
     this.saveSettings();
   }
 

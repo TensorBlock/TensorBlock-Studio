@@ -11,16 +11,6 @@
   @tailwind utilities;
 }
 
-:root {
-  --primary-color-50: #F8F7F3;
-  --primary-color: #9B9378;
-  --primary-color-200: #E6E3DB;
-  --primary-color-outline: #E6E3DB;
-  --surface-200: #E7E5E4;
-  --surface-700: #44403C;
-}
-
-
 /* Add these styles for Electron window dragging */
 .app-region-drag {
   -webkit-app-region: drag;
@@ -30,4 +20,21 @@
 .app-region-no-drag {
   -webkit-app-region: no-drag;
   app-region: no-drag;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent; /* 设置轨道背景为透明 */
+}
+
+::-webkit-scrollbar {
+  width: 10px; /* 增大滚动条宽度 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00000033; /* 滑块的背景颜色 */
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  -webkit-transition: 0.3s;
+  background: #00000066; /* 滑块的背景颜色 */
 }
