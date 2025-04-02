@@ -230,14 +230,19 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   };
 
   // Handle regenerating the last AI response
-  const handleRegenerateResponse = async () => {
-    if (!isServiceInitialized || !chatServiceRef.current) return;
+  const handleRegenerateResponse = async (messageId: string) => {
+    if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
     
     try {
       // Use the new regenerateLastMessage method
-      await chatServiceRef.current.regenerateLastMessage((updatedConversation) => {
-        setConversations(updatedConversation);
-      });
+      await chatServiceRef.current.regenerateAiMessage(
+        messageId, 
+        activeConversationId,
+        true,
+        (updatedConversation) => {
+          setConversations(updatedConversation);
+        }
+      );
     } catch (error) {
       console.error('Error regenerating response:', error);
     }

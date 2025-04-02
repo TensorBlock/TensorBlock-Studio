@@ -148,7 +148,8 @@ export class ChatService {
       const model = settingsService.getSelectedModel();
 
       //#region Save user message to database and update title
-      let updatedConversation = await MessageHelper.addUserMessageToConversation(content, currentConversation);
+      // eslint-disable-next-line prefer-const
+      let {conversation: updatedConversation, message: userMessage} = await MessageHelper.addUserMessageToConversation(content, currentConversation);
       
       // Update in memory
       this.conversations = this.conversations.map(c => 
@@ -159,43 +160,41 @@ export class ChatService {
       //#endregion
 
       //#region Map messages to messages array
+      console.log('Updated conversation:', updatedConversation);
       const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false);
+      console.log('Messages:', messages);
       //#endregion
 
       //#region Streaming Special Message Handling
-      if(isStreaming) {
-        // Create a placeholder for the streaming message
-        const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
+      // Create a placeholder for the streaming message
+      const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
 
-        const latestMessage = Array.from(updatedConversation.messages.values()).length > 0 ? Array.from(updatedConversation.messages.values())[Array.from(updatedConversation.messages.values()).length - 1] : null;
+      userMessage.childrenMessageIds.push(placeholderMessage.messageId);
+      userMessage.preferIndex = userMessage.childrenMessageIds.length - 1;
 
-        if(latestMessage) {
-          latestMessage.childrenMessageIds.push(placeholderMessage.messageId);
-          latestMessage.preferIndex = latestMessage.childrenMessageIds.length - 1;
-        }
+      // Add placeholder to conversation and update UI
+      const messagesWithPlaceholder = new Map(updatedConversation.messages);
+      messagesWithPlaceholder.set(placeholderMessage.messageId, placeholderMessage);
 
-        // Add placeholder to conversation and update UI
-        updatedConversation = {
-          ...updatedConversation,
-          messages: new Map([
-            ...Array.from(updatedConversation.messages.entries()), 
-            [placeholderMessage.messageId, placeholderMessage]
-          ]),
-          updatedAt: new Date()
-        };
+      updatedConversation = {
+        ...updatedConversation,
+        messages: messagesWithPlaceholder,
+        updatedAt: new Date()
+      };
 
-        this.conversations = this.conversations.map(c => 
-          c.id === conversationId ? updatedConversation : c
-        );
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? updatedConversation : c
+      );
 
-        conversationUpdate(this.conversations);
-      }
+      conversationUpdate(this.conversations);
       //#endregion
 
       //#region Send Chat Message to AI with streaming
 
       // Create a new abort controller for this request
-      const streamController = new StreamControlHandler(updatedConversation, 
+      const streamController = new StreamControlHandler(
+        updatedConversation, 
+        placeholderMessage,
         // ---- On chunk callback ----
         (updated: Conversation) => {  
           this.conversations = this.conversations.map(c => 
@@ -210,7 +209,7 @@ export class ChatService {
 
           if (aiResponse === null) return;
 
-          const finalConversation = await MessageHelper.addAssistantMessageToConversation(aiResponse, updatedConversation);
+          const finalConversation = await MessageHelper.insertAssistantMessageToConversation(userMessage, aiResponse, updatedConversation);
 
           // Update in memory
           this.conversations = this.conversations.map(c => 
@@ -276,14 +275,11 @@ export class ChatService {
       }
       
       // Find the message
-      const messageIndex = Array.from(currentConversation.messages.values()).findIndex(m => m.messageId === messageId);
-      
-      if (messageIndex === -1) {
+      const originalMessage = currentConversation.messages.get(messageId);
+
+      if(!originalMessage) {
         throw new Error('Message not found');
       }
-      
-      // Get the original message
-      const originalMessage = Array.from(currentConversation.messages.values())[messageIndex];
 
       // Check if the message is a user message (only user messages can be edited)
       if (originalMessage.role !== 'user') {
@@ -291,11 +287,15 @@ export class ChatService {
       }
       
       const fatherMessageId = originalMessage.fatherMessageId;
-      const fatherMessage = Array.from(currentConversation.messages.values()).find(m => m.messageId === fatherMessageId);
+      if(!fatherMessageId) {
+        throw new Error('Father message not found');
+      }
 
+      const fatherMessage = currentConversation.messages.get(fatherMessageId);
       if(!fatherMessage) {
         throw new Error('Father message not found');
       }
+
       //#endregion
 
       const settingsService = SettingsService.getInstance();
@@ -303,7 +303,8 @@ export class ChatService {
       const model = settingsService.getSelectedModel();
 
       //#region Save edited message to database
-      let updatedConversation = await MessageHelper.insertUserMessageToConversation(fatherMessage, newContent, currentConversation);
+      // eslint-disable-next-line prefer-const
+      let {conversation: updatedConversation, message: editedMessage} = await MessageHelper.insertUserMessageToConversation(fatherMessage, newContent, currentConversation);
 
       // Update in memory
       this.conversations = this.conversations.map(c => 
@@ -314,43 +315,40 @@ export class ChatService {
       //#endregion
       
       //#region Map messages to messages array
-      const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false);
+      const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false, editedMessage.messageId);
       //#endregion
 
       //#region Streaming Special Message Handling
-      if(isStreaming) {
-        // Create a placeholder for the streaming message
-        const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
 
-        const latestMessage = Array.from(updatedConversation.messages.values()).length > 0 ? Array.from(updatedConversation.messages.values())[Array.from(updatedConversation.messages.values()).length - 1] : null;
+      // Create a placeholder for the streaming message
+      const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
 
-        if(latestMessage) {
-          latestMessage.childrenMessageIds.push(placeholderMessage.messageId);
-          latestMessage.preferIndex = latestMessage.childrenMessageIds.length - 1;
-        }
+      editedMessage.childrenMessageIds.push(placeholderMessage.messageId);
+      editedMessage.preferIndex = editedMessage.childrenMessageIds.length - 1;
 
-        // Add placeholder to conversation and update UI
-        updatedConversation = {
-          ...updatedConversation,
-          messages: new Map([
-            ...Array.from(updatedConversation.messages.entries()), 
-            [placeholderMessage.messageId, placeholderMessage]
-          ]),
-          updatedAt: new Date()
-        };
+      const messagesWithPlaceholder = new Map(updatedConversation.messages);
+      messagesWithPlaceholder.set(placeholderMessage.messageId, placeholderMessage);
 
-        this.conversations = this.conversations.map(c => 
-          c.id === conversationId ? updatedConversation : c
-        );
+      // Add placeholder to conversation and update UI
+      updatedConversation = {
+        ...updatedConversation,
+        messages: messagesWithPlaceholder,
+        updatedAt: new Date()
+      };
 
-        conversationUpdate(this.conversations);
-      }
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? updatedConversation : c
+      );
+
+      conversationUpdate(this.conversations);
       //#endregion
 
       //#region Send Chat Message to AI with streaming
 
       // Create a new abort controller for this request
-      const streamController = new StreamControlHandler(updatedConversation, 
+      const streamController = new StreamControlHandler(
+        updatedConversation, 
+        placeholderMessage,
         // ---- On chunk callback ----
         (updated: Conversation) => {  
           this.conversations = this.conversations.map(c => 
@@ -365,7 +363,7 @@ export class ChatService {
 
           if (aiResponse === null) return;
 
-          const finalConversation = await MessageHelper.addAssistantMessageToConversation(aiResponse, updatedConversation);
+          const finalConversation = await MessageHelper.insertAssistantMessageToConversation(editedMessage, aiResponse, updatedConversation);
 
           // Update in memory
           this.conversations = this.conversations.map(c => 
@@ -405,6 +403,141 @@ export class ChatService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Regenerate a specific AI Response in the active conversation
+   */
+  public async regenerateAiMessage(
+    messageId: string,
+    conversationId: string,
+    isStreaming: boolean,
+    conversationUpdate: (conversations: Conversation[]) => void
+  ): Promise<void> {
+
+    if (!this.dbService) {
+      throw new Error('Database service not initialized');
+    }
+    
+    try {
+      //#region Get message and father message in conversation
+      const currentConversation = this.conversations.find(c => c.id === conversationId);
+      
+      if (!currentConversation) {
+        throw new Error('Active conversation not found');
+      }
+      
+      const originalMessage = currentConversation.messages.get(messageId);
+
+      if(!originalMessage) {
+        throw new Error('Message not found');
+      }
+
+      // Check if the message is a user message (only user messages can be edited)
+      if (originalMessage.role !== 'assistant') {
+        throw new Error('Only assistant messages can be regenerated');
+      }
+
+      const fatherMessageId = originalMessage.fatherMessageId;
+      if(!fatherMessageId) {
+        throw new Error('Father message not found');
+      }
+
+      const fatherMessage = currentConversation.messages.get(fatherMessageId);
+      if(!fatherMessage) {
+        throw new Error('Father message not found');
+      }
+
+      //#endregion
+
+      const settingsService = SettingsService.getInstance();
+      const provider = settingsService.getSelectedProvider();
+      const model = settingsService.getSelectedModel();
+      
+      //#region Map messages to messages array
+      const messages = MessageHelper.mapMessagesTreeToList(currentConversation, false, fatherMessage.messageId);
+      
+      //#endregion
+
+      //#region Streaming Special Message Handling
+
+      // Create a placeholder for the streaming message
+      const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
+
+      fatherMessage.childrenMessageIds.push(placeholderMessage.messageId);
+      fatherMessage.preferIndex = fatherMessage.childrenMessageIds.length - 1;
+
+      const messagesWithPlaceholder = new Map(currentConversation.messages);
+      messagesWithPlaceholder.set(placeholderMessage.messageId, placeholderMessage);
+
+      // Add placeholder to conversation and update UI
+      const updatedConversation = {
+        ...currentConversation,
+        messages: messagesWithPlaceholder,
+        updatedAt: new Date()
+      };
+
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? updatedConversation : c
+      );
+
+      conversationUpdate(this.conversations);
+      //#endregion
+
+      //#region Send Chat Message to AI with streaming
+      // Create a new abort controller for this request
+      const streamController = new StreamControlHandler(
+        updatedConversation, 
+        placeholderMessage,
+        // ---- On chunk callback ----
+        (updated: Conversation) => {  
+          this.conversations = this.conversations.map(c => 
+            c.id === conversationId ? updated : c
+          );
+          conversationUpdate(this.conversations);
+        }, 
+        // ---- On finish callback ----
+        async (aiResponse: Message | null) => { 
+
+          console.log(aiResponse);
+
+          if (aiResponse === null) return;
+
+          const finalConversation = await MessageHelper.insertAssistantMessageToConversation(fatherMessage, aiResponse, currentConversation);
+
+          // Update in memory
+          this.conversations = this.conversations.map(c => 
+            c.id === conversationId ? finalConversation : c
+          );
+
+          conversationUpdate(this.conversations);
+
+          this.streamControllerMap.delete(conversationId);
+        }
+      );
+
+      this.streamControllerMap.set(conversationId, streamController);
+
+      // Send Chat Message to AI with streaming
+      await this.aiService.getChatCompletion(
+        messages, 
+        {
+          model: settingsService.getSelectedModel(),
+          provider: settingsService.getSelectedProvider(),
+          stream: isStreaming
+        },
+        streamController
+      );
+
+      conversationUpdate(this.conversations);
+      
+      //#endregion
+
+    } catch (err) {
+      console.error('Error regenerating AI message:', err);
+      throw err;
+    }
+
   }
 
   /**
@@ -515,76 +648,5 @@ export class ChatService {
    */
   public isServiceInitialized(): boolean {
     return this.isInitialized;
-  }
-
-  /**
-   * Regenerate the last AI response in the active conversation
-   */
-  public async regenerateLastMessage(conversationUpdate: (conversations: Conversation[]) => void): Promise<void> {
-    if (!this.dbService || !this.activeConversationId) {
-      throw new Error('Database service not initialized or no active conversation');
-    }
-    
-    try {
-      const conversationId = this.activeConversationId;
-      const activeConversation = this.conversations.find(c => c.id === conversationId);
-      if (!activeConversation) {
-        throw new Error('Active conversation not found');
-      }
-      
-      // Find the last user message
-      const messages = Array.from(activeConversation.messages.values());
-      
-      // Remove the last assistant message
-      let lastAssistantIndex = -1;
-      for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].role === 'assistant') {
-          lastAssistantIndex = i;
-          break;
-        }
-      }
-      
-      // If no assistant message found, nothing to regenerate
-      if (lastAssistantIndex === -1) {
-        throw new Error('No assistant message to regenerate');
-      }
-      
-      // Keep only messages up to the last user message before the assistant response
-      const updatedMessages = Array.from(activeConversation.messages.values()).slice(0, lastAssistantIndex);
-      
-      // Create a new conversation state without the last assistant message
-      const updatedConversation: Conversation = {
-        ...activeConversation,
-        messages: new Map(updatedMessages.map(message => [message.messageId, message])),
-        updatedAt: new Date()
-      };
-      
-      // Update in memory
-      this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
-      );
-      
-      // Update UI
-      conversationUpdate(this.conversations);
-      
-      // const settingsService = SettingsService.getInstance();
-      
-      // TODO: Uncomment this when we have a way to handle streaming
-
-      // Select between streaming and non-streaming based on settings
-      // if (settingsService.getUseStreaming()) {
-      //   await this.sendMessage(
-      //     updatedConversation, 
-      //     conversationUpdate, 
-      //     undefined
-      //   );
-      // } else {
-      //   await this.sendMessageInternal(updatedConversation, conversationUpdate);
-      // }
-      
-    } catch (error) {
-      console.error('Error regenerating message:', error);
-      throw error;
-    }
   }
 }

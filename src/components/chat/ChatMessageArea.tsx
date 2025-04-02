@@ -11,7 +11,7 @@ interface ChatMessageAreaProps {
   error: string | null;
   onSendMessage: (content: string) => void;
   onStopStreaming?: () => void;
-  onRegenerateResponse?: () => void;
+  onRegenerateResponse?: (messageId: string) => void;
   onEditMessage?: (messageId: string, newContent: string) => void;
   isCurrentlyStreaming?: boolean;
 }
@@ -62,9 +62,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   };
 
   // Handle regenerate response
-  const handleRegenerateResponse = () => {
+  const handleRegenerateResponse = (messageId: string) => {
     if (onRegenerateResponse) {
-      onRegenerateResponse();
+      onRegenerateResponse(messageId);
     } else {
       console.error('Regenerate response function not provided');
     }
@@ -165,7 +165,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'regenerate',
                   icon: RotateCcw,
                   label: 'Regenerate',
-                  onClick: () => handleRegenerateResponse(),
+                  onClick: () => handleRegenerateResponse(message.messageId),
                 }
               ];
               

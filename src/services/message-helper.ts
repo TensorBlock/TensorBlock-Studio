@@ -4,9 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class MessageHelper {
   
-    public static async addUserMessageToConversation(content: string, conversation: Conversation): Promise<Conversation> {
+    public static async addUserMessageToConversation(content: string, conversation: Conversation): Promise<{conversation: Conversation, message: Message}> {
 
-        const latestMessage = Array.from(conversation.messages.values()).length > 0 ? Array.from(conversation.messages.values())[Array.from(conversation.messages.values()).length - 1] : null;
+        const latestMessage = MessageHelper.getLastMessage(conversation);
 
         const dbService = DatabaseIntegrationService.getInstance();
 
@@ -29,28 +29,32 @@ export class MessageHelper {
             await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.id);
         }
         
-        const shouldUpdateTitle = Array.from(conversation.messages.values()).length === 1 && Array.from(conversation.messages.values())[0].role === 'system';
+        const shouldUpdateTitle = conversation.messages.size === 1 && Array.from(conversation.messages.values())[0].role === 'system';
 
         const title = shouldUpdateTitle 
             ? content.substring(0, 30) + (content.length > 30 ? '...' : '') 
             : conversation.title;
 
+
+        const messages = new Map(conversation.messages);
+        messages.set(userMessage.messageId, userMessage);
+
         const updatedConversation = {
             ...conversation,
             title,
-            messages: new Map([
-                ...Array.from(conversation.messages.entries()), 
-                [userMessage.messageId, userMessage]
-            ]),
+            messages,
             updatedAt: new Date()
         };
 
         await dbService.updateConversation(updatedConversation);
 
-        return updatedConversation;
+        return {
+            conversation: updatedConversation,
+            message: userMessage
+        };
     }
     
-    public static async insertUserMessageToConversation(fatherMessage: Message, newContent: string, conversation: Conversation): Promise<Conversation> {
+    public static async insertUserMessageToConversation(fatherMessage: Message, newContent: string, conversation: Conversation): Promise<{conversation: Conversation, message: Message}> {
 
         const dbService = DatabaseIntegrationService.getInstance();
 
@@ -71,38 +75,37 @@ export class MessageHelper {
         fatherMessage.preferIndex = fatherMessage.childrenMessageIds.length - 1;
         await dbService.updateChatMessage(fatherMessage.messageId, fatherMessage, conversation.id);
 
+        const messages = new Map(conversation.messages);
+        messages.set(userMessage.messageId, userMessage);
+
         const updatedConversation = {
             ...conversation,
-            messages: new Map([
-                ...Array.from(conversation.messages.entries()), 
-                [userMessage.messageId, userMessage]
-            ]),
+            messages,
             updatedAt: new Date()
         };
 
         await dbService.updateConversation(updatedConversation);
 
-        return updatedConversation;
+        return {
+            conversation: updatedConversation,
+            message: userMessage
+        };
     }
 
-    public static async addAssistantMessageToConversation(aiResponse: Message, conversation: Conversation): Promise<Conversation> {
+    public static async insertAssistantMessageToConversation(fatherMessage: Message, aiResponse: Message, conversation: Conversation): Promise<Conversation> {
 
         const updatedConversation = MessageHelper.removeAllPlaceholderMessage(conversation);
 
-        const latestMessage = Array.from(updatedConversation.messages.values()).length > 0 ? Array.from(updatedConversation.messages.values())[Array.from(updatedConversation.messages.values()).length - 1] : null;
-        
-        const updatedAiResponse: Message = {
-            ...aiResponse,
-            fatherMessageId: latestMessage?.messageId || null,
-        }
-
         const dbService = DatabaseIntegrationService.getInstance();
 
-        if(latestMessage) {
-            latestMessage.childrenMessageIds.push(updatedAiResponse.messageId);
-            latestMessage.preferIndex = latestMessage.childrenMessageIds.length - 1;
-            await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.id);
+        const updatedAiResponse: Message = {
+            ...aiResponse,
+            fatherMessageId: fatherMessage.messageId,
         }
+
+        fatherMessage.childrenMessageIds.push(updatedAiResponse.messageId);
+        fatherMessage.preferIndex = fatherMessage.childrenMessageIds.length - 1;
+        await dbService.updateChatMessage(fatherMessage.messageId, fatherMessage, conversation.id);
 
         await dbService.saveChatMessage(
             updatedAiResponse.messageId,
@@ -117,12 +120,12 @@ export class MessageHelper {
             updatedAiResponse.preferIndex
         );
 
+        const messages = new Map(updatedConversation.messages);
+        messages.set(updatedAiResponse.messageId, updatedAiResponse);
+
         const finalConversation: Conversation = {
             ...updatedConversation,
-            messages: new Map([
-                ...Array.from(updatedConversation.messages.entries()), 
-                [aiResponse.messageId, aiResponse]
-            ]),
+            messages,
             updatedAt: new Date()
         };
 
@@ -162,7 +165,14 @@ export class MessageHelper {
         };
     }
 
-    public static mapMessagesTreeToList(conversation: Conversation, isFilterSystemMessages: boolean = true): Message[] {
+    /**
+     * Map the messages tree to a list of messages
+     * @param conversation - The conversation to map
+     * @param isFilterSystemMessages - Whether to filter system messages (default: true)
+     * @param stopAtMessageId - The message id to stop at (inclusive) (optional)
+     * @returns The list of messages
+     */
+    public static mapMessagesTreeToList(conversation: Conversation, isFilterSystemMessages: boolean = true, stopAtMessageId: string | null = null): Message[] {
 
         const messages = isFilterSystemMessages 
             ? (Array.from(conversation?.messages.values()).filter(m => m.role !== 'system') || []) 
@@ -174,13 +184,17 @@ export class MessageHelper {
         let currentMessage: Message | null = messages[0];
 
         while(currentMessage !== null) {
-        
+
             const copyMessage = {...currentMessage};
 
             constructedMessageList.push(copyMessage);
 
+            if(stopAtMessageId !== null && currentMessage.messageId === stopAtMessageId) {
+                break;
+            }
+
             const nextIndex: number = currentMessage.preferIndex;
-            
+
             const isNextIndexValid: boolean = nextIndex >= 0 && nextIndex < currentMessage.childrenMessageIds.length;
 
             currentMessage = isNextIndexValid 
@@ -190,5 +204,13 @@ export class MessageHelper {
 
         return constructedMessageList;
             
+    }
+
+    public static getLastMessage(conversation: Conversation): Message | null {
+        if(conversation.messages.size === 0) return null;
+
+        const mapedMessages = MessageHelper.mapMessagesTreeToList(conversation, false, null);
+        console.log('Maped messages:', mapedMessages);
+        return mapedMessages[mapedMessages.length - 1];
     }
 }

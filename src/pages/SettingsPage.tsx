@@ -20,7 +20,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onSave,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('api');
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('OpenAI');
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('TensorBlock');
   const [providerSettings, setProviderSettings] = useState<Record<string, ProviderSettings>>({});
   const [selectedModel, setSelectedModel] = useState('');
   const [useStreaming, setUseStreaming] = useState(true);

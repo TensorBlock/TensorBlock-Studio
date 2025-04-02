@@ -8,10 +8,17 @@ export class StreamControlHandler {
     public onChunkCallback: (updatedConversation: Conversation) => void;
     public onFinishCallback: (aiResponse: Message | null) => void;
 
-    private currentTotalTokens: number = 0;
+    private placeholderMessage: Message;
+    private fullText: string = '';
 
-    constructor(targetConversation: Conversation, onChunkCallback: (updatedConversation: Conversation) => void, onFinishCallback: (aiResponse: Message | null) => void) {
+    constructor(
+        targetConversation: Conversation, 
+        placeholderMessage: Message,
+        onChunkCallback: (updatedConversation: Conversation) => void, 
+        onFinishCallback: (aiResponse: Message | null) => void
+    ) {
         this.targetConverstation = targetConversation;
+        this.placeholderMessage = placeholderMessage;
         this.abortController = new AbortController();
         this.onChunkCallback = onChunkCallback;
         this.onFinishCallback = onFinishCallback;
@@ -30,40 +37,37 @@ export class StreamControlHandler {
         // Update the placeholder message with the new content
         if (!this.targetConverstation) return;
 
-        const messageIndex = Array.from(this.targetConverstation.messages.values()).length - 1;
-        const updatedMessages = Array.from(this.targetConverstation.messages.values());
+        this.fullText = streamingFullText;
         
-        // Update the streaming message content
-        updatedMessages[messageIndex] = {
-          ...updatedMessages[messageIndex],
-          content: streamingFullText
+        const updatedMessages = new Map(this.targetConverstation.messages);
+        updatedMessages.set(this.placeholderMessage.messageId, {
+            ...this.placeholderMessage,
+            content: this.fullText
+        });
+
+        const updatedConversation = {
+            ...this.targetConverstation,
+            messages: updatedMessages
         };
 
-        // Update in memory
-        const updatedStreamingConv = {
-          ...this.targetConverstation,
-          messages: new Map(updatedMessages.map(message => [message.messageId, message]))
-        };
+        this.targetConverstation = updatedConversation;
 
-        this.targetConverstation = updatedStreamingConv;
-
-        this.onChunkCallback(updatedStreamingConv);
+        this.onChunkCallback(updatedConversation);
     }
 
     public onFinish(usage: LanguageModelUsage | null) {
-        const lastMessage = Array.from(this.targetConverstation.messages.values())[Array.from(this.targetConverstation.messages.values()).length - 1];
         const finalMessage: Message = {
             messageId: uuidv4(),
-            content: lastMessage.content,
+            content: this.fullText,
             conversationId: this.targetConverstation.id,
             role: 'assistant',
             timestamp: new Date(),
-            provider: lastMessage.provider,
-            model: lastMessage.model,
+            provider: this.placeholderMessage.provider,
+            model: this.placeholderMessage.model,
             tokens: usage?.completionTokens || 0,
-            fatherMessageId: lastMessage.fatherMessageId,
-            childrenMessageIds: lastMessage.childrenMessageIds,
-            preferIndex: lastMessage.preferIndex
+            fatherMessageId: this.placeholderMessage.fatherMessageId,
+            childrenMessageIds: this.placeholderMessage.childrenMessageIds,
+            preferIndex: this.placeholderMessage.preferIndex
         }
         this.onFinishCallback(finalMessage);
     }
