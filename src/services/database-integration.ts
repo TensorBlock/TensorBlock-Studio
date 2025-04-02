@@ -1,6 +1,6 @@
 import { DatabaseService } from './database';
 import { SettingsService, ProviderSettings } from './settings-service';
-import { Conversation, Message } from '../types/chat';
+import { Conversation, Message, ConversationFolder } from '../types/chat';
 import { ApiSettings } from './api-settings';
 import { v4 as uuidv4 } from 'uuid';
 import { AIProvider } from '../types/ai-providers';
@@ -63,6 +63,18 @@ export class DatabaseIntegrationService {
     }
 
     /**
+     * Load folders list
+     */
+    public async loadFoldersList(): Promise<ConversationFolder[]> {
+        try {
+            return await this.dbService.getFolders();
+        } catch (error) {
+            console.error('Error loading folders list:', error);
+            return [];
+        }
+    }
+
+    /**
      * Load a specific conversation including all messages
      */
     public async loadConversation(conversationId: string): Promise<Conversation | null> {
@@ -93,12 +105,14 @@ export class DatabaseIntegrationService {
      */
     public async createConversation(title: string): Promise<Conversation> {
         try {
+            const firstMessageId = uuidv4();
+
             // Create in database
             const dbConversation = await this.dbService.createConversation(title);
 
             // Create system message
             const systemMessage: Message = {
-                messageId: uuidv4(),
+                messageId: firstMessageId,
                 conversationId: dbConversation.conversationId,
                 role: 'system',
                 content: 'You are a helpful assistant. Be concise in your responses.',
@@ -119,6 +133,8 @@ export class DatabaseIntegrationService {
                 [systemMessage.messageId, systemMessage]
             ]);
             
+            console.log('db integration Conversation', dbConversation);
+
             return dbConversation;
         } catch (error) {
             console.error('Error creating conversation:', error);
@@ -343,6 +359,67 @@ export class DatabaseIntegrationService {
             await this.dbService.updateChatMessage(dbMessage);
         } catch (error) {
             console.error('Error updating message:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Create a new folder
+     */
+    public async createFolder(folderName: string, colorFlag: string = '#808080'): Promise<ConversationFolder> {
+        try {
+            return await this.dbService.createFolder(folderName, colorFlag);
+        } catch (error) {
+            console.error('Error creating folder:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Rename a folder
+     */
+    public async renameFolder(folderId: string, newName: string): Promise<void> {
+        try {
+            const folders = await this.dbService.getFolders();
+            const folder = folders.find(f => f.folderId === folderId);
+            
+            if (!folder) {
+                throw new Error(`Folder with ID ${folderId} not found`);
+            }
+            
+            const updatedFolder: ConversationFolder = {
+                ...folder,
+                folderName: newName,
+                updatedAt: new Date()
+            };
+            
+            await this.dbService.updateFolder(updatedFolder);
+        } catch (error) {
+            console.error('Error renaming folder:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a folder
+     */
+    public async deleteFolder(folderId: string): Promise<void> {
+        try {
+            await this.dbService.deleteFolder(folderId);
+        } catch (error) {
+            console.error('Error deleting folder:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update a conversation's folder
+     */
+    public async moveConversationToFolder(conversationId: string, folderId: string): Promise<void> {
+        try {
+            await this.dbService.updateConversationFolder(conversationId, folderId);
+        } catch (error) {
+            console.error('Error moving conversation to folder:', error);
             throw error;
         }
     }

@@ -1,5 +1,5 @@
 import { DatabaseIntegrationService } from './database-integration';
-import { Conversation, Message } from '../types/chat';
+import { Conversation, Message, ConversationFolder } from '../types/chat';
 import { AIService } from './ai-service';
 import { SettingsService } from './settings-service';
 import { StreamControlHandler } from './streaming-control';
@@ -16,6 +16,7 @@ export class ChatService {
   private conversations: Conversation[] = [];
   private activeConversationId: string | null = null;
   private isInitialized: boolean = false;
+  private folders: ConversationFolder[] = [];
 
   private streamControllerMap: Map<string, StreamControlHandler> = new Map();
 
@@ -63,6 +64,7 @@ export class ChatService {
     
     try {
       this.conversations = await this.dbService.loadConversationsList();
+      this.folders = await this.dbService.loadFoldersList();
       
       // Set first conversation as active if none is selected and there are conversations
       if (!this.activeConversationId && this.conversations.length > 0) {
@@ -657,5 +659,106 @@ export class ChatService {
    */
   public isServiceInitialized(): boolean {
     return this.isInitialized;
+  }
+
+  /**
+   * Create a new folder
+   */
+  public async createFolder(folderName: string, colorFlag: string = '#808080'): Promise<ConversationFolder> {
+    if (!this.dbService) {
+      throw new Error('Database service not initialized');
+    }
+    
+    try {
+      const newFolder = await this.dbService.createFolder(folderName, colorFlag);
+      
+      // Add to local list
+      this.folders = [newFolder, ...this.folders];
+      
+      return newFolder;
+    } catch (error) {
+      console.error('Failed to create new folder:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Rename a folder
+   */
+  public async renameFolder(folderId: string, newName: string): Promise<void> {
+    if (!this.dbService) {
+      throw new Error('Database service not initialized');
+    }
+    
+    try {
+      await this.dbService.renameFolder(folderId, newName);
+      
+      // Update in memory
+      this.folders = this.folders.map(f => 
+        f.folderId === folderId ? { ...f, folderName: newName, updatedAt: new Date() } : f
+      );
+    } catch (error) {
+      console.error('Failed to rename folder:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a folder
+   */
+  public async deleteFolder(folderId: string): Promise<void> {
+    if (!this.dbService) {
+      throw new Error('Database service not initialized');
+    }
+    
+    try {
+      await this.dbService.deleteFolder(folderId);
+      
+      // Update conversations in memory
+      this.conversations = this.conversations.map(c => 
+        c.folderId === folderId ? { ...c, folderId: '' } : c
+      );
+      
+      // Remove from memory
+      this.folders = this.folders.filter(f => f.folderId !== folderId);
+    } catch (error) {
+      console.error('Failed to delete folder:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Move a conversation to a folder
+   */
+  public async moveConversationToFolder(conversationId: string, folderId: string): Promise<void> {
+    if (!this.dbService) {
+      throw new Error('Database service not initialized');
+    }
+    
+    try {
+      await this.dbService.moveConversationToFolder(conversationId, folderId);
+      
+      // Update in memory
+      this.conversations = this.conversations.map(c => 
+        c.conversationId === conversationId ? { ...c, folderId } : c
+      );
+      
+      // Update folder's updatedAt
+      if (folderId) {
+        this.folders = this.folders.map(f => 
+          f.folderId === folderId ? { ...f, updatedAt: new Date() } : f
+        );
+      }
+    } catch (error) {
+      console.error('Failed to move conversation to folder:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all folders
+   */
+  public getFolders(): ConversationFolder[] {
+    return [...this.folders];
   }
 }

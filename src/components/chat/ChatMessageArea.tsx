@@ -45,7 +45,10 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     }, 50);
 
     if(activeConversation) {
-      setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation));
+      const messagesList = MessageHelper.mapMessagesTreeToList(activeConversation);
+      console.log(activeConversation);
+      console.log(messagesList);
+      setMessagesList(messagesList);
     }
   }, [activeConversation, activeConversation?.messages]);
 

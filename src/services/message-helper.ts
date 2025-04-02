@@ -174,21 +174,23 @@ export class MessageHelper {
      */
     public static mapMessagesTreeToList(conversation: Conversation, isFilterSystemMessages: boolean = true, stopAtMessageId: string | null = null): Message[] {
 
-        const messages = isFilterSystemMessages 
-            ? (Array.from(conversation?.messages.values()).filter(m => m.role !== 'system') || []) 
-            : (Array.from(conversation?.messages.values()) || []);
+        const messages = conversation.messages;
 
-        if(messages.length === 0) return [];
+        if(messages.size === 0) return [];
+        if(conversation.firstMessageId === null) return [];
+        if(!messages.has(conversation.firstMessageId)) return [];
 
         const constructedMessageList: Message[] = [];
-        let currentMessage: Message | null = messages[0];
+        let currentMessage: Message | null = messages.get(conversation.firstMessageId)!;
 
         while(currentMessage !== null) {
 
-            const copyMessage = {...currentMessage};
+            if(!isFilterSystemMessages || currentMessage.role !== 'system') {
+                const copyMessage = {...currentMessage};
 
-            constructedMessageList.push(copyMessage);
-
+                constructedMessageList.push(copyMessage);
+            }
+                
             if(stopAtMessageId !== null && currentMessage.messageId === stopAtMessageId) {
                 break;
             }
@@ -198,7 +200,7 @@ export class MessageHelper {
             const isNextIndexValid: boolean = nextIndex >= 0 && nextIndex < currentMessage.childrenMessageIds.length;
 
             currentMessage = isNextIndexValid 
-                ? messages.find(m => m.messageId === currentMessage!.childrenMessageIds[nextIndex]) || null
+                ? messages.get(currentMessage!.childrenMessageIds[nextIndex]) || null
                 : null;
         }
 

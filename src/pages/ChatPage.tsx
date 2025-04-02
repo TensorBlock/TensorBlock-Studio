@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatHistoryList from '../components/chat/ChatHistoryList';
 import ChatMessageArea from '../components/chat/ChatMessageArea';
-import { Conversation } from '../types/chat';
+import { Conversation, ConversationFolder } from '../types/chat';
 import { SettingsService } from '../services/settings-service';
 import { ChatService } from '../services/chat-service';
 import { AIService } from '../services/ai-service';
@@ -15,6 +15,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   apiKey = ''
 }) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [folders, setFolders] = useState<ConversationFolder[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const chatServiceRef = useRef<ChatService | null>(null);
   const [isServiceInitialized, setIsServiceInitialized] = useState(false);
@@ -41,6 +42,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         // Load conversations from chat service
         const conversationsList = chatService.getConversations();
         setConversations(conversationsList);
+        
+        // Load folders from chat service
+        const foldersList = chatService.getFolders();
+        setFolders(foldersList);
         
         // Set active conversation from chat service
         const activeId = chatService.getActiveConversationId();
@@ -134,13 +139,69 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     
     try {
       const chatService = chatServiceRef.current;
-
-      // Update the state with the new list of conversations
       
+      // Create new folder with default name
+      await chatService.createFolder('New Folder');
+      
+      // Update the state with the new list of folders
+      setFolders(chatService.getFolders());
     } catch (error) {
       console.error('Failed to create new folder:', error);
     }
   }, [isServiceInitialized]);
+
+  // Rename a folder
+  const handleRenameFolder = async (folderId: string, newName: string) => {
+    if (!isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      const chatService = chatServiceRef.current;
+      
+      // Rename the folder
+      await chatService.renameFolder(folderId, newName);
+      
+      // Update folders state
+      setFolders(chatService.getFolders());
+    } catch (error) {
+      console.error('Error renaming folder:', error);
+    }
+  };
+
+  // Delete a folder
+  const handleDeleteFolder = async (folderId: string) => {
+    if (!isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      const chatService = chatServiceRef.current;
+      
+      // Delete the folder
+      await chatService.deleteFolder(folderId);
+      
+      // Update state
+      setFolders(chatService.getFolders());
+      setConversations(chatService.getConversations());
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+    }
+  };
+
+  // Move a conversation to a folder
+  const handleMoveConversation = async (conversationId: string, folderId: string) => {
+    if (!isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      const chatService = chatServiceRef.current;
+      
+      // Move the conversation
+      await chatService.moveConversationToFolder(conversationId, folderId);
+      
+      // Update state
+      setConversations(chatService.getConversations());
+      setFolders(chatService.getFolders());
+    } catch (error) {
+      console.error('Error moving conversation:', error);
+    }
+  };
 
   // Handle sending a message with streaming
   const handleSendMessage = async (content: string) => {
@@ -301,12 +362,16 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       <div className="flex flex-1 overflow-hidden">
         <ChatHistoryList 
           conversations={conversations}
+          folders={folders}
           activeConversationId={activeConversationId}
           onSelectConversation={handleSelectConversation}
           onCreateNewChat={createNewChat}
           onCreateNewFolder={createNewFolder}
           onRenameConversation={handleRenameConversation}
           onDeleteConversation={handleDeleteConversation}
+          onRenameFolder={handleRenameFolder}
+          onDeleteFolder={handleDeleteFolder}
+          onMoveConversation={handleMoveConversation}
         />
         
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

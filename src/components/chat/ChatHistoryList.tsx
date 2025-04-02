@@ -1,36 +1,53 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Conversation } from '../../types/chat';
-import { MessageSquare, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, MessageSquarePlus, FolderPlus } from 'lucide-react';
+import { Conversation, ConversationFolder } from '../../types/chat';
+import { MessageSquare, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, MessageSquarePlus, FolderPlus, Folder, ChevronDown } from 'lucide-react';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
 interface ChatHistoryListProps {
   conversations: Conversation[];
+  folders: ConversationFolder[];
   activeConversationId: string | null;
   onSelectConversation: (conversationId: string) => void;
   onCreateNewChat: () => void;
   onCreateNewFolder: () => void;
   onRenameConversation: (conversationId: string, newTitle: string) => void;
   onDeleteConversation: (conversationId: string) => void;
+  onRenameFolder: (folderId: string, newName: string) => void;
+  onDeleteFolder: (folderId: string) => void;
+  onMoveConversation: (conversationId: string, folderId: string) => void;
+}
+
+interface DragItem {
+  id: string;
+  type: 'conversation' | 'folder';
 }
 
 export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
   conversations,
+  folders,
   activeConversationId,
   onSelectConversation,
   onCreateNewChat,
   onCreateNewFolder,
   onRenameConversation,
   onDeleteConversation,
+  onRenameFolder,
+  onDeleteFolder,
+  onMoveConversation,
 }) => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingType, setEditingType] = useState<'conversation' | 'folder'>('conversation');
   const [editTitle, setEditTitle] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(() => {
     // Initialize from localStorage if available
     const savedState = localStorage.getItem('chat_sidebar_collapsed');
     return savedState ? JSON.parse(savedState) : false;
   });
+  
+  // Folder expansion state
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   
   // Button visibility state
   const [isButtonVisible, setIsButtonVisible] = useState(false);
@@ -44,10 +61,16 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     title: '',
     message: '',
     itemId: '',
+    itemType: '' as 'conversation' | 'folder',
     confirmText: '',
     cancelText: '',
     confirmColor: 'red' as 'red' | 'blue' | 'green' | 'gray'
   });
+  
+  // Drag and drop state
+  const [draggingItem, setDraggingItem] = useState<DragItem | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [dropTargetType, setDropTargetType] = useState<'folder' | 'root'>('root');
   
   const inputRef = useRef<HTMLInputElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -109,26 +132,33 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     };
   }, [isButtonHovered, isButtonVisible]);
 
-  const handleMenuClick = (e: React.MouseEvent, conversationId: string) => {
+  const handleMenuClick = (e: React.MouseEvent, id: string, type: 'conversation' | 'folder') => {
     e.stopPropagation();
-    setOpenMenuId(openMenuId === conversationId ? null : conversationId);
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+    } else {
+      setOpenMenuId(id);
+      setEditingType(type);
+    }
   };
 
-  const handleRenameClick = (e: React.MouseEvent, conversation: Conversation) => {
+  const handleRenameClick = (e: React.MouseEvent, item: Conversation | ConversationFolder, type: 'conversation' | 'folder') => {
     e.stopPropagation();
-    setEditingId(conversation.conversationId);
-    setEditTitle(conversation.title);
+    setEditingId(type === 'conversation' ? (item as Conversation).conversationId : (item as ConversationFolder).folderId);
+    setEditTitle(type === 'conversation' ? (item as Conversation).title : (item as ConversationFolder).folderName);
+    setEditingType(type);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, id: string, type: 'conversation' | 'folder') => {
     e.stopPropagation();
     
     // Show confirmation dialog
     setConfirmDialog({
       isOpen: true,
-      title: 'Delete Conversation',
-      message: 'Are you sure you want to delete this conversation? This action cannot be undone.',
-      itemId: conversationId,
+      title: `Delete ${type === 'conversation' ? 'Conversation' : 'Folder'}`,
+      message: `Are you sure you want to delete this ${type}? ${type === 'folder' ? 'All conversations will be moved to the root.' : 'This action cannot be undone.'}`,
+      itemId: id,
+      itemType: type,
       confirmText: 'Delete',
       cancelText: 'Cancel',
       confirmColor: 'red'
@@ -137,7 +167,11 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
 
   const handleConfirmDelete = () => {
     // Proceed with deletion
-    onDeleteConversation(confirmDialog.itemId);
+    if (confirmDialog.itemType === 'conversation') {
+      onDeleteConversation(confirmDialog.itemId);
+    } else {
+      onDeleteFolder(confirmDialog.itemId);
+    }
     // Close the dialog
     setConfirmDialog(prev => ({ ...prev, isOpen: false }));
   };
@@ -150,7 +184,11 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
   const handleRenameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId && editTitle.trim()) {
-      onRenameConversation(editingId, editTitle.trim());
+      if (editingType === 'conversation') {
+        onRenameConversation(editingId, editTitle.trim());
+      } else {
+        onRenameFolder(editingId, editTitle.trim());
+      }
       setEditingId(null);
     }
   };
@@ -161,6 +199,13 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  const toggleFolderExpansion = (folderId: string) => {
+    setExpandedFolders(prev => ({
+      ...prev,
+      [folderId]: !prev[folderId]
+    }));
   };
 
   const handleButtonMouseEnter = () => {
@@ -201,23 +246,143 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     }
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, item: DragItem) => {
+    // Only allow dragging conversations, not folders
+    if (item.type !== 'conversation') return;
+    
+    setDraggingItem(item);
+    // Add some ghost image effect
+    if (e.dataTransfer.setDragImage) {
+      const elem = document.createElement('div');
+      elem.classList.add('bg-blue-100', 'p-2', 'rounded', 'shadow', 'text-sm', 'w-fit');
+      elem.innerText = conversations.find(c => c.conversationId === item.id)?.title || 'Moving...';
+      document.body.appendChild(elem);
+      e.dataTransfer.setDragImage(elem, 10, 10);
+      setTimeout(() => {
+        document.body.removeChild(elem);
+      }, 0);
+    }
+    
+    e.dataTransfer.setData('text/plain', JSON.stringify(item));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    // Reset drag and drop state
+    setDraggingItem(null);
+    setDropTargetId(null);
+    setDropTargetType('root');
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: string, targetType: 'folder' | 'root') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Only set drop target if it's different than current one
+    if (targetId !== dropTargetId || targetType !== dropTargetType) {
+      setDropTargetId(targetId);
+      setDropTargetType(targetType);
+    }
+    
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragLeave = () => {
+    setDropTargetId(null);
+    setDropTargetType('root');
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string, targetType: 'folder' | 'root') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      // Parse the dragged item data
+      const item = JSON.parse(e.dataTransfer.getData('text/plain')) as DragItem;
+      
+      if (item.type === 'conversation' && draggingItem) {
+        // If target is root, pass empty string as folderId
+        const folderId = targetType === 'folder' ? targetId : '';
+        onMoveConversation(item.id, folderId);
+      }
+    } catch (error) {
+      console.error('Error parsing drag data:', error);
+    }
+    
+    // Reset drag and drop state
+    setDraggingItem(null);
+    setDropTargetId(null);
+    setDropTargetType('root');
+  };
+
   // Create context menu items for a conversation
-  const getContextMenuItems = (conversation: Conversation): ContextMenuItem[] => [
+  const getConversationContextMenuItems = (conversation: Conversation): ContextMenuItem[] => [
     {
       id: 'rename',
       icon: Edit,
       label: 'Rename',
-      onClick: (e) => handleRenameClick(e, conversation),
+      onClick: (e) => handleRenameClick(e, conversation, 'conversation'),
       color: 'text-gray-700'
     },
     {
       id: 'delete',
       icon: Trash2,
       label: 'Delete',
-      onClick: (e) => handleDeleteClick(e, conversation.conversationId),
+      onClick: (e) => handleDeleteClick(e, conversation.conversationId, 'conversation'),
       color: 'text-red-600'
     }
   ];
+
+  // Create context menu items for a folder
+  const getFolderContextMenuItems = (folder: ConversationFolder): ContextMenuItem[] => [
+    {
+      id: 'rename',
+      icon: Edit,
+      label: 'Rename',
+      onClick: (e) => handleRenameClick(e, folder, 'folder'),
+      color: 'text-gray-700'
+    },
+    {
+      id: 'delete',
+      icon: Trash2,
+      label: 'Delete',
+      onClick: (e) => handleDeleteClick(e, folder.folderId, 'folder'),
+      color: 'text-red-600'
+    }
+  ];
+
+  // Sort items by updatedAt
+  const sortByUpdatedAt = <T extends { updatedAt: Date }>(items: T[]): T[] => {
+    return [...items].sort((a, b) => {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  };
+
+  // Prepare data for rendering
+  const sortedFolders = sortByUpdatedAt(folders);
+  const sortedConversations = sortByUpdatedAt(conversations);
+  
+  // Group conversations by folder
+  const conversationsByFolder: Record<string, Conversation[]> = {};
+  
+  // Initialize with root conversations
+  conversationsByFolder['root'] = sortedConversations.filter(c => !c.folderId);
+  
+  // Add conversations to their folders
+  sortedFolders.forEach(folder => {
+    conversationsByFolder[folder.folderId] = sortedConversations.filter(
+      c => c.folderId === folder.folderId
+    );
+  });
+
+  // Combined list of root items (folders and root conversations)
+  const rootItems = [
+    ...sortedFolders.map(folder => ({ type: 'folder', item: folder })),
+    ...conversationsByFolder['root'].map(conv => ({ type: 'conversation', item: conv }))
+  ].sort((a, b) => {
+    return new Date(b.item.updatedAt).getTime() - new Date(a.item.updatedAt).getTime();
+  });
 
   return (
     <div 
@@ -225,6 +390,8 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       onMouseEnter={handleSidebarMouseEnter}
       onMouseLeave={handleSidebarMouseLeave}
       className={`flex flex-col h-full border-r border-gray-200 bg-gray-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-0' : 'w-64'} relative`}
+      onDragOver={(e) => handleDragOver(e, 'root', 'root')}
+      onDrop={(e) => handleDrop(e, 'root', 'root')}
     >
       {/* Confirmation Dialog */}
       <ConfirmDialog
@@ -271,62 +438,195 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
         
       </div>
       
-      <div className="flex-1 overflow-y-auto">
-        {conversations.length === 0 ? (
+      <div 
+        className="flex-1 overflow-y-auto"
+      >
+        {rootItems.length === 0 ? (
           <div className={`flex flex-col items-center justify-center h-full text-gray-500 ${isCollapsed ? 'px-2' : ''}`}>
             <MessageSquare size={isCollapsed ? 16 : 24} className="mb-2" />
             {!isCollapsed && <p className="text-sm">No conversations yet</p>}
           </div>
         ) : (
           <ul className="py-2">
-            {conversations.map((conversation) => (
-              <li key={conversation.conversationId} className="relative">
-                {editingId === conversation.conversationId && !isCollapsed ? (
-                  <form onSubmit={handleRenameSubmit} className="px-4 py-2">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onBlur={handleRenameCancel}
-                      onKeyDown={(e) => e.key === 'Escape' && handleRenameCancel()}
-                    />
-                  </form>
-                ) : (
-                  <button
-                    onClick={() => onSelectConversation(conversation.conversationId)}
-                    className={`flex items-center justify-between w-full ${isCollapsed ? 'px-0 py-3 flex-col' : 'px-4 py-2'} text-left ${
-                      activeConversationId === conversation.conversationId
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    title={isCollapsed ? conversation.title : undefined}
-                  >
-                    {isCollapsed ? (
-                      <MessageSquare size={16} className="mx-auto" />
+            {rootItems.map(({ type, item }) => (
+              <li 
+                key={type === 'folder' ? `folder-${item.folderId}` : `conv-${(item as Conversation).conversationId}`} 
+                className="relative"
+              >
+                {/* Folder Item */}
+                {type === 'folder' && (
+                  <>
+                    {editingId === (item as ConversationFolder).folderId && !isCollapsed ? (
+                      <form onSubmit={handleRenameSubmit} className="px-4 py-2">
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="w-full px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onBlur={handleRenameCancel}
+                          onKeyDown={(e) => e.key === 'Escape' && handleRenameCancel()}
+                        />
+                      </form>
                     ) : (
-                      <>
-                        <div className="flex items-center truncate">
-                          <MessageSquare size={16} className="flex-shrink-0 mr-2" />
-                          <span className="truncate">{conversation.title}</span>
-                        </div>
-                        <div onClick={(e) => handleMenuClick(e, conversation.conversationId)}>
-                          <MoreVertical size={16} className="flex-shrink-0 text-gray-400 hover:text-gray-600" />
-                        </div>
-                      </>
+                      <div
+                        className={`flex items-center justify-between w-full ${isCollapsed ? 'px-0 py-3 flex-col' : 'px-2 py-2'} 
+                        text-left transition-colors duration-150 cursor-pointer
+                        ${dropTargetId === (item as ConversationFolder).folderId && dropTargetType === 'folder' ? 
+                          'bg-blue-100 border-2 border-blue-300 rounded-md' : 'border-2 border-transparent hover:bg-gray-100'}`}
+                        onDragOver={(e) => handleDragOver(e, (item as ConversationFolder).folderId, 'folder')}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, (item as ConversationFolder).folderId, 'folder')}
+                      >
+                        {isCollapsed ? (
+                          <Folder size={16} className="mx-auto text-gray-600" />
+                        ) : (
+                          <>
+                            <div 
+                              className="flex items-center flex-1 truncate cursor-pointer" 
+                              onClick={() => toggleFolderExpansion((item as ConversationFolder).folderId)}
+                            >
+                              <button className="flex items-center justify-center w-6 h-6">
+                                {expandedFolders[(item as ConversationFolder).folderId] ? 
+                                  <ChevronDown size={16} className="text-gray-500" /> : 
+                                  <ChevronRight size={16} className="text-gray-500" />
+                                }
+                              </button>
+                              <Folder size={16} className="flex-shrink-0 mr-1 text-gray-600" />
+                              <span className="font-medium truncate select-none">{(item as ConversationFolder).folderName}</span>
+                            </div>
+                            <div onClick={(e) => handleMenuClick(e, (item as ConversationFolder).folderId, 'folder')}>
+                              <MoreVertical size={16} className="flex-shrink-0 text-gray-400 hover:text-gray-600" />
+                            </div>
+                          </>
+                        )}
+                      </div>
                     )}
-                  </button>
+                    
+                    {!isCollapsed && (
+                      <ContextMenu
+                        items={getFolderContextMenuItems(item as ConversationFolder)}
+                        isOpen={openMenuId === (item as ConversationFolder).folderId}
+                        onClose={() => setOpenMenuId(null)}
+                        position={{ top: '100%', right: '12px' }}
+                        width="10rem"
+                      />
+                    )}
+                    
+                    {/* Folder contents */}
+                    {!isCollapsed && expandedFolders[(item as ConversationFolder).folderId] && (
+                      <ul className="pl-6 mt-1">
+                        {conversationsByFolder[(item as ConversationFolder).folderId]?.map((conversation) => (
+                          <li key={conversation.conversationId} className="relative">
+                            {editingId === conversation.conversationId ? (
+                              <form onSubmit={handleRenameSubmit} className="px-4 py-1">
+                                <input
+                                  ref={inputRef}
+                                  type="text"
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                                  className="w-full px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  onBlur={handleRenameCancel}
+                                  onKeyDown={(e) => e.key === 'Escape' && handleRenameCancel()}
+                                />
+                              </form>
+                            ) : (
+                              <div
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, { id: conversation.conversationId, type: 'conversation' })}
+                                onDragEnd={handleDragEnd}
+                                onDragOver={(e) => handleDragOver(e, (item as ConversationFolder).folderId, 'folder')}
+                                onDrop={(e) => handleDrop(e, (item as ConversationFolder).folderId, 'folder')}
+                                onClick={() => onSelectConversation(conversation.conversationId)}
+                                className={`flex items-center justify-between w-full px-2 py-1 text-left rounded-sm ${
+                                  activeConversationId === conversation.conversationId
+                                    ? 'bg-blue-50 text-blue-600'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                } 
+                                ${draggingItem?.id === conversation.conversationId ? 'opacity-50' : ''}
+                                ${
+                                  dropTargetId === (item as ConversationFolder).folderId && dropTargetType === 'folder' ? 
+                                  'bg-blue-100' : ''
+                                }`}
+                              >
+                                <div className="flex items-center truncate">
+                                  <MessageSquare size={14} className="flex-shrink-0 mr-1" />
+                                  <span className="text-sm truncate">{conversation.title}</span>
+                                </div>
+                                <div onClick={(e) => handleMenuClick(e, conversation.conversationId, 'conversation')}>
+                                  <MoreVertical size={14} className="flex-shrink-0 text-gray-400 hover:text-gray-600" />
+                                </div>
+                              </div>
+                            )}
+                            
+                            <ContextMenu
+                              items={getConversationContextMenuItems(conversation)}
+                              isOpen={openMenuId === conversation.conversationId}
+                              onClose={() => setOpenMenuId(null)}
+                              position={{ top: '100%', right: '12px' }}
+                              width="10rem"
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 )}
                 
-                {!isCollapsed && (
-                  <ContextMenu
-                    items={getContextMenuItems(conversation)}
-                    isOpen={openMenuId === conversation.conversationId}
-                    onClose={() => setOpenMenuId(null)}
-                    position={{ top: '100%', right: '12px' }}
-                    width="10rem"
-                  />
+                {/* Conversation Item in Root */}
+                {type === 'conversation' && (
+                  <>
+                    {editingId === (item as Conversation).conversationId && !isCollapsed ? (
+                      <form onSubmit={handleRenameSubmit} className="px-4 py-2">
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="w-full px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onBlur={handleRenameCancel}
+                          onKeyDown={(e) => e.key === 'Escape' && handleRenameCancel()}
+                        />
+                      </form>
+                    ) : (
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, { id: (item as Conversation).conversationId, type: 'conversation' })}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => onSelectConversation((item as Conversation).conversationId)}
+                        className={`flex items-center justify-between w-full ${isCollapsed ? 'px-0 py-3 flex-col' : 'px-4 py-2'} text-left ${
+                          activeConversationId === (item as Conversation).conversationId
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        } ${draggingItem?.id === (item as Conversation).conversationId ? 'opacity-50' : ''}`}
+                        title={isCollapsed ? (item as Conversation).title : undefined}
+                      >
+                        {isCollapsed ? (
+                          <MessageSquare size={16} className="mx-auto" />
+                        ) : (
+                          <>
+                            <div className="flex items-center truncate">
+                              <MessageSquare size={16} className="flex-shrink-0 mr-2" />
+                              <span className="truncate">{(item as Conversation).title}</span>
+                            </div>
+                            <div onClick={(e) => handleMenuClick(e, (item as Conversation).conversationId, 'conversation')}>
+                              <MoreVertical size={16} className="flex-shrink-0 text-gray-400 hover:text-gray-600" />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    
+                    {!isCollapsed && (
+                      <ContextMenu
+                        items={getConversationContextMenuItems(item as Conversation)}
+                        isOpen={openMenuId === (item as Conversation).conversationId}
+                        onClose={() => setOpenMenuId(null)}
+                        position={{ top: '100%', right: '12px' }}
+                        width="10rem"
+                      />
+                    )}
+                  </>
                 )}
               </li>
             ))}
