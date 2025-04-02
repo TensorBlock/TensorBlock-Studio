@@ -69,7 +69,7 @@ export class DatabaseIntegrationService {
         try {
             // Get conversation details
             const dbConversations = await this.dbService.getConversations();
-            const conversation = dbConversations.find(c => c.id === conversationId);
+            const conversation = dbConversations.find(c => c.conversationId === conversationId);
             if (!conversation) return null;
             
             // Get chat messages
@@ -99,7 +99,7 @@ export class DatabaseIntegrationService {
             // Create system message
             const systemMessage: Message = {
                 messageId: uuidv4(),
-                conversationId: dbConversation.id,
+                conversationId: dbConversation.conversationId,
                 role: 'system',
                 content: 'You are a helpful assistant. Be concise in your responses.',
                 timestamp: new Date(),
@@ -176,7 +176,8 @@ export class DatabaseIntegrationService {
         try {
             // Map to database format
             const dbConversation: Conversation = {
-                id: conversation.id,
+                conversationId: conversation.conversationId,
+                folderId: conversation.folderId,
                 title: conversation.title,
                 firstMessageId: conversation.firstMessageId,
                 createdAt: conversation.createdAt,
@@ -199,7 +200,7 @@ export class DatabaseIntegrationService {
         try {
             // Get the conversation
             const dbConversations = await this.dbService.getConversations();
-            const conversation = dbConversations.find(c => c.id === conversationId);
+            const conversation = dbConversations.find(c => c.conversationId === conversationId);
             if (!conversation) {
                 throw new Error(`Conversation with ID ${conversationId} not found`);
             }

@@ -12,7 +12,7 @@ export class MessageHelper {
 
         const userMessage = await dbService.saveChatMessage(
             uuidv4(),
-            conversation.id,
+            conversation.conversationId,
             'user',
             content,
             'provider: user',
@@ -26,7 +26,7 @@ export class MessageHelper {
         if (latestMessage) {
             latestMessage.childrenMessageIds.push(userMessage.messageId);
             latestMessage.preferIndex = latestMessage.childrenMessageIds.length - 1;
-            await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.id);
+            await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.conversationId);
         }
         
         const shouldUpdateTitle = conversation.messages.size === 1 && Array.from(conversation.messages.values())[0].role === 'system';
@@ -60,7 +60,7 @@ export class MessageHelper {
 
         const userMessage = await dbService.saveChatMessage(
             uuidv4(),
-            conversation.id,
+            conversation.conversationId,
             'user',
             newContent,
             'user', // provider
@@ -73,7 +73,7 @@ export class MessageHelper {
 
         fatherMessage.childrenMessageIds.push(userMessage.messageId);
         fatherMessage.preferIndex = fatherMessage.childrenMessageIds.length - 1;
-        await dbService.updateChatMessage(fatherMessage.messageId, fatherMessage, conversation.id);
+        await dbService.updateChatMessage(fatherMessage.messageId, fatherMessage, conversation.conversationId);
 
         const messages = new Map(conversation.messages);
         messages.set(userMessage.messageId, userMessage);
@@ -105,7 +105,7 @@ export class MessageHelper {
 
         fatherMessage.childrenMessageIds.push(updatedAiResponse.messageId);
         fatherMessage.preferIndex = fatherMessage.childrenMessageIds.length - 1;
-        await dbService.updateChatMessage(fatherMessage.messageId, fatherMessage, conversation.id);
+        await dbService.updateChatMessage(fatherMessage.messageId, fatherMessage, conversation.conversationId);
 
         await dbService.saveChatMessage(
             updatedAiResponse.messageId,

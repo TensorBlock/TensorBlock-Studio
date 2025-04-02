@@ -66,7 +66,7 @@ export class ChatService {
       
       // Set first conversation as active if none is selected and there are conversations
       if (!this.activeConversationId && this.conversations.length > 0) {
-        this.activeConversationId = this.conversations[0].id;
+        this.activeConversationId = this.conversations[0].conversationId;
       }
       
       return [...this.conversations];
@@ -90,7 +90,7 @@ export class ChatService {
       if (conversation) {
         // Update the conversation in the local list
         this.conversations = this.conversations.map(c => 
-          c.id === conversationId ? conversation : c
+          c.conversationId === conversationId ? conversation : c
         );
         return conversation;
       }
@@ -117,7 +117,7 @@ export class ChatService {
       this.conversations = [newConversation, ...this.conversations];
       
       // Set as active conversation
-      this.activeConversationId = newConversation.id;
+      this.activeConversationId = newConversation.conversationId;
       
       return newConversation;
     } catch (error) {
@@ -139,7 +139,7 @@ export class ChatService {
       throw new Error('Database service not initialized');
     }
 
-    const currentConversation = this.conversations.find(c => c.id === conversationId);
+    const currentConversation = this.conversations.find(c => c.conversationId === conversationId);
     if (currentConversation === undefined) {
       throw new Error('Active conversation not found');
     }
@@ -155,7 +155,7 @@ export class ChatService {
       
       // Update in memory
       this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
+        c.conversationId === conversationId ? updatedConversation : c
       );
 
       conversationUpdate(this.conversations);
@@ -185,7 +185,7 @@ export class ChatService {
       };
 
       this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
+        c.conversationId === conversationId ? updatedConversation : c
       );
 
       conversationUpdate(this.conversations);
@@ -200,7 +200,7 @@ export class ChatService {
         // ---- On chunk callback ----
         (updated: Conversation) => {  
           this.conversations = this.conversations.map(c => 
-            c.id === conversationId ? updated : c
+            c.conversationId === conversationId ? updated : c
           );
           conversationUpdate(this.conversations);
         }, 
@@ -215,7 +215,7 @@ export class ChatService {
 
           // Update in memory
           this.conversations = this.conversations.map(c => 
-            c.id === conversationId ? finalConversation : c
+            c.conversationId === conversationId ? finalConversation : c
           );
 
           conversationUpdate(this.conversations);
@@ -270,7 +270,7 @@ export class ChatService {
     
     try {
       //#region Get message and father message in conversation
-      const currentConversation = this.conversations.find(c => c.id === conversationId);
+      const currentConversation = this.conversations.find(c => c.conversationId === conversationId);
       
       if (!currentConversation) {
         throw new Error('Active conversation not found');
@@ -310,7 +310,7 @@ export class ChatService {
 
       // Update in memory
       this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
+        c.conversationId === conversationId ? updatedConversation : c
       );
 
       conversationUpdate(this.conversations);
@@ -339,7 +339,7 @@ export class ChatService {
       };
 
       this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
+        c.conversationId === conversationId ? updatedConversation : c
       );
 
       conversationUpdate(this.conversations);
@@ -354,7 +354,7 @@ export class ChatService {
         // ---- On chunk callback ----
         (updated: Conversation) => {  
           this.conversations = this.conversations.map(c => 
-            c.id === conversationId ? updated : c
+            c.conversationId === conversationId ? updated : c
           );
           conversationUpdate(this.conversations);
         }, 
@@ -369,7 +369,7 @@ export class ChatService {
 
           // Update in memory
           this.conversations = this.conversations.map(c => 
-            c.id === conversationId ? finalConversation : c
+            c.conversationId === conversationId ? finalConversation : c
           );
 
           conversationUpdate(this.conversations);
@@ -423,7 +423,7 @@ export class ChatService {
     
     try {
       //#region Get message and father message in conversation
-      const currentConversation = this.conversations.find(c => c.id === conversationId);
+      const currentConversation = this.conversations.find(c => c.conversationId === conversationId);
       
       if (!currentConversation) {
         throw new Error('Active conversation not found');
@@ -480,7 +480,7 @@ export class ChatService {
       };
 
       this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
+        c.conversationId === conversationId ? updatedConversation : c
       );
 
       conversationUpdate(this.conversations);
@@ -494,7 +494,7 @@ export class ChatService {
         // ---- On chunk callback ----
         (updated: Conversation) => {  
           this.conversations = this.conversations.map(c => 
-            c.id === conversationId ? updated : c
+            c.conversationId === conversationId ? updated : c
           );
           conversationUpdate(this.conversations);
         }, 
@@ -509,7 +509,7 @@ export class ChatService {
 
           // Update in memory
           this.conversations = this.conversations.map(c => 
-            c.id === conversationId ? finalConversation : c
+            c.conversationId === conversationId ? finalConversation : c
           );
 
           conversationUpdate(this.conversations);
@@ -574,7 +574,7 @@ export class ChatService {
    */
   public getActiveConversation(): Conversation | null {
     if (!this.activeConversationId) return null;
-    return this.conversations.find(c => c.id === this.activeConversationId) || null;
+    return this.conversations.find(c => c.conversationId === this.activeConversationId) || null;
   }
 
   /**
@@ -594,18 +594,18 @@ export class ChatService {
   /**
    * Rename a conversation
    */
-  public async renameConversation(id: string, newTitle: string): Promise<void> {
+  public async renameConversation(conversationId: string, newTitle: string): Promise<void> {
     if (!this.dbService) {
       throw new Error('Database service not initialized');
     }
     
     try {
       // Update in database
-      await this.dbService.renameConversation(id, newTitle);
+      await this.dbService.renameConversation(conversationId, newTitle);
       
       // Update in memory
       this.conversations = this.conversations.map(conv => 
-        conv.id === id ? { ...conv, title: newTitle } : conv
+        conv.conversationId === conversationId ? { ...conv, title: newTitle } : conv
       );
     } catch (error) {
       console.error('Error renaming conversation:', error);
@@ -616,21 +616,21 @@ export class ChatService {
   /**
    * Delete a conversation
    */
-  public async deleteConversation(id: string): Promise<void> {
+  public async deleteConversation(conversationId: string): Promise<void> {
     if (!this.dbService) {
       throw new Error('Database service not initialized');
     }
     
     try {
       // Delete from database
-      await this.dbService.deleteConversation(id);
+      await this.dbService.deleteConversation(conversationId);
       
       // Remove from memory
-      this.conversations = this.conversations.filter(conv => conv.id !== id);
+      this.conversations = this.conversations.filter(conv => conv.conversationId !== conversationId);
       
       // If the active conversation was deleted, set active to null or the first available
-      if (this.activeConversationId === id) {
-        this.activeConversationId = this.conversations.length > 0 ? this.conversations[0].id : null;
+      if (this.activeConversationId === conversationId) {
+        this.activeConversationId = this.conversations.length > 0 ? this.conversations[0].conversationId : null;
       }
     } catch (error) {
       console.error('Error deleting conversation:', error);

@@ -7,10 +7,10 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 interface ChatHistoryListProps {
   conversations: Conversation[];
   activeConversationId: string | null;
-  onSelectConversation: (id: string) => void;
+  onSelectConversation: (conversationId: string) => void;
   onCreateNewChat: () => void;
-  onRenameConversation: (id: string, newTitle: string) => void;
-  onDeleteConversation: (id: string) => void;
+  onRenameConversation: (conversationId: string, newTitle: string) => void;
+  onDeleteConversation: (conversationId: string) => void;
 }
 
 export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
@@ -107,18 +107,18 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     };
   }, [isButtonHovered, isButtonVisible]);
 
-  const handleMenuClick = (e: React.MouseEvent, id: string) => {
+  const handleMenuClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
-    setOpenMenuId(openMenuId === id ? null : id);
+    setOpenMenuId(openMenuId === conversationId ? null : conversationId);
   };
 
   const handleRenameClick = (e: React.MouseEvent, conversation: Conversation) => {
     e.stopPropagation();
-    setEditingId(conversation.id);
+    setEditingId(conversation.conversationId);
     setEditTitle(conversation.title);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
     
     // Show confirmation dialog
@@ -126,7 +126,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       isOpen: true,
       title: 'Delete Conversation',
       message: 'Are you sure you want to delete this conversation? This action cannot be undone.',
-      itemId: id,
+      itemId: conversationId,
       confirmText: 'Delete',
       cancelText: 'Cancel',
       confirmColor: 'red'
@@ -212,7 +212,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       id: 'delete',
       icon: Trash2,
       label: 'Delete',
-      onClick: (e) => handleDeleteClick(e, conversation.id),
+      onClick: (e) => handleDeleteClick(e, conversation.conversationId),
       color: 'text-red-600'
     }
   ];
@@ -278,8 +278,8 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
         ) : (
           <ul className="py-2">
             {conversations.map((conversation) => (
-              <li key={conversation.id} className="relative">
-                {editingId === conversation.id && !isCollapsed ? (
+              <li key={conversation.conversationId} className="relative">
+                {editingId === conversation.conversationId && !isCollapsed ? (
                   <form onSubmit={handleRenameSubmit} className="px-4 py-2">
                     <input
                       ref={inputRef}
@@ -293,9 +293,9 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                   </form>
                 ) : (
                   <button
-                    onClick={() => onSelectConversation(conversation.id)}
+                    onClick={() => onSelectConversation(conversation.conversationId)}
                     className={`flex items-center justify-between w-full ${isCollapsed ? 'px-0 py-3 flex-col' : 'px-4 py-2'} text-left ${
-                      activeConversationId === conversation.id
+                      activeConversationId === conversation.conversationId
                         ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
@@ -309,7 +309,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                           <MessageSquare size={16} className="flex-shrink-0 mr-2" />
                           <span className="truncate">{conversation.title}</span>
                         </div>
-                        <div onClick={(e) => handleMenuClick(e, conversation.id)}>
+                        <div onClick={(e) => handleMenuClick(e, conversation.conversationId)}>
                           <MoreVertical size={16} className="flex-shrink-0 text-gray-400 hover:text-gray-600" />
                         </div>
                       </>
@@ -320,7 +320,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                 {!isCollapsed && (
                   <ContextMenu
                     items={getContextMenuItems(conversation)}
-                    isOpen={openMenuId === conversation.id}
+                    isOpen={openMenuId === conversation.conversationId}
                     onClose={() => setOpenMenuId(null)}
                     position={{ top: '100%', right: '12px' }}
                     width="10rem"

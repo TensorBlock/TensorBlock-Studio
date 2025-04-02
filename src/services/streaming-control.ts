@@ -59,7 +59,7 @@ export class StreamControlHandler {
         const finalMessage: Message = {
             messageId: uuidv4(),
             content: this.fullText,
-            conversationId: this.targetConverstation.id,
+            conversationId: this.targetConverstation.conversationId,
             role: 'assistant',
             timestamp: new Date(),
             provider: this.placeholderMessage.provider,

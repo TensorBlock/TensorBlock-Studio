@@ -15,10 +15,20 @@ export interface Message {
 }
 
 export interface Conversation {
-  id: string;
+  conversationId: string;
+  folderId: string;
   title: string;
   firstMessageId: string | null;
   messages: Map<string, Message>;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ConversationFolder{
+  folderId: string;
+  folderName: string;
+  conversations: Conversation[];
+  createdAt: Date;
+  updatedAt: Date;
+  colorFlag: string;
 }

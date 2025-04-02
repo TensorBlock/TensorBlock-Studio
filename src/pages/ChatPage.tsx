@@ -106,7 +106,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
   // Get the active conversation
   const activeConversation = activeConversationId
-    ? conversations.find(c => c.id === activeConversationId) || null
+    ? conversations.find(c => c.conversationId === activeConversationId) || null
     : null;
 
   // Create a new conversation
@@ -122,7 +122,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       
       // Update the state with the new list of conversations
       setConversations(chatService.getConversations());
-      setActiveConversationId(newConversation.id);
+      setActiveConversationId(newConversation.conversationId);
     } catch (error) {
       console.error('Failed to create new conversation:', error);
     }
@@ -161,24 +161,24 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   };
 
   // Select a conversation
-  const handleSelectConversation = (id: string) => {
-    setActiveConversationId(id);
+  const handleSelectConversation = (conversationId: string) => {
+    setActiveConversationId(conversationId);
     
     // Also update in the service
     if (chatServiceRef.current) {
-      chatServiceRef.current.setActiveConversation(id);
+      chatServiceRef.current.setActiveConversation(conversationId);
     }
   };
 
   // Rename a conversation
-  const handleRenameConversation = async (id: string, newTitle: string) => {
+  const handleRenameConversation = async (conversationId: string, newTitle: string) => {
     if (!isServiceInitialized || !chatServiceRef.current) return;
     
     try {
       const chatService = chatServiceRef.current;
       
       // Rename the conversation
-      await chatService.renameConversation(id, newTitle);
+      await chatService.renameConversation(conversationId, newTitle);
       
       // Update conversations state
       setConversations(chatService.getConversations());
@@ -188,14 +188,14 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   };
 
   // Delete a conversation
-  const handleDeleteConversation = async (id: string) => {
+  const handleDeleteConversation = async (conversationId: string) => {
     if (!isServiceInitialized || !chatServiceRef.current) return;
     
     try {
       const chatService = chatServiceRef.current;
       
       // Delete the conversation
-      await chatService.deleteConversation(id);
+      await chatService.deleteConversation(conversationId);
       
       // Update conversations state
       setConversations(chatService.getConversations());

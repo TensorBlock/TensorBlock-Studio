@@ -21,14 +21,14 @@ export class DatabaseService {
 
             request.onupgradeneeded = (event) => {
 
-                console.log(`onupgradeneeded`);
+                console.log(`Upgrade Database`);
 
                 const db = (event.target as IDBOpenDBRequest).result;
 
                 // Create conversations store
                 if (!db.objectStoreNames.contains('conversations')) {
                     const conversationStore = db.createObjectStore('conversations', {
-                        keyPath: 'id'
+                        keyPath: 'conversationId'
                     });
                     conversationStore.createIndex('updatedAt', 'updatedAt');
                 }
@@ -36,7 +36,7 @@ export class DatabaseService {
                 // Create chat history store
                 if (!db.objectStoreNames.contains('chatHistory')) {
                     const chatStore = db.createObjectStore('chatHistory', {
-                        keyPath: 'id',
+                        keyPath: 'messageId',
                         autoIncrement: true
                     });
                     chatStore.createIndex('conversationId', 'conversationId');
@@ -59,7 +59,8 @@ export class DatabaseService {
             if (!this.db) throw new Error('Database not initialized');
 
             const conversation: Conversation = {
-                id: uuidv4(),
+                conversationId: uuidv4(),
+                folderId: '',
                 title,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -85,7 +86,16 @@ export class DatabaseService {
             const index = store.index('updatedAt');
             const request = index.getAll();
 
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = () => {
+                const conversations = request.result;
+                for (const conversation of conversations) {
+                    if(conversation['id'] !== undefined) {
+                        conversation['conversationId'] = conversation['id'];
+                        delete conversation['id'];
+                    }
+                }
+                resolve(conversations);
+            }
             request.onerror = () => reject(request.error);
         });
     }
