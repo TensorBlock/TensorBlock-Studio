@@ -27,7 +27,6 @@ export interface Conversation {
 export interface ConversationFolder{
   folderId: string;
   folderName: string;
-  conversations: Conversation[];
   createdAt: Date;
   updatedAt: Date;
   colorFlag: string;

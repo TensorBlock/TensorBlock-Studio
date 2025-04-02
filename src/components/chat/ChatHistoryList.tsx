@@ -9,6 +9,7 @@ interface ChatHistoryListProps {
   activeConversationId: string | null;
   onSelectConversation: (conversationId: string) => void;
   onCreateNewChat: () => void;
+  onCreateNewFolder: () => void;
   onRenameConversation: (conversationId: string, newTitle: string) => void;
   onDeleteConversation: (conversationId: string) => void;
 }
@@ -18,6 +19,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
   activeConversationId,
   onSelectConversation,
   onCreateNewChat,
+  onCreateNewFolder,
   onRenameConversation,
   onDeleteConversation,
 }) => {
@@ -253,7 +255,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       
       <div className={`p-2 border-b border-gray-200 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'flex justify-between items-center'}`}>
         <button
-          onClick={onCreateNewChat}
+          onClick={onCreateNewFolder}
           className="flex items-center justify-center p-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md aspect-square hover:bg-gray-50 checked:outline-none checked:ring-2 checked:ring-blue-500"
         >
           <FolderPlus size={16}/>

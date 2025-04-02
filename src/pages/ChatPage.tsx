@@ -128,6 +128,20 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     }
   }, [SettingsService.getInstance().getSelectedModel(), isServiceInitialized]);
 
+  // Create a new folder
+  const createNewFolder = useCallback(async () => {
+    if (!isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      const chatService = chatServiceRef.current;
+
+      // Update the state with the new list of conversations
+      
+    } catch (error) {
+      console.error('Failed to create new folder:', error);
+    }
+  }, [isServiceInitialized]);
+
   // Handle sending a message with streaming
   const handleSendMessage = async (content: string) => {
     if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
@@ -290,6 +304,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
           activeConversationId={activeConversationId}
           onSelectConversation={handleSelectConversation}
           onCreateNewChat={createNewChat}
+          onCreateNewFolder={createNewFolder}
           onRenameConversation={handleRenameConversation}
           onDeleteConversation={handleDeleteConversation}
         />
