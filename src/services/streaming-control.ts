@@ -1,3 +1,4 @@
+import { LanguageModelUsage } from "ai";
 import { Conversation, Message } from "../types/chat";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -7,6 +8,8 @@ export class StreamControlHandler {
     public onChunkCallback: (updatedConversation: Conversation) => void;
     public onFinishCallback: (aiResponse: Message | null) => void;
 
+    private currentTotalTokens: number = 0;
+
     constructor(targetConversation: Conversation, onChunkCallback: (updatedConversation: Conversation) => void, onFinishCallback: (aiResponse: Message | null) => void) {
         this.targetConverstation = targetConversation;
         this.abortController = new AbortController();
@@ -14,27 +17,14 @@ export class StreamControlHandler {
         this.onFinishCallback = onFinishCallback;
     }
 
-    public abort() {
+    public async abort() {
         this.abortController.abort();
-        this.onFinish();
+        this.onFinish(null);
     }
 
     public getAbortSignal() {
         return this.abortController.signal;
     }
-
-    public static getPlaceholderMessage(model: string, provider: string, conversationId: string): Message {
-        return {
-            messageId: 'streaming-' + Date.now(),
-            conversationId: conversationId,
-            role: 'assistant',
-            content: '',
-            timestamp: new Date(),
-            provider: provider,
-            model: model
-        };
-    }
-
 
     public onChunk(streamingFullText: string) {
         // Update the placeholder message with the new content
@@ -60,7 +50,7 @@ export class StreamControlHandler {
         this.onChunkCallback(updatedStreamingConv);
     }
 
-    public onFinish() {
+    public onFinish(usage: LanguageModelUsage | null) {
         const lastMessage = this.targetConverstation.messages[this.targetConverstation.messages.length - 1];
         const finalMessage: Message = {
             messageId: uuidv4(),
@@ -70,6 +60,10 @@ export class StreamControlHandler {
             timestamp: new Date(),
             provider: lastMessage.provider,
             model: lastMessage.model,
+            tokens: usage?.completionTokens || 0,
+            fatherMessageId: lastMessage.fatherMessageId,
+            childrenMessageIds: lastMessage.childrenMessageIds,
+            preferIndex: lastMessage.preferIndex
         }
         this.onFinishCallback(finalMessage);
     }

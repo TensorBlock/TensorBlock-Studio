@@ -1,4 +1,4 @@
-import { generateText, LanguageModelV1, Provider, streamText } from 'ai';
+import { generateText, LanguageModelV1, LanguageModelUsage, Provider, streamText } from 'ai';
 import { v4 as uuidv4 } from 'uuid';
 import { Message, MessageRole } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
@@ -40,8 +40,8 @@ export class CommonProviderHelper implements AiServiceProvider {
    * Create the OpenAI client with current settings
    */
   private createClient() {
-    console.log(`Creating ${this.providerName} client`);
-    console.log(this._apiKey);
+    // console.log(`Creating ${this.providerName} client`);
+    // console.log(this._apiKey);
     return this.createProviderFunction(this._apiKey);
   }
 
@@ -100,8 +100,8 @@ export class CommonProviderHelper implements AiServiceProvider {
    * Setup authentication for OpenAI
    */
   public recreateClient(): void {
-    console.log(`Updating ${this.providerName} client`);
-    console.log(this._apiKey);
+    // console.log(`Updating ${this.providerName} client`);
+    // console.log(this._apiKey);
     this.ProviderInstance = this.createClient();
   }
 
@@ -136,19 +136,16 @@ export class CommonProviderHelper implements AiServiceProvider {
     streamController: StreamControlHandler
   ): Promise<Message> {
     try {
-      console.log('Model:', modelInstance.modelId);
-      
       const formattedMessages = messages.map(msg => ({
         role: msg.role,
         content: msg.content
       }));
-      console.log('Formatted messages:', formattedMessages);
 
       let fullText = '';
 
       if (options.stream) {
-        console.log('Streaming OpenAI response');
-        const { textStream } = await streamText({
+        console.log(`Streaming ${options.provider}/${options.model} response`);
+        const result = streamText({
           model: modelInstance,
           abortSignal: streamController.getAbortSignal(),
           messages: formattedMessages,
@@ -157,24 +154,25 @@ export class CommonProviderHelper implements AiServiceProvider {
           topP: options.top_p,
           frequencyPenalty: options.frequency_penalty,
           presencePenalty: options.presence_penalty,
-          onFinish: () => {
+          onFinish: (result: { usage: LanguageModelUsage }) => {
             console.log('OpenAI streaming chat completion finished');
-            streamController.onFinish();
+            streamController.onFinish(result.usage);
           },
-          
           onError: (error) => {
-            console.error(`${options.provider} streaming chat completion error:`, error);
-            throw new Error(`${options.provider} streaming chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
+            console.error(`${options.provider}/${options.model} streaming chat completion error:`, error);
+            throw new Error(`${options.provider}/${options.model} streaming chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
           }
         });
 
-        for await (const textPart of textStream) {
+        for await (const textPart of result.textStream) {
           fullText += textPart;
           streamController.onChunk(fullText);
         }
+
+        
       }
       else{
-        const { text } = await generateText({
+        const { text, usage } = await generateText({
           model: modelInstance,
           messages: formattedMessages,
           temperature: options.temperature,
@@ -185,7 +183,7 @@ export class CommonProviderHelper implements AiServiceProvider {
         });
 
         fullText = text;
-        streamController.onFinish();
+        streamController.onFinish(usage);
       }
 
       return {
@@ -195,7 +193,11 @@ export class CommonProviderHelper implements AiServiceProvider {
         content: fullText,
         timestamp: new Date(),
         provider: options.provider,
-        model: options.model
+        model: options.model,
+        tokens: 0,
+        fatherMessageId: null,
+        childrenMessageIds: [],
+        preferIndex: 0
       };
 
     } catch (error) {

@@ -66,6 +66,8 @@ export class DatabaseIntegrationService {
      * Load a specific conversation including all messages
      */
     public async loadConversation(conversationId: string): Promise<Conversation | null> {
+        console.log(`loadConversation: ${conversationId}`);
+
         try {
             // Get conversation details
             const dbConversations = await this.dbService.getConversations();
@@ -95,15 +97,6 @@ export class DatabaseIntegrationService {
         try {
             // Create in database
             const dbConversation = await this.dbService.createConversation(title);
-            
-            // Create app conversation object
-            const appConversation: Conversation = {
-                id: dbConversation.id,
-                title: dbConversation.title,
-                messages: [],
-                createdAt: dbConversation.createdAt,
-                updatedAt: dbConversation.updatedAt
-            };
 
             // Create system message
             const systemMessage: Message = {
@@ -113,24 +106,20 @@ export class DatabaseIntegrationService {
                 content: 'You are a helpful assistant. Be concise in your responses.',
                 timestamp: new Date(),
                 model: 'unknown',
-                provider: 'unknown'
+                provider: 'unknown',
+                tokens: 0,
+                fatherMessageId: null,
+                childrenMessageIds: [],
+                preferIndex: 0
             };
             
             // Save system message
             await this.dbService.saveChatMessage(systemMessage);
             
             // Add system message to the conversation
-            appConversation.messages = [{
-                messageId: systemMessage.messageId,
-                conversationId: dbConversation.id,
-                role: 'system',
-                content: systemMessage.content,
-                timestamp: systemMessage.timestamp,
-                provider: 'unknown',
-                model: 'unknown'
-            }];
+            dbConversation.messages = [systemMessage];
             
-            return appConversation;
+            return dbConversation;
         } catch (error) {
             console.error('Error creating conversation:', error);
             throw error;
@@ -146,8 +135,14 @@ export class DatabaseIntegrationService {
         role: 'user' | 'assistant' | 'system', 
         content: string,
         provider: string,
-        model: string
+        model: string,
+        tokens: number,
+        fatherMessageId: string | null,
+        childrenMessageIds: string[],
+        preferIndex: number
     ): Promise<Message> {
+        console.log(`saveChatMessage: ${messageId} | conversationId: ${conversationId} | role: ${role} | content: ${content} | provider: ${provider} | model: ${model} | tokens: ${tokens} | fatherMessageId: ${fatherMessageId} | childrenMessageIds: ${childrenMessageIds} | preferIndex: ${preferIndex}`);
+
         try {
             // Create message object
             const dbMessage: Message = {
@@ -157,7 +152,11 @@ export class DatabaseIntegrationService {
                 content,
                 timestamp: new Date(),
                 model,
-                provider
+                provider,
+                tokens,
+                fatherMessageId,
+                childrenMessageIds,
+                preferIndex
             };
             
             // Save to database
@@ -180,6 +179,7 @@ export class DatabaseIntegrationService {
             const dbConversation: Conversation = {
                 id: conversation.id,
                 title: conversation.title,
+                firstMessageId: conversation.firstMessageId,
                 createdAt: conversation.createdAt,
                 updatedAt: new Date(),
                 messages: conversation.messages
@@ -228,18 +228,6 @@ export class DatabaseIntegrationService {
             await this.dbService.deleteConversation(conversationId);
         } catch (error) {
             console.error('Error deleting conversation:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Delete a chat message
-     */
-    public async deleteChatMessage(messageId: string): Promise<void> {
-        try {
-            await this.dbService.deleteChatMessage(messageId);
-        } catch (error) {
-            console.error('Error deleting message:', error);
             throw error;
         }
     }
@@ -347,13 +335,9 @@ export class DatabaseIntegrationService {
     public async updateChatMessage(messageId: string, updatedMessage: Message, conversationId: string): Promise<void> {
         try {
             const dbMessage: Message = {
+                ...updatedMessage,
                 messageId: messageId,
                 conversationId: conversationId,
-                role: updatedMessage.role,
-                content: updatedMessage.content,
-                timestamp: updatedMessage.timestamp,
-                model: updatedMessage.model,
-                provider: updatedMessage.provider
             };
             
             await this.dbService.updateChatMessage(dbMessage);
@@ -366,23 +350,15 @@ export class DatabaseIntegrationService {
     // Mapping helpers
     private mapDbConversationToAppConversation(dbConversation: Conversation): Conversation {
         return {
-            id: dbConversation.id,
-            title: dbConversation.title,
-            messages: [], // Will be loaded separately when needed
-            createdAt: dbConversation.createdAt,
-            updatedAt: dbConversation.updatedAt
+            ...dbConversation,
         };
     }
 
     private mapDbMessageToAppMessage(dbMessage: Message): Message {
+        console.log(`mapDbMessageToAppMessage`);
+        console.log(dbMessage);
         return {
-            messageId: dbMessage.messageId.toString(),
-            conversationId: dbMessage.conversationId,
-            role: dbMessage.role,
-            content: dbMessage.content,
-            timestamp: dbMessage.timestamp,
-            provider: dbMessage.provider,
-            model: dbMessage.model
+            ...dbMessage,
         };
     }
 } 

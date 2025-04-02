@@ -171,11 +171,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     } catch (err) {
       console.error('Error sending streaming message:', err);
       
-      // If streaming fails, we'll try to fall back to regular mode
-      const error = err as Error;
-      if (error.message && error.message.includes('does not support streaming')) {
-        await handleSendMessage(content);
-      }
+      // // If streaming fails, we'll try to fall back to regular mode
+      // const error = err as Error;
+      // if (error.message && error.message.includes('does not support streaming')) {
+      //   await handleSendMessage(content);
+      // }
     }
   };
 
@@ -264,37 +264,33 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   
   // Handle editing a message
   const handleEditMessage = async (messageId: string, newContent: string) => {
-    if (!isServiceInitialized || !chatServiceRef.current || !activeConversation) return;
+    if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
     
     try {
-      // Find the message being edited
-      const message = activeConversation.messages.find(m => m.messageId === messageId);
-      
-      if (message && message.role === 'user') {
-        // Delete this message and all subsequent messages
-        const messageIndex = activeConversation.messages.findIndex(m => m.messageId === messageId);
-        
-        // If this is not the last message, we need to delete all subsequent messages
-        if (messageIndex < activeConversation.messages.length - 1) {
-          // Delete from last to first to avoid index shifting issues
-          for (let i = activeConversation.messages.length - 1; i > messageIndex; i--) {
-            const msgToDelete = activeConversation.messages[i];
-            await chatServiceRef.current.deleteMessage(msgToDelete.messageId, (updatedConversation) => {
-              setConversations(updatedConversation);
-            });
-          }
-        }
-        
-        // Then delete the edited message itself
-        await chatServiceRef.current.deleteMessage(messageId, (updatedConversation) => {
+      const chatService = chatServiceRef.current;
+      const selectedModel = SettingsService.getInstance().getSelectedModel();
+      const selectedProvider = SettingsService.getInstance().getSelectedProvider();
+      console.log('Using streaming with provider:', selectedProvider);
+      console.log('Using streaming with model:', selectedModel);
+
+      // Send user message with streaming
+      await chatService.editMessage(
+        messageId, 
+        activeConversationId,
+        newContent,
+        true,
+        (updatedConversation) => {
           setConversations(updatedConversation);
-        });
-        
-        // Finally, send the new message
-        await handleSendMessage(newContent);
-      }
-    } catch (error) {
-      console.error('Error editing message:', error);
+        }
+      );
+      
+    } catch (err) {
+      console.error('Error editing message:', err);
+      // // If streaming fails, we'll try to fall back to regular mode
+      // const error = err as Error;
+      // if (error.message && error.message.includes('does not support streaming')) {
+      //   await handleSendMessage(content);
+      // }
     }
   };
 

@@ -1,8 +1,9 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
-import { Conversation } from '../../types/chat';
+import { Conversation, Message } from '../../types/chat';
 import { Send, Square, Copy, RotateCcw, Share2, Pencil, Loader2 } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
+import { MessageHelper } from '../../services/message-helper';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -30,12 +31,19 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [messagesList, setMessagesList] = useState<Message[]>([]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
+
+    console.log(activeConversation);
+
+    if(activeConversation) {
+      setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation));
+    }
   }, [activeConversation?.messages]);
   
   const handleSubmit = (e: FormEvent) => {
@@ -70,23 +78,16 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     setEditingContent(content);
   };
 
-  // Handle save edit
-  const handleSaveEdit = () => {
-    if (editingMessageId && onEditMessage && editingContent.trim()) {
-      onEditMessage(editingMessageId, editingContent);
-      setEditingMessageId(null);
-      setEditingContent('');
-    }
-  };
-
   // Handle send edited message
   const handleSendEditedMessage = () => {
-    if (editingMessageId && editingContent.trim()) {
+    if (editingMessageId && onEditMessage && editingContent.trim()) {
+      const newContent = editingContent;
+
       // First cancel the edit mode
       setEditingMessageId(null);
       setEditingContent('');
       
-      onSendMessage(input);
+      onEditMessage(editingMessageId, newContent);
     }
   };
 
@@ -109,6 +110,10 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     console.error(`Function not implemented yet: ${action}`);
   };
   
+  const getMessagesList = () => {
+    return messagesList;
+  }
+
   // If no active conversation is selected
   if (!activeConversation) {
     return (
@@ -125,7 +130,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     <div className="flex flex-col h-full">
       {/* Messages area */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-        {activeConversation.messages.filter(m => m.role !== 'system').map((message) => {
+        {getMessagesList().map((message) => {
           const isUserMessage = message.role === 'user';
           const isEditing = editingMessageId === message.messageId;
           

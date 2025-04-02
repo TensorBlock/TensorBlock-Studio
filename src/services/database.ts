@@ -20,6 +20,9 @@ export class DatabaseService {
             };
 
             request.onupgradeneeded = (event) => {
+
+                console.log(`onupgradeneeded`);
+
                 const db = (event.target as IDBOpenDBRequest).result;
 
                 // Create conversations store
@@ -61,6 +64,7 @@ export class DatabaseService {
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 messages: [],
+                firstMessageId: null
             };
 
             const transaction = this.db.transaction('conversations', 'readwrite');
@@ -126,7 +130,7 @@ export class DatabaseService {
     }
 
     // Chat History Methods
-    async saveChatMessage(message: Omit<Message, 'id'>): Promise<string> {
+    async saveChatMessage(message: Message): Promise<string> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
@@ -145,7 +149,6 @@ export class DatabaseService {
             conversationRequest.onsuccess = () => {
                 const conversation = conversationRequest.result;
                 if (conversation) {
-                    conversation.lastMessage = message.content;
                     conversation.updatedAt = new Date();
                     conversationStore.put(conversation);
                 }
@@ -180,22 +183,6 @@ export class DatabaseService {
             const transaction = this.db.transaction('chatHistory', 'readwrite');
             const store = transaction.objectStore('chatHistory');
             const request = store.put(message);
-
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    /**
-     * Delete a chat message from the database
-     */
-    async deleteChatMessage(messageId: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (!this.db) throw new Error('Database not initialized');
-
-            const transaction = this.db.transaction('chatHistory', 'readwrite');
-            const store = transaction.objectStore('chatHistory');
-            const request = store.delete(messageId);
 
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
@@ -273,11 +260,11 @@ export class DatabaseService {
         const applySaltToChar = (code: number) => textToChars(this.ENCRYPTION_KEY).reduce((a, b) => a ^ b, code);
         
         const decoded = encoded
-        .match(/.{1,2}/g)
-        ?.map(hex => parseInt(hex, 16))
-        .map(applySaltToChar)
-        .map(charCode => String.fromCharCode(charCode))
-        .join('');
+            .match(/.{1,2}/g)
+            ?.map(hex => parseInt(hex, 16))
+            .map(applySaltToChar)
+            .map(charCode => String.fromCharCode(charCode))
+            .join('');
 
         return decoded || '';
     }

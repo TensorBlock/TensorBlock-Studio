@@ -3,7 +3,7 @@ import { Conversation, Message } from '../types/chat';
 import { AIService } from './ai-service';
 import { SettingsService } from './settings-service';
 import { StreamControlHandler } from './streaming-control';
-import { v4 as uuidv4 } from 'uuid';
+import { MessageHelper } from './message-helper';
 /**
  * Service for managing chat conversations
  */
@@ -81,7 +81,7 @@ export class ChatService {
     if (!this.dbService) {
       throw new Error('Database service not initialized');
     }
-    
+
     try {
       const conversation = await this.dbService.loadConversation(conversationId);
       
@@ -148,32 +148,7 @@ export class ChatService {
       const model = settingsService.getSelectedModel();
 
       //#region Save user message to database and update title
-      const userMessage = await this.dbService.saveChatMessage(
-        uuidv4(),
-        conversationId,
-        'user',
-        content,
-        'user',
-        'user'
-      );
-
-      // Update conversation title in memory
-      const shouldUpdateTitle = currentConversation.messages.length === 1 && 
-                              currentConversation.messages[0].role === 'system';
-      
-      const title = shouldUpdateTitle 
-        ? content.substring(0, 30) + (content.length > 30 ? '...' : '') 
-        : currentConversation.title;
-      
-      let updatedConversation = {
-        ...currentConversation,
-        title,
-        messages: [...currentConversation.messages, userMessage],
-        updatedAt: new Date()
-      };
-      
-      // Update in database
-      await this.dbService.updateConversation(updatedConversation);
+      let updatedConversation = await MessageHelper.addUserMessageToConversation(content, currentConversation);
       
       // Update in memory
       this.conversations = this.conversations.map(c => 
@@ -181,22 +156,23 @@ export class ChatService {
       );
 
       conversationUpdate(this.conversations);
+      //#endregion
 
-      const messages = updatedConversation.messages.map(m => ({
-        messageId: m.messageId,
-        conversationId: m.conversationId,
-        role: m.role,
-        content: m.content,
-        model: m.model,
-        provider: m.provider,
-        timestamp: m.timestamp
-      }));
+      //#region Map messages to messages array
+      const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false);
       //#endregion
 
       //#region Streaming Special Message Handling
       if(isStreaming) {
         // Create a placeholder for the streaming message
-        const placeholderMessage: Message = StreamControlHandler.getPlaceholderMessage(model, provider, conversationId);
+        const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
+
+        const latestMessage = updatedConversation.messages.length > 0 ? updatedConversation.messages[updatedConversation.messages.length - 1] : null;
+
+        if(latestMessage) {
+          latestMessage.childrenMessageIds.push(placeholderMessage.messageId);
+          latestMessage.preferIndex = latestMessage.childrenMessageIds.length - 1;
+        }
 
         // Add placeholder to conversation and update UI
         updatedConversation = {
@@ -231,29 +207,7 @@ export class ChatService {
 
           if (aiResponse === null) return;
 
-          const dbService = DatabaseIntegrationService.getInstance();
-
-          // Save final AI response message to database
-          await dbService.saveChatMessage(
-            aiResponse.messageId,
-            aiResponse.conversationId,
-            aiResponse.role,
-            aiResponse.content,
-            aiResponse.provider,
-            aiResponse.model
-          );
-
-          // Update the final conversation with the complete message
-          const finalConversation: Conversation = {
-            ...updatedConversation,
-            messages: [
-              ...messages, 
-              aiResponse
-            ],
-            updatedAt: new Date()
-          };
-          
-          await dbService.updateConversation(finalConversation);
+          const finalConversation = await MessageHelper.addAssistantMessageToConversation(aiResponse, updatedConversation);
 
           // Update in memory
           this.conversations = this.conversations.map(c => 
@@ -284,6 +238,158 @@ export class ChatService {
       //#endregion
 
     } catch (err) {     
+      console.error('Error sending streaming message:', err);
+      
+      // Don't throw the error if it was an abort error
+      const error = err as Error;
+      if (error.name === 'AbortError') {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Edit a message in a conversation
+   */
+  public async editMessage(
+    messageId: string, 
+    conversationId: string,
+    newContent: string, 
+    isStreaming: boolean,
+    conversationUpdate: (conversations: Conversation[]) => void
+  ): Promise<void> {
+
+    if (!this.dbService) {
+      throw new Error('Database service not initialized');
+    }
+    
+    try {
+      //#region Get message and father message in conversation
+      const currentConversation = this.conversations.find(c => c.id === conversationId);
+      
+      if (!currentConversation) {
+        throw new Error('Active conversation not found');
+      }
+      
+      // Find the message
+      const messageIndex = currentConversation.messages.findIndex(m => m.messageId === messageId);
+      
+      if (messageIndex === -1) {
+        throw new Error('Message not found');
+      }
+      
+      // Get the original message
+      const originalMessage = currentConversation.messages[messageIndex];
+
+      // Check if the message is a user message (only user messages can be edited)
+      if (originalMessage.role !== 'user') {
+        throw new Error('Only user messages can be edited');
+      }
+      
+      const fatherMessageId = originalMessage.fatherMessageId;
+      const fatherMessage = currentConversation.messages.find(m => m.messageId === fatherMessageId);
+
+      if(!fatherMessage) {
+        throw new Error('Father message not found');
+      }
+      //#endregion
+
+      const settingsService = SettingsService.getInstance();
+      const provider = settingsService.getSelectedProvider();
+      const model = settingsService.getSelectedModel();
+
+      //#region Save edited message to database
+      let updatedConversation = await MessageHelper.insertUserMessageToConversation(fatherMessage, newContent, currentConversation);
+
+      // Update in memory
+      this.conversations = this.conversations.map(c => 
+        c.id === conversationId ? updatedConversation : c
+      );
+
+      conversationUpdate(this.conversations);
+      //#endregion
+      
+      //#region Map messages to messages array
+      const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false);
+      //#endregion
+
+      //#region Streaming Special Message Handling
+      if(isStreaming) {
+        // Create a placeholder for the streaming message
+        const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
+
+        const latestMessage = updatedConversation.messages.length > 0 ? updatedConversation.messages[updatedConversation.messages.length - 1] : null;
+
+        if(latestMessage) {
+          latestMessage.childrenMessageIds.push(placeholderMessage.messageId);
+          latestMessage.preferIndex = latestMessage.childrenMessageIds.length - 1;
+        }
+
+        // Add placeholder to conversation and update UI
+        updatedConversation = {
+          ...updatedConversation,
+          messages: [...updatedConversation.messages, placeholderMessage],
+          updatedAt: new Date()
+        };
+
+        this.conversations = this.conversations.map(c => 
+          c.id === conversationId ? updatedConversation : c
+        );
+
+        conversationUpdate(this.conversations);
+      }
+      //#endregion
+
+      //#region Send Chat Message to AI with streaming
+
+      // Create a new abort controller for this request
+      const streamController = new StreamControlHandler(updatedConversation, 
+        // ---- On chunk callback ----
+        (updated: Conversation) => {  
+          this.conversations = this.conversations.map(c => 
+            c.id === conversationId ? updated : c
+          );
+          conversationUpdate(this.conversations);
+        }, 
+        // ---- On finish callback ----
+        async (aiResponse: Message | null) => { 
+
+          console.log(aiResponse);
+
+          if (aiResponse === null) return;
+
+          const finalConversation = await MessageHelper.addAssistantMessageToConversation(aiResponse, updatedConversation);
+
+          // Update in memory
+          this.conversations = this.conversations.map(c => 
+            c.id === conversationId ? finalConversation : c
+          );
+
+          conversationUpdate(this.conversations);
+
+          this.streamControllerMap.delete(conversationId);
+        }
+      );
+
+      this.streamControllerMap.set(conversationId, streamController);
+
+      // Send Chat Message to AI with streaming
+      await this.aiService.getChatCompletion(
+        messages, 
+        {
+          model: settingsService.getSelectedModel(),
+          provider: settingsService.getSelectedProvider(),
+          stream: isStreaming
+        },
+        streamController
+      );
+
+      conversationUpdate(this.conversations);
+      
+      //#endregion
+      
+    } catch (err) {
       console.error('Error sending streaming message:', err);
       
       // Don't throw the error if it was an abort error
@@ -472,127 +578,6 @@ export class ChatService {
       
     } catch (error) {
       console.error('Error regenerating message:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Delete a message from a conversation
-   */
-  public async deleteMessage(messageId: string, conversationUpdate: (conversations: Conversation[]) => void): Promise<void> {
-    if (!this.dbService || !this.activeConversationId) {
-      throw new Error('Database service not initialized or no active conversation');
-    }
-    
-    try {
-      const conversationId = this.activeConversationId;
-      const activeConversation = this.conversations.find(c => c.id === conversationId);
-      
-      if (!activeConversation) {
-        throw new Error('Active conversation not found');
-      }
-      
-      // Find the message index
-      const messageIndex = activeConversation.messages.findIndex(m => m.messageId === messageId);
-      
-      if (messageIndex === -1) {
-        throw new Error('Message not found');
-      }
-      
-      // Delete the message from database
-      await this.dbService.deleteChatMessage(messageId);
-      
-      // Create a new conversation with the message removed
-      const updatedMessages = [...activeConversation.messages];
-      updatedMessages.splice(messageIndex, 1);
-      
-      const updatedConversation: Conversation = {
-        ...activeConversation,
-        messages: updatedMessages,
-        updatedAt: new Date()
-      };
-      
-      // Update in database
-      await this.dbService.updateConversation(updatedConversation);
-      
-      // Update in memory
-      this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
-      );
-      
-      // Update UI
-      conversationUpdate(this.conversations);
-      
-    } catch (error) {
-      console.error('Error deleting message:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Edit a message in a conversation
-   */
-  public async editMessage(messageId: string, newContent: string, conversationUpdate: (conversations: Conversation[]) => void): Promise<void> {
-    if (!this.dbService || !this.activeConversationId) {
-      throw new Error('Database service not initialized or no active conversation');
-    }
-    
-    try {
-      const conversationId = this.activeConversationId;
-      const activeConversation = this.conversations.find(c => c.id === conversationId);
-      
-      if (!activeConversation) {
-        throw new Error('Active conversation not found');
-      }
-      
-      // Find the message
-      const messageIndex = activeConversation.messages.findIndex(m => m.messageId === messageId);
-      
-      if (messageIndex === -1) {
-        throw new Error('Message not found');
-      }
-      
-      // Check if the message is a user message (only user messages can be edited)
-      if (activeConversation.messages[messageIndex].role !== 'user') {
-        throw new Error('Only user messages can be edited');
-      }
-      
-      // Get the original message
-      const originalMessage = activeConversation.messages[messageIndex];
-      
-      // Update the message in the database
-      await this.dbService.updateChatMessage(messageId, {
-        ...originalMessage,
-        content: newContent
-      }, conversationId);
-      
-      // Create updated messages array with the edited message
-      const updatedMessages = [...activeConversation.messages];
-      updatedMessages[messageIndex] = {
-        ...originalMessage,
-        content: newContent
-      };
-      
-      // Create updated conversation
-      const updatedConversation: Conversation = {
-        ...activeConversation,
-        messages: updatedMessages,
-        updatedAt: new Date()
-      };
-      
-      // Update conversation in database
-      await this.dbService.updateConversation(updatedConversation);
-      
-      // Update in memory
-      this.conversations = this.conversations.map(c => 
-        c.id === conversationId ? updatedConversation : c
-      );
-      
-      // Update UI
-      conversationUpdate(this.conversations);
-      
-    } catch (error) {
-      console.error('Error editing message:', error);
       throw error;
     }
   }

@@ -71,7 +71,9 @@ export class AIService {
     const settings = settingsService.getSettings();
     for (const provider of Object.keys(settings.providers)) {
       const providerSettings = settings.providers[provider];
-      console.log('Provider: ', provider, ' Provider settings: ', providerSettings);
+
+      // console.log('Provider: ', provider, ' Provider settings: ', providerSettings);
+
       if (providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
         const providerInstance = ProviderFactory.getNewProvider(provider as AIProvider);
         if (providerInstance) {

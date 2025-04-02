@@ -8,19 +8,17 @@ export interface Message {
   timestamp: Date;
   provider: string;
   model: string;
+  tokens: number;
+  fatherMessageId: string | null;
+  childrenMessageIds: string[];
+  preferIndex: number;
 }
 
 export interface Conversation {
   id: string;
   title: string;
+  firstMessageId: string | null;
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
 }
-
-export interface ChatState {
-  conversations: Conversation[];
-  activeConversationId: string | null;
-  isLoading: boolean;
-  error: string | null;
-} 
