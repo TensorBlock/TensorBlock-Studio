@@ -39,12 +39,10 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
 
-    console.log(activeConversation);
-
     if(activeConversation) {
       setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation));
     }
-  }, [activeConversation?.messages]);
+  }, [activeConversation, activeConversation?.messages]);
   
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -124,7 +122,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   }
   
   // Check if there's a streaming message
-  const hasStreamingMessage = activeConversation.messages.some(m => m.messageId.startsWith('streaming-'));
+  const hasStreamingMessage = Array.from(activeConversation.messages.values()).some(m => m.messageId.startsWith('streaming-'));
   
   return (
     <div className="flex flex-col h-full">

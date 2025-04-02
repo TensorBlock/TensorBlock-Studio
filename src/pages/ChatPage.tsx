@@ -26,6 +26,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     const initServices = async () => {
       try {
         // Initialize chat service
+        
         const chatService = ChatService.getInstance();
         await chatService.initialize();
         chatServiceRef.current = chatService;
@@ -68,14 +69,18 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         console.error('Failed to initialize services:', error);
       }
     };
+
+    if(!isServiceInitialized) {
+      initServices();
+    }
     
-    initServices();
-  }, [initialSelectedModel]);
+  }, [initialSelectedModel, isServiceInitialized]);
 
   // Load active conversation details when selected
   useEffect(() => {
     if (activeConversationId && isServiceInitialized && chatServiceRef.current) {
       const loadConversation = async () => {
+
         try {
           const chatService = chatServiceRef.current;
           if (!chatService) return;
@@ -98,30 +103,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       loadConversation();
     }
   }, [activeConversationId, isServiceInitialized]);
-
-  // Update selected model when initialSelectedModel changes
-  useEffect(() => {
-    const selectedModel = SettingsService.getInstance().getSelectedModel();
-    if (initialSelectedModel && initialSelectedModel !== selectedModel) {
-      SettingsService.getInstance().setSelectedModel(initialSelectedModel);
-    }
-  }, [initialSelectedModel, SettingsService.getInstance().getSelectedModel()]);
-  
-  // Save selected model to settings when it changes
-  useEffect(() => {
-    const selectedModel = SettingsService.getInstance().getSelectedModel();
-    if (selectedModel && isServiceInitialized) {
-      const settingsService = SettingsService.getInstance();
-      const settings = settingsService.getSettings();
-      
-      if (settings.selectedModel !== selectedModel) {
-        settingsService.updateSettings({
-          ...settings,
-          selectedModel: selectedModel
-        });
-      }
-    }
-  }, [SettingsService.getInstance().getSelectedModel(), isServiceInitialized]);
 
   // Get the active conversation
   const activeConversation = activeConversationId
@@ -311,7 +292,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           {isApiKeyMissing && (
             <div className="p-2 text-sm text-center text-yellow-800 bg-yellow-100">
-              Please set your OpenAI API key in the settings to use this model.
+              Please set your API key for the selected provider in the settings.
             </div>
           )}
           

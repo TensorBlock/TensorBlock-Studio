@@ -40,7 +40,7 @@ export class DatabaseService {
                         autoIncrement: true
                     });
                     chatStore.createIndex('conversationId', 'conversationId');
-                    chatStore.createIndex('timestamp', 'timestamp');
+                    chatStore.createIndex('messageId', 'messageId');
                 }
 
                 // Create API settings store
@@ -63,7 +63,7 @@ export class DatabaseService {
                 title,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                messages: [],
+                messages: new Map(),
                 firstMessageId: null
             };
 
@@ -96,6 +96,7 @@ export class DatabaseService {
 
             const transaction = this.db.transaction('conversations', 'readwrite');
             const store = transaction.objectStore('conversations');
+            console.log(conversation);
             const request = store.put(conversation);
 
             request.onsuccess = () => resolve();
@@ -134,6 +135,8 @@ export class DatabaseService {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
+            console.log(`saveChatMessage: ${message.messageId}`);
+
             const transaction = this.db.transaction(['chatHistory', 'conversations'], 'readwrite');
             const chatStore = transaction.objectStore('chatHistory');
             const conversationStore = transaction.objectStore('conversations');
@@ -141,7 +144,7 @@ export class DatabaseService {
             // Save the message
             const chatRequest = chatStore.add({
                 ...message,
-                timestamp: new Date()
+                messageId: message.messageId
             });
 
             // Update conversation's last message and timestamp

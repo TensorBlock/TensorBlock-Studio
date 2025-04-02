@@ -30,8 +30,8 @@ export class StreamControlHandler {
         // Update the placeholder message with the new content
         if (!this.targetConverstation) return;
 
-        const messageIndex = this.targetConverstation.messages.length - 1;
-        const updatedMessages = [...this.targetConverstation.messages];
+        const messageIndex = Array.from(this.targetConverstation.messages.values()).length - 1;
+        const updatedMessages = Array.from(this.targetConverstation.messages.values());
         
         // Update the streaming message content
         updatedMessages[messageIndex] = {
@@ -42,7 +42,7 @@ export class StreamControlHandler {
         // Update in memory
         const updatedStreamingConv = {
           ...this.targetConverstation,
-          messages: updatedMessages
+          messages: new Map(updatedMessages.map(message => [message.messageId, message]))
         };
 
         this.targetConverstation = updatedStreamingConv;
@@ -51,7 +51,7 @@ export class StreamControlHandler {
     }
 
     public onFinish(usage: LanguageModelUsage | null) {
-        const lastMessage = this.targetConverstation.messages[this.targetConverstation.messages.length - 1];
+        const lastMessage = Array.from(this.targetConverstation.messages.values())[Array.from(this.targetConverstation.messages.values()).length - 1];
         const finalMessage: Message = {
             messageId: uuidv4(),
             content: lastMessage.content,

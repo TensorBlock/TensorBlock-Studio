@@ -18,7 +18,7 @@ export interface Conversation {
   id: string;
   title: string;
   firstMessageId: string | null;
-  messages: Message[];
+  messages: Map<string, Message>;
   createdAt: Date;
   updatedAt: Date;
 }

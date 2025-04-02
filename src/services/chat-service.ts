@@ -167,7 +167,7 @@ export class ChatService {
         // Create a placeholder for the streaming message
         const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
 
-        const latestMessage = updatedConversation.messages.length > 0 ? updatedConversation.messages[updatedConversation.messages.length - 1] : null;
+        const latestMessage = Array.from(updatedConversation.messages.values()).length > 0 ? Array.from(updatedConversation.messages.values())[Array.from(updatedConversation.messages.values()).length - 1] : null;
 
         if(latestMessage) {
           latestMessage.childrenMessageIds.push(placeholderMessage.messageId);
@@ -177,7 +177,10 @@ export class ChatService {
         // Add placeholder to conversation and update UI
         updatedConversation = {
           ...updatedConversation,
-          messages: [...updatedConversation.messages, placeholderMessage],
+          messages: new Map([
+            ...Array.from(updatedConversation.messages.entries()), 
+            [placeholderMessage.messageId, placeholderMessage]
+          ]),
           updatedAt: new Date()
         };
 
@@ -273,14 +276,14 @@ export class ChatService {
       }
       
       // Find the message
-      const messageIndex = currentConversation.messages.findIndex(m => m.messageId === messageId);
+      const messageIndex = Array.from(currentConversation.messages.values()).findIndex(m => m.messageId === messageId);
       
       if (messageIndex === -1) {
         throw new Error('Message not found');
       }
       
       // Get the original message
-      const originalMessage = currentConversation.messages[messageIndex];
+      const originalMessage = Array.from(currentConversation.messages.values())[messageIndex];
 
       // Check if the message is a user message (only user messages can be edited)
       if (originalMessage.role !== 'user') {
@@ -288,7 +291,7 @@ export class ChatService {
       }
       
       const fatherMessageId = originalMessage.fatherMessageId;
-      const fatherMessage = currentConversation.messages.find(m => m.messageId === fatherMessageId);
+      const fatherMessage = Array.from(currentConversation.messages.values()).find(m => m.messageId === fatherMessageId);
 
       if(!fatherMessage) {
         throw new Error('Father message not found');
@@ -319,7 +322,7 @@ export class ChatService {
         // Create a placeholder for the streaming message
         const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
 
-        const latestMessage = updatedConversation.messages.length > 0 ? updatedConversation.messages[updatedConversation.messages.length - 1] : null;
+        const latestMessage = Array.from(updatedConversation.messages.values()).length > 0 ? Array.from(updatedConversation.messages.values())[Array.from(updatedConversation.messages.values()).length - 1] : null;
 
         if(latestMessage) {
           latestMessage.childrenMessageIds.push(placeholderMessage.messageId);
@@ -329,7 +332,10 @@ export class ChatService {
         // Add placeholder to conversation and update UI
         updatedConversation = {
           ...updatedConversation,
-          messages: [...updatedConversation.messages, placeholderMessage],
+          messages: new Map([
+            ...Array.from(updatedConversation.messages.entries()), 
+            [placeholderMessage.messageId, placeholderMessage]
+          ]),
           updatedAt: new Date()
         };
 
@@ -527,7 +533,7 @@ export class ChatService {
       }
       
       // Find the last user message
-      const messages = [...activeConversation.messages];
+      const messages = Array.from(activeConversation.messages.values());
       
       // Remove the last assistant message
       let lastAssistantIndex = -1;
@@ -544,12 +550,12 @@ export class ChatService {
       }
       
       // Keep only messages up to the last user message before the assistant response
-      const updatedMessages = messages.slice(0, lastAssistantIndex);
+      const updatedMessages = Array.from(activeConversation.messages.values()).slice(0, lastAssistantIndex);
       
       // Create a new conversation state without the last assistant message
       const updatedConversation: Conversation = {
         ...activeConversation,
-        messages: updatedMessages,
+        messages: new Map(updatedMessages.map(message => [message.messageId, message])),
         updatedAt: new Date()
       };
       

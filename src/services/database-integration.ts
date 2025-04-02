@@ -66,8 +66,6 @@ export class DatabaseIntegrationService {
      * Load a specific conversation including all messages
      */
     public async loadConversation(conversationId: string): Promise<Conversation | null> {
-        console.log(`loadConversation: ${conversationId}`);
-
         try {
             // Get conversation details
             const dbConversations = await this.dbService.getConversations();
@@ -76,12 +74,12 @@ export class DatabaseIntegrationService {
             
             // Get chat messages
             const messages = await this.dbService.getChatHistory(conversationId);
-            
+
             // Map to app conversation format
             const appConversation = this.mapDbConversationToAppConversation(conversation);
             
             // Add messages
-            appConversation.messages = messages.map((msg) => this.mapDbMessageToAppMessage(msg));
+            appConversation.messages = new Map(messages.map((msg) => [msg.messageId, this.mapDbMessageToAppMessage(msg)]));
             
             return appConversation;
         } catch (error) {
@@ -117,7 +115,9 @@ export class DatabaseIntegrationService {
             await this.dbService.saveChatMessage(systemMessage);
             
             // Add system message to the conversation
-            dbConversation.messages = [systemMessage];
+            dbConversation.messages = new Map([
+                [systemMessage.messageId, systemMessage]
+            ]);
             
             return dbConversation;
         } catch (error) {
@@ -141,7 +141,6 @@ export class DatabaseIntegrationService {
         childrenMessageIds: string[],
         preferIndex: number
     ): Promise<Message> {
-        console.log(`saveChatMessage: ${messageId} | conversationId: ${conversationId} | role: ${role} | content: ${content} | provider: ${provider} | model: ${model} | tokens: ${tokens} | fatherMessageId: ${fatherMessageId} | childrenMessageIds: ${childrenMessageIds} | preferIndex: ${preferIndex}`);
 
         try {
             // Create message object
@@ -355,8 +354,6 @@ export class DatabaseIntegrationService {
     }
 
     private mapDbMessageToAppMessage(dbMessage: Message): Message {
-        console.log(`mapDbMessageToAppMessage`);
-        console.log(dbMessage);
         return {
             ...dbMessage,
         };

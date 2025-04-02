@@ -6,7 +6,7 @@ export class MessageHelper {
   
     public static async addUserMessageToConversation(content: string, conversation: Conversation): Promise<Conversation> {
 
-        const latestMessage = conversation.messages.length > 0 ? conversation.messages[conversation.messages.length - 1] : null;
+        const latestMessage = Array.from(conversation.messages.values()).length > 0 ? Array.from(conversation.messages.values())[Array.from(conversation.messages.values()).length - 1] : null;
 
         const dbService = DatabaseIntegrationService.getInstance();
 
@@ -29,7 +29,7 @@ export class MessageHelper {
             await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.id);
         }
         
-        const shouldUpdateTitle = conversation.messages.length === 1 && conversation.messages[0].role === 'system';
+        const shouldUpdateTitle = Array.from(conversation.messages.values()).length === 1 && Array.from(conversation.messages.values())[0].role === 'system';
 
         const title = shouldUpdateTitle 
             ? content.substring(0, 30) + (content.length > 30 ? '...' : '') 
@@ -38,7 +38,10 @@ export class MessageHelper {
         const updatedConversation = {
             ...conversation,
             title,
-            messages: [...conversation.messages, userMessage],
+            messages: new Map([
+                ...Array.from(conversation.messages.entries()), 
+                [userMessage.messageId, userMessage]
+            ]),
             updatedAt: new Date()
         };
 
@@ -70,7 +73,10 @@ export class MessageHelper {
 
         const updatedConversation = {
             ...conversation,
-            messages: [...conversation.messages, userMessage],
+            messages: new Map([
+                ...Array.from(conversation.messages.entries()), 
+                [userMessage.messageId, userMessage]
+            ]),
             updatedAt: new Date()
         };
 
@@ -83,7 +89,7 @@ export class MessageHelper {
 
         const updatedConversation = MessageHelper.removeAllPlaceholderMessage(conversation);
 
-        const latestMessage = updatedConversation.messages.length > 0 ? updatedConversation.messages[updatedConversation.messages.length - 1] : null;
+        const latestMessage = Array.from(updatedConversation.messages.values()).length > 0 ? Array.from(updatedConversation.messages.values())[Array.from(updatedConversation.messages.values()).length - 1] : null;
         
         const updatedAiResponse: Message = {
             ...aiResponse,
@@ -113,10 +119,10 @@ export class MessageHelper {
 
         const finalConversation: Conversation = {
             ...updatedConversation,
-            messages: [
-                ...updatedConversation.messages, 
-                aiResponse
-            ],
+            messages: new Map([
+                ...Array.from(updatedConversation.messages.entries()), 
+                [aiResponse.messageId, aiResponse]
+            ]),
             updatedAt: new Date()
         };
 
@@ -127,7 +133,7 @@ export class MessageHelper {
     
     public static removeAllPlaceholderMessage(conversation: Conversation): Conversation {
         // Remove all messages with messageId starting with 'streaming-'
-        const filteredMessages = conversation.messages.filter(message => !message.messageId.startsWith('streaming-'));
+        const filteredMessages = Array.from(conversation.messages.values()).filter(message => !message.messageId.startsWith('streaming-'));
         
         for(const message of filteredMessages) {
             message.childrenMessageIds = message.childrenMessageIds.filter(id => !id.startsWith('streaming-'));
@@ -136,7 +142,7 @@ export class MessageHelper {
         
         return {
             ...conversation,
-            messages: filteredMessages
+            messages: new Map(filteredMessages.map(message => [message.messageId, message]))
         };
     }
 
@@ -159,15 +165,13 @@ export class MessageHelper {
     public static mapMessagesTreeToList(conversation: Conversation, isFilterSystemMessages: boolean = true): Message[] {
 
         const messages = isFilterSystemMessages 
-            ? (conversation?.messages.filter(m => m.role !== 'system') || []) 
-            : (conversation?.messages || []);
+            ? (Array.from(conversation?.messages.values()).filter(m => m.role !== 'system') || []) 
+            : (Array.from(conversation?.messages.values()) || []);
 
         if(messages.length === 0) return [];
 
         const constructedMessageList: Message[] = [];
         let currentMessage: Message | null = messages[0];
-        
-        console.log(`--------------------------------`);
 
         while(currentMessage !== null) {
         
@@ -176,17 +180,13 @@ export class MessageHelper {
             constructedMessageList.push(copyMessage);
 
             const nextIndex: number = currentMessage.preferIndex;
-
-            console.log(`MessageId: ${currentMessage.messageId} | MessageContent: ${currentMessage.content} | NextIndex: ${nextIndex} | ChildrenMessageIds: ${currentMessage.childrenMessageIds}`);
-
+            
             const isNextIndexValid: boolean = nextIndex >= 0 && nextIndex < currentMessage.childrenMessageIds.length;
 
             currentMessage = isNextIndexValid 
                 ? messages.find(m => m.messageId === currentMessage!.childrenMessageIds[nextIndex]) || null
                 : null;
         }
-
-        console.log(`--------------------------------`);
 
         return constructedMessageList;
             
