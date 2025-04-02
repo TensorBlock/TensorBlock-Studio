@@ -4,6 +4,7 @@ import { Send, Square, Copy, RotateCcw, Share2, Pencil, Loader2 } from 'lucide-r
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
+import { DatabaseIntegrationService } from '../../services/database-integration';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -43,7 +44,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation));
     }
   }, [activeConversation, activeConversation?.messages]);
-  
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
@@ -110,6 +111,63 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   
   const getMessagesList = () => {
     return messagesList;
+  }
+
+  const handleMessageIndexChange = async (messageId: string, isPrevious: boolean) => {
+    if (!activeConversation) return;
+
+    const message = messagesList.find(m => m.messageId === messageId);
+    if (!message || !message.fatherMessageId) return;
+
+    const fatherMessage = activeConversation.messages.get(message.fatherMessageId);
+    if (!fatherMessage) return;
+
+    const currentIndex = fatherMessage.childrenMessageIds.indexOf(messageId);
+    if (currentIndex <= 0 && isPrevious) return;
+    if (currentIndex >= fatherMessage.childrenMessageIds.length - 1 && !isPrevious) return;
+
+    // Create updated message
+    const updatedFatherMessage = {
+      ...fatherMessage,
+      preferIndex: currentIndex + (isPrevious ? -1 : 1),
+    };
+
+    // Update activeConversation
+    activeConversation.messages.set(updatedFatherMessage.messageId, updatedFatherMessage);
+
+    // Update database
+    const dbService = DatabaseIntegrationService.getInstance();
+    await dbService.updateChatMessage(
+      updatedFatherMessage.messageId,
+      updatedFatherMessage,
+      updatedFatherMessage.conversationId
+    );
+
+    setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation));
+  };
+
+  const getCurrentMessageIndex = (messageId: string) => {
+    const message = messagesList.find(m => m.messageId === messageId);
+    if (!message) return 0;
+    
+    const fatherMessage = messagesList.find(m => m.messageId === message.fatherMessageId);
+    if (fatherMessage) {
+      // Find the index of this message in the father's children
+      const index = fatherMessage.childrenMessageIds.indexOf(messageId);
+      return index >= 0 ? index : 0;
+    }
+    return 0;
+  }
+
+  const getTotalMessagesNumber = (messageId: string) => {
+    const message = messagesList.find(m => m.messageId === messageId);
+    if (!message) return 0;
+    
+    const fatherMessage = messagesList.find(m => m.messageId === message.fatherMessageId);
+    if (fatherMessage) {
+      return fatherMessage.childrenMessageIds.length;
+    }
+    return 0;
   }
 
   // If no active conversation is selected
@@ -226,6 +284,10 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     <MessageToolboxMenu 
                       actions={toolboxActions} 
                       className={`mr-1 ${hoveredMessageId === message.messageId ? 'opacity-100' : 'opacity-0'}`}
+                      currentMessageIndex={getCurrentMessageIndex(message.messageId)}
+                      totalMessages={getTotalMessagesNumber(message.messageId)}
+                      onPreviousMessageClick={() => handleMessageIndexChange(message.messageId, true)}
+                      onNextMessageClick={() => handleMessageIndexChange(message.messageId, false)}
                     />
                   </div>
                 </>

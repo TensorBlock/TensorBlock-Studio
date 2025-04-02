@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LucideIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LucideIcon } from 'lucide-react';
 
 export interface ToolboxAction {
   id: string;
@@ -12,6 +12,10 @@ export interface ToolboxAction {
 interface MessageToolboxMenuProps {
   actions: ToolboxAction[];
   className?: string;
+  currentMessageIndex: number;
+  totalMessages: number;
+  onPreviousMessageClick: () => void;
+  onNextMessageClick: () => void;
 }
 
 /**
@@ -20,9 +24,21 @@ interface MessageToolboxMenuProps {
  */
 const MessageToolboxMenu: React.FC<MessageToolboxMenuProps> = ({
   actions,
-  className = ''
+  className = '',
+  currentMessageIndex,
+  totalMessages,
+  onPreviousMessageClick,
+  onNextMessageClick
 }) => {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+
+  const handlePreviousMessageClick = () => {
+    onPreviousMessageClick();
+  };
+
+  const handleNextMessageClick = () => {
+    onNextMessageClick();
+  };
 
   return (
     <div
@@ -55,6 +71,34 @@ const MessageToolboxMenu: React.FC<MessageToolboxMenuProps> = ({
           )}
         </div>
       ))}
+
+      {totalMessages > 1 && (
+        <>
+          <button
+            onClick={handlePreviousMessageClick}
+            className={`flex items-center justify-center p-1.5 text-gray-600 rounded hover:bg-gray-100 transition-colors cursor-pointer`}
+            title={'Previous Message'}
+            aria-label={'Previous Message'}
+            onMouseEnter={() => setActiveTooltip('previousMessage')}
+            onMouseLeave={() => setActiveTooltip(null)}
+          >
+            <ChevronLeft />
+          </button>
+
+          <span className='text-gray-600'>{currentMessageIndex + 1} / {totalMessages}</span>
+
+          <button
+            onClick={handleNextMessageClick}
+            className={`flex items-center justify-center p-1.5 text-gray-600 rounded hover:bg-gray-100 transition-colors cursor-pointer`}
+            title={'Next Message'}
+            aria-label={'Next Message'}
+            onMouseEnter={() => setActiveTooltip('nextMessage')}
+            onMouseLeave={() => setActiveTooltip(null)}
+          >
+            <ChevronRight />
+          </button>
+        </>
+      )}
     </div>
   );
 };
