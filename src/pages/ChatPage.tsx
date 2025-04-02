@@ -4,7 +4,7 @@ import ChatMessageArea from '../components/chat/ChatMessageArea';
 import { Conversation } from '../types/chat';
 import { SettingsService } from '../services/settings-service';
 import { ChatService } from '../services/chat-service';
-
+import { AIService } from '../services/ai-service';
 interface ChatPageProps {
   initialSelectedModel?: string;
   apiKey?: string;
@@ -32,7 +32,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         chatServiceRef.current = chatService;
         
         // Setup AI service state listener
-        const aiService = chatService.getAIService();
+        const aiService = AIService.getInstance();
         const unsubscribe = aiService.subscribe(() => {
           setIsLoading(aiService.isLoading);
           setError(aiService.error);

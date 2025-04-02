@@ -6,6 +6,7 @@ import { CommonProviderHelper } from './common-provider-service';
 import { SettingsService } from '../settings-service';
 import { AIServiceCapability } from '../core/capabilities';
 import { mapModelCapabilities } from '../core/capabilities';
+import { LanguageModel } from 'ai';
 
 export const GEMINI_PROVIDER_NAME = 'Gemini';
 
@@ -118,7 +119,21 @@ export class GeminiService implements AiServiceProvider {
     options: CompletionOptions,
     streamController: StreamControlHandler
   ): Promise<Message> {
-    const modelInstance = this.ProviderInstance.languageModel(options.model);
+    const isWebSearchActive = SettingsService.getInstance().getWebSearchEnabled();
+
+    let modelInstance: LanguageModel;
+
+    if (isWebSearchActive) {
+      modelInstance = this.ProviderInstance.languageModel(options.model, {
+        useSearchGrounding: true,
+      });
+
+      options.stream = false;
+    } 
+    else {
+      modelInstance = this.ProviderInstance.languageModel(options.model);
+    }
+
     return CommonProviderHelper.getChatCompletionByModel(modelInstance, messages, options, streamController);
   }
 

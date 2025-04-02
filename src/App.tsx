@@ -46,6 +46,24 @@ function App() {
     return () => {};
   }, []);
 
+  // Handle link clicks
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('a');
+      if (target && target.href && target.target !== '_self') {
+        e.preventDefault();
+        window.electron.openUrl(target.href);
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick);
+
+    return () => {
+      document.removeEventListener('click', handleLinkClick);
+    };
+  }, []);
+  
+  
   return (
     <DatabaseInitializer>
       <MainLayout>

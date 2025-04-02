@@ -11,5 +11,6 @@ interface Window {
       usedMemory: number;
       cpuUsage: number;
     }>;
+    openUrl: (url: string) => Promise<void>;
   };
 } 

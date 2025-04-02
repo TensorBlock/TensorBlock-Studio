@@ -4,6 +4,8 @@ import { AIService } from './ai-service';
 import { SettingsService } from './settings-service';
 import { StreamControlHandler } from './streaming-control';
 import { MessageHelper } from './message-helper';
+import { AIServiceCapability } from './core/capabilities';
+import { AIProvider as AIProviderType } from '../types/ai-providers';
 /**
  * Service for managing chat conversations
  */
@@ -636,11 +638,18 @@ export class ChatService {
     }
   }
 
-  /**
-   * Get the AI service
-   */
-  public getAIService(): AIService {
-    return this.aiService;
+  getCurrentProviderModelCapabilities(): AIServiceCapability[] {
+    const settingsService = SettingsService.getInstance();
+    const provider = settingsService.getSelectedProvider() as AIProviderType;
+    const model = settingsService.getSelectedModel();
+
+    const providerService = AIService.getInstance().getProvider(provider);
+
+    if (!providerService) {
+      return [];
+    }
+
+    return providerService.getModelCapabilities(model);
   }
 
   /**

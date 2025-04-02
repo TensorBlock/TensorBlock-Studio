@@ -114,11 +114,9 @@ export class OpenAIService implements AiServiceProvider {
     options: CompletionOptions,
     streamController: StreamControlHandler
   ): Promise<Message> {
-    console.log("OPEN AI Getting chat completion");
     const isWebSearchActive = SettingsService.getInstance().getWebSearchEnabled();
 
     if (isWebSearchActive) {
-      console.log("Web search is active");
       return this.getChatCompletionWithWebSearch(messages, options, streamController);
     }
 

@@ -74,7 +74,7 @@ export class AIService {
 
       // console.log('Provider: ', provider, ' Provider settings: ', providerSettings);
 
-      if (providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
+      if (!this.providers.has(provider) && providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
         const providerInstance = ProviderFactory.getNewProvider(provider as AIProvider);
         if (providerInstance) {
           this.providers.set(provider, providerInstance);
@@ -408,6 +408,8 @@ export class AIService {
     this.modelCache.clear();
     this.lastFetchTime.clear();
     
+    this.addProviders();
+
     // Re-fetch all models
     await this.getCachedAllModels();
   }

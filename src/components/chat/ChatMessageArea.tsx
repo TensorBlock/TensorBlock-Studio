@@ -6,6 +6,8 @@ import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
 import { DatabaseIntegrationService } from '../../services/database-integration';
 import { SettingsService } from '../../services/settings-service';
+import { ChatService } from '../../services/chat-service';
+import { AIServiceCapability } from '../../services/core/capabilities';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -182,6 +184,10 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     setWebSearchActive(!webSearchActive);
     SettingsService.getInstance().setWebSearchEnabled(!webSearchActive);
   }
+  
+  const getWebSearchAllowed = () => {
+    return ChatService.getInstance().getCurrentProviderModelCapabilities().includes(AIServiceCapability.WebSearch);
+  }
 
   // If no active conversation is selected
   if (!activeConversation) {
@@ -344,18 +350,34 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           />
         </div>
 
-        <div className="flex flex-row items-center justify-between">
-          <button
-            type="button"
-            onClick={handleToggleWebSearch}
-            className={`flex items-center justify-center w-fit h-8 p-2 ml-2 transition-all duration-200 rounded-full outline outline-2 hover:outline
-              ${webSearchActive ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
-            aria-label="Toggle Web Search"
-            title="Toggle Web Search"
-          >
-            <Globe className={`mr-1 ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
-            <span className={`text-sm font-light ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>Web Search</span>
-          </button>
+        <div className="flex flex-row items-center justify-between px-2">
+          {
+            getWebSearchAllowed() ? (
+              <button
+                type="button"
+                onClick={handleToggleWebSearch}
+                className={`flex items-center justify-center w-fit h-8 p-2 transition-all duration-200 rounded-full outline outline-2 hover:outline
+                  ${webSearchActive ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
+                aria-label="Toggle Web Search"
+                title="Toggle Web Search"
+              >
+                <Globe className={`mr-1 ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
+                <span className={`text-sm font-light ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>Web Search</span>
+              </button>
+            )
+            :
+            (
+              <button
+                type="button"
+                className={`flex items-center justify-center bg-gray-100 w-fit h-8 p-2 ml-2 transition-all duration-200 rounded-full cursor-not-allowed`}
+                aria-label="Toggle Web Search"
+                title="Toggle Web Search"
+              >
+                <Globe className={`mr-1 text-gray-400 transition-all duration-200`} size={20} />
+                <span className={`text-sm font-light text-gray-400 transition-all duration-200`}>Web Search (Not available)</span>
+              </button>
+            )
+          }
 
           {isCurrentlyStreaming || hasStreamingMessage ? (
             <button
