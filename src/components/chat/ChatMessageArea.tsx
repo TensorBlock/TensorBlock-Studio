@@ -7,7 +7,7 @@ import { MessageHelper } from '../../services/message-helper';
 import { DatabaseIntegrationService } from '../../services/database-integration';
 import { SettingsService } from '../../services/settings-service';
 import { ChatService } from '../../services/chat-service';
-import { AIServiceCapability } from '../../services/core/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;

@@ -1,9 +1,8 @@
 import { DatabaseService } from './database';
-import { SettingsService, ProviderSettings } from './settings-service';
+import { SettingsService } from './settings-service';
 import { Conversation, Message, ConversationFolder } from '../types/chat';
-import { ApiSettings } from './api-settings';
+import { ProviderSettings } from '../types/settings';
 import { v4 as uuidv4 } from 'uuid';
-import { AIProvider } from '../types/ai-providers';
 
 /**
  * Service for integrating database operations with app components
@@ -253,49 +252,13 @@ export class DatabaseIntegrationService {
      */
     private async loadApiSettings(): Promise<void> {
         try {
-            const providers: AIProvider[] = [
-                'OpenAI', 
-                'Anthropic', 
-                'Gemini', 
-                'Fireworks.ai', 
-                'Together.ai', 
-                'OpenRouter', 
-                'Custom'
-            ];
-            
-            const settings = this.settingsService.getSettings();
-            let selectedProvider = settings.selectedProvider;
+            const apiSettingsList = await this.dbService.getApiSettingsList();
             
             // Load each provider's settings
-            for (const provider of providers) {
-                const dbSettings = await this.dbService.getApiSettings(provider);
-                if (dbSettings) {
-                    // Convert to ProviderSettings format
-                    const providerSettings: ProviderSettings = {
-                        apiKey: dbSettings.apiKey,
-                        organizationId: dbSettings.organizationId,
-                        apiVersion: dbSettings.apiVersion,
-                        baseUrl: dbSettings.baseUrl,
-                    };
-                    
-                    // Add any additional settings
-                    if (dbSettings.additional) {
-                        Object.assign(providerSettings, dbSettings.additional);
-                    }
-                    
-                    // Update settings service
-                    this.settingsService.updateProviderSettings(providerSettings, provider);
-                    
-                    // If this is the first provider with an API key, make it selected
-                    if (providerSettings.apiKey && !settings.providers[selectedProvider]?.apiKey) {
-                        selectedProvider = provider;
-                    }
-                }
-            }
-            
-            // Update selected provider if changed
-            if (selectedProvider !== settings.selectedProvider) {
-                this.settingsService.setSelectedProvider(selectedProvider);
+            for (const apiSettings of apiSettingsList) {
+                
+                // Update settings service
+                this.settingsService.updateProviderSettings(apiSettings);
             }
             
         } catch (error) {
@@ -315,28 +278,12 @@ export class DatabaseIntegrationService {
                 const providerSettings = settings.providers[provider];
                 if (providerSettings) {
                     // Create database settings object
-                    const dbSettings: ApiSettings = {
-                        provider,
-                        apiKey: providerSettings.apiKey || '',
-                        organizationId: providerSettings.organizationId,
-                        apiVersion: providerSettings.apiVersion,
-                        baseUrl: providerSettings.baseUrl
+                    const dbSettings: ProviderSettings = {
+                        ...providerSettings,
                     };
                     
-                    // Add additional fields
-                    const additional: Record<string, string | number | boolean> = {};
-                    for (const key in providerSettings) {
-                        if (!['apiKey', 'organizationId', 'apiVersion', 'baseUrl'].includes(key)) {
-                            additional[key] = providerSettings[key as keyof ProviderSettings] as string | number | boolean;
-                        }
-                    }
-                    
-                    if (Object.keys(additional).length > 0) {
-                        dbSettings.additional = additional;
-                    }
-                    
                     // Save to database
-                    await this.dbService.saveApiSettings(provider, dbSettings);
+                    await this.dbService.saveApiSettings(dbSettings);
                 }
             }
         } catch (error) {

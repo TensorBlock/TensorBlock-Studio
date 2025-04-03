@@ -4,8 +4,8 @@ import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provide
 import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { Provider } from 'ai';
-import { mapModelCapabilities } from '../core/capabilities';
-import { AIServiceCapability } from '../core/capabilities';
+import { mapModelCapabilities } from '../../types/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
 
 export const FIREWORKS_PROVIDER_NAME = 'Fireworks.ai';
 

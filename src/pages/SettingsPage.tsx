@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Server, MessageSquare } from 'lucide-react';
-import { SettingsService, ProviderSettings } from '../services/settings-service';
+import { SettingsService } from '../services/settings-service';
+import { ProviderSettings } from '../types/settings';
 import { ApiManagement, ModelManagement, ChatSettings } from '../components/settings';
 import { AIProvider } from '../types/ai-providers';
 import { DatabaseIntegrationService } from '../services/database-integration';
@@ -143,12 +144,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       Object.keys(providerSettings).forEach(provider => {
         settingsService.updateProviderSettings(providerSettings[provider], provider);
       });
-      
-      // Update selected provider
-      settingsService.setSelectedProvider(selectedProvider);
-      
-      // Update selected model
-      settingsService.setSelectedModel(selectedModel);
       
       // Update streaming setting
       settingsService.setUseStreaming(useStreaming);

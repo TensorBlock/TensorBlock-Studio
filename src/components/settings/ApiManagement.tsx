@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronRight, Save, AlertCircle } from 'lucide-react';
-import { ProviderSettings } from '../../services/settings-service';
+import { ChevronRight, Save, AlertCircle, Plus } from 'lucide-react';
+import { ProviderSettings } from '../../types/settings';
 import { AIProvider } from '../../types/ai-providers';
-
 
 interface ApiManagementProps {
   selectedProvider: AIProvider;
@@ -27,22 +26,21 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   saveStatus,
   onSaveSettings,
 }) => {
-  const [showApiKey, setShowApiKey] = useState(false);
   
+  const [showApiKey, setShowApiKey] = useState(false);
+
   // Get current provider settings
   const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
   
-  const providers: AIProvider[] = [
-    'TensorBlock', 
-    'OpenAI', 
-    'Anthropic', 
-    'Gemini', 
-    'Fireworks.ai', 
-    'Together.ai', 
-    'OpenRouter', 
-    'Custom'
-  ];
-  
+  const handleMapProviderSettings = () => {
+    const providers = Object.keys(providerSettings).map((provider) => {
+      providerSettings[provider].providerName = provider;
+      return providerSettings[provider];
+    });
+    
+    return providers;
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
@@ -65,27 +63,34 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
       
       <div className="flex flex-1">
         {/* Provider Selection */}
-        <div className="w-1/3 pr-6 border-r border-gray-200">
+        <div className="relative w-1/3 pr-6 border-r border-gray-200">
           <h3 className="mb-4 text-lg font-medium">AI Service Providers</h3>
           <p className="mb-4 text-sm text-gray-600">
             Select an AI service provider to configure its API settings.
           </p>
           
           <div className="space-y-2">
-            {providers.map((provider) => (
+            {handleMapProviderSettings().map((provider) => (
               <button
-                key={provider}
+                key={provider.providerName}
                 className={`flex items-center justify-between w-full px-4 py-3 text-left rounded-lg ${
-                  selectedProvider === provider 
+                  selectedProvider === provider.providerName 
                     ? 'bg-blue-50 text-blue-600 border border-blue-200' 
                     : 'bg-white border border-gray-200 hover:bg-gray-50'
                 }`}
-                onClick={() => onProviderChange(provider)}
+                onClick={() => onProviderChange(provider.providerName as AIProvider)}
               >
-                <span>{provider}</span>
-                {selectedProvider === provider && <ChevronRight size={16} />}
+                <span>{provider.providerName}</span>
+                {selectedProvider === provider.providerName && <ChevronRight size={16} />}
               </button>
             ))}
+          </div>
+
+          <div className="absolute w-[calc(100%-1.5rem)] bottom-2">
+            <button className="flex items-center w-full px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:text-gray-800">
+              <Plus size={16} className="mr-2 text-base" />
+              <span>Add Custom Provider</span>
+            </button>
           </div>
         </div>
         
@@ -127,22 +132,6 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               </p>
             </div>
             
-            {/* OpenAI-specific settings */}
-            {/* {selectedProvider === 'OpenAI' && (
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Organization ID (optional)
-                </label>
-                <input
-                  type="text"
-                  value={currentProviderSettings.organizationId || ''}
-                  onChange={(e) => onOrgIdChange(e.target.value)}
-                  placeholder="org-..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            )} */}
-            
             {/* Anthropic-specific settings */}
             {selectedProvider === 'Anthropic' && (
               <div>
@@ -160,63 +149,24 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               </div>
             )}
             
-            {/* Gemini-specific settings */}
-            {/* {selectedProvider === 'Gemini' && (
-              <>
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Base URL
-                  </label>
-                  <input
-                    type="text"
-                    value={currentProviderSettings.baseUrl || 'https://generativelanguage.googleapis.com'}
-                    onChange={(e) => onBaseUrlChange && onBaseUrlChange(e.target.value)}
-                    placeholder="https://generativelanguage.googleapis.com"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    API Version
-                  </label>
-                  <input
-                    type="text"
-                    value={currentProviderSettings.apiVersion || 'v1'}
-                    onChange={(e) => onApiVersionChange(e.target.value)}
-                    placeholder="v1"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </>
-            )} */}
-            
-            {/* Base URL setting for providers that need it */}
-            {/* {(selectedProvider === 'Fireworks.ai' || 
-              selectedProvider === 'Together' || 
-              selectedProvider === 'OpenRouter') && (
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Base URL
-                </label>
-                <input
-                  type="text"
-                  value={currentProviderSettings.baseUrl || ''}
-                  onChange={(e) => onBaseUrlChange && onBaseUrlChange(e.target.value)}
-                  placeholder={
-                    selectedProvider === 'Fireworks.ai' 
-                      ? 'https://api.fireworks.ai/inference/v1' 
-                      : selectedProvider === 'Together'
-                        ? 'https://api.together.xyz/v1'
-                        : 'https://openrouter.ai/api/v1'
-                  }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            )} */}
-            
             {/* Custom provider settings */}
             {selectedProvider === 'Custom' && (
               <>
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Provider Name
+                  </label>
+                  <input
+                    type="text"
+                    value={currentProviderSettings.providerName || ''}
+                    onChange={(e) => onBaseUrlChange && onBaseUrlChange(e.target.value)}
+                    placeholder="Custom Provider Name"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    The name of your custom provider
+                  </p>
+                </div>
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
                     Base URL
@@ -236,20 +186,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 <div className="pt-6 mt-6 border-t border-gray-200">
                   <h4 className="mb-4 font-medium text-md">API Endpoints</h4>
                   
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Completions Endpoint
-                      </label>
-                      <input
-                        type="text"
-                        value={currentProviderSettings.completionsEndpoint || '/completions'}
-                        onChange={(e) => onEndpointChange && onEndpointChange('completionsEndpoint', e.target.value)}
-                        placeholder="/completions"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
+                  <div className="space-y-4">                   
                     <div>
                       <label className="block mb-2 text-sm font-medium text-gray-700">
                         Chat Completions Endpoint

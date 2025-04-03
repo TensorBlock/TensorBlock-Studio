@@ -4,8 +4,8 @@ import { Message, MessageRole } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
 import { SettingsService } from '../settings-service';
 import { StreamControlHandler } from '../streaming-control';
-import { AIServiceCapability } from '../core/capabilities';
-import { mapModelCapabilities } from '../core/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
+import { mapModelCapabilities } from '../../types/capabilities';
 
 /**
  * Implementation of OpenAI service provider using the AI SDK

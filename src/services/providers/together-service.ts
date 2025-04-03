@@ -4,8 +4,8 @@ import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { Provider } from 'ai';
 import { createTogetherAI } from '@ai-sdk/togetherai';
-import { mapModelCapabilities } from '../core/capabilities';
-import { AIServiceCapability } from '../core/capabilities';
+import { mapModelCapabilities } from '../../types/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
 export const TOGETHER_PROVIDER_NAME = 'Together.ai';
 
 /**

@@ -1,72 +1,45 @@
-/**
- * Provider-specific settings interface
- */
-export interface ProviderSettings {
-  apiKey: string;
-  organizationId?: string;
-  apiVersion?: string;
-  baseUrl?: string;
-  // Custom provider endpoints
-  completionsEndpoint?: string;
-  chatCompletionsEndpoint?: string;
-  modelsEndpoint?: string;
-  // Models and capabilities
-  models?: string[];
-  capabilities?: string[];
-  // Add more provider-specific settings as needed
-}
-
-/**
- * User settings interface
- */
-export interface UserSettings {
-  providers: {
-    [key: string]: ProviderSettings;
-  };
-  selectedProvider: string;
-  selectedModel: string;
-  useStreaming: boolean;
-  webSearchEnabled: boolean;
-}
+import { UserSettings, ProviderSettings } from "../types/settings";
 
 /**
  * Default settings
  */
 const DEFAULT_SETTINGS: UserSettings = {
   providers: {
-    OpenAI: {
+    ['TensorBlock']: {
+      providerName: 'TensorBlock',
+      apiKey: '',
+      baseUrl: 'http://54.177.123.202:8000/v1',
+    },
+    ['OpenAI']: {
+      providerName: 'OpenAI',
       apiKey: '',
       organizationId: '',
     },
-    Anthropic: {
+    ['Anthropic']: {
+      providerName: 'Anthropic',
       apiKey: '',
       apiVersion: '2023-06-01',
     },
-    Gemini: {
+    ['Gemini']: {
+      providerName: 'Gemini',
       apiKey: '',
       baseUrl: 'https://generativelanguage.googleapis.com',
       apiVersion: 'v1',
     },
-    Fireworks: {
+    ['Fireworks.ai']: {
+      providerName: 'Fireworks',
       apiKey: '',
       baseUrl: 'https://api.fireworks.ai/inference/v1',
     },
-    Together: {
+    ['Together.ai']: {
+      providerName: 'Together',
       apiKey: '',
       baseUrl: 'https://api.together.xyz/v1',
     },
-    OpenRouter: {
+    ['OpenRouter']: {
+      providerName: 'OpenRouter',
       apiKey: '',
       baseUrl: 'https://openrouter.ai/api/v1',
-    },
-    Custom: {
-      apiKey: '',
-      baseUrl: '',
-      completionsEndpoint: '/completions',
-      chatCompletionsEndpoint: '/chat/completions',
-      modelsEndpoint: '/models',
-      models: ['default-model'],
-      capabilities: ['TextCompletion', 'ChatCompletion']
     }
   },
   selectedProvider: 'OpenAI',
@@ -119,11 +92,13 @@ export class SettingsService {
         if (!parsedSettings.providers && parsedSettings.apiKey) {
           return {
             providers: {
-              OpenAI: {
+              ['OpenAI']: {
+                providerName: 'OpenAI',
                 apiKey: parsedSettings.apiKey || '',
                 organizationId: '',
               },
-              Anthropic: {
+              ['Anthropic']: {
+                providerName: 'Anthropic',
                 apiKey: '',
                 apiVersion: '2023-06-01',
               }
@@ -196,7 +171,7 @@ export class SettingsService {
     const providerKey = provider || this.settings.selectedProvider;
     
     if (!this.settings.providers[providerKey]) {
-      this.settings.providers[providerKey] = { apiKey };
+      this.settings.providers[providerKey] = { apiKey, providerName: providerKey };
     } else {
       this.settings.providers[providerKey].apiKey = apiKey;
     }
@@ -235,6 +210,7 @@ export class SettingsService {
     
     if (!this.settings.providers[providerKey]) {
       this.settings.providers[providerKey] = {
+        providerName: providerKey,
         apiKey: '',
         ...settings
       };

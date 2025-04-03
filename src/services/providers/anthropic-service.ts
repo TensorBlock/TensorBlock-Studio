@@ -4,8 +4,8 @@ import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provide
 import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { SettingsService } from '../settings-service';
-import { mapModelCapabilities } from '../core/capabilities';
-import { AIServiceCapability } from '../core/capabilities';
+import { mapModelCapabilities } from '../../types/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
 
 export const ANTHROPIC_PROVIDER_NAME = 'Anthropic';
 

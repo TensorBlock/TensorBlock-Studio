@@ -1,6 +1,6 @@
 import { Message } from '../../types/chat';
 import { StreamControlHandler } from '../streaming-control';
-import { AIServiceCapability } from './capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
 
 /**
  * Configuration for AI service providers

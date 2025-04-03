@@ -1,4 +1,4 @@
-import { ApiSettings } from './api-settings';
+import { ProviderSettings } from '../types/settings';
 import { Conversation, Message, ConversationFolder } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -54,7 +54,7 @@ export class DatabaseService {
                 // Create API settings store
                 if (!db.objectStoreNames.contains('apiSettings')) {
                     db.createObjectStore('apiSettings', {
-                        keyPath: 'provider'
+                        keyPath: 'providerName'
                     });
                 }
             };
@@ -216,21 +216,16 @@ export class DatabaseService {
     }
 
     // API Settings Methods
-    async saveApiSettings(provider: string, settings: ApiSettings): Promise<void> {
+    async saveApiSettings(settings: ProviderSettings): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
             const transaction = this.db.transaction('apiSettings', 'readwrite');
             const store = transaction.objectStore('apiSettings');
 
-            const encryptedSettings = {
-                provider,
+            const encryptedSettings: ProviderSettings = {
+                ...settings,
                 apiKey: this.encrypt(settings.apiKey),
-                baseUrl: settings.baseUrl,
-                organizationId: settings.organizationId ? 
-                    this.encrypt(settings.organizationId) : undefined,
-                apiVersion: settings.apiVersion,
-                additional: settings.additional
             };
 
             const request = store.put(encryptedSettings);
@@ -240,7 +235,7 @@ export class DatabaseService {
         });
     }
 
-    async getApiSettings(provider: string): Promise<ApiSettings | null> {
+    async getApiSettings(provider: string): Promise<ProviderSettings | null> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
@@ -262,6 +257,19 @@ export class DatabaseService {
                         this.decrypt(settings.organizationId) : undefined
                 });
             };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getApiSettingsList(): Promise<ProviderSettings[]> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('apiSettings', 'readonly');
+            const store = transaction.objectStore('apiSettings');
+            const request = store.getAll();
+
+            request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }

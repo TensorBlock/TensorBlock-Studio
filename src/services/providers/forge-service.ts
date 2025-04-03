@@ -4,8 +4,8 @@ import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provide
 import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { Provider } from 'ai';
-import { AIServiceCapability } from '../core/capabilities';
-import { mapModelCapabilities } from '../core/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
+import { mapModelCapabilities } from '../../types/capabilities';
 
 export const FORGE_PROVIDER_NAME = 'TensorBlock';
 

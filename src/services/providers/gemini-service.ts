@@ -4,8 +4,8 @@ import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provide
 import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { SettingsService } from '../settings-service';
-import { AIServiceCapability } from '../core/capabilities';
-import { mapModelCapabilities } from '../core/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
+import { mapModelCapabilities } from '../../types/capabilities';
 import { LanguageModel } from 'ai';
 
 export const GEMINI_PROVIDER_NAME = 'Gemini';

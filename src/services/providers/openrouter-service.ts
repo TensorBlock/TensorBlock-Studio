@@ -4,8 +4,8 @@ import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { SettingsService } from '../settings-service';
 import { createOpenRouter, OpenRouterProvider } from '@openrouter/ai-sdk-provider';
-import { mapModelCapabilities } from '../core/capabilities';
-import { AIServiceCapability } from '../core/capabilities';
+import { mapModelCapabilities } from '../../types/capabilities';
+import { AIServiceCapability } from '../../types/capabilities';
 
 export const OPENROUTER_PROVIDER_NAME = 'OpenRouter';
 

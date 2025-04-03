@@ -4,7 +4,7 @@ import { AIService } from './ai-service';
 import { SettingsService } from './settings-service';
 import { StreamControlHandler } from './streaming-control';
 import { MessageHelper } from './message-helper';
-import { AIServiceCapability } from './core/capabilities';
+import { AIServiceCapability } from '../types/capabilities';
 import { AIProvider as AIProviderType } from '../types/ai-providers';
 /**
  * Service for managing chat conversations

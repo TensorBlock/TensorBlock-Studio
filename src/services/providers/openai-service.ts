@@ -5,7 +5,7 @@ import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
 import { Provider, ToolChoice, ToolSet } from 'ai';
 import { SettingsService } from '../settings-service';
-import { AIServiceCapability, mapModelCapabilities } from '../core/capabilities';
+import { AIServiceCapability, mapModelCapabilities } from '../../types/capabilities';
 
 export const OPENAI_PROVIDER_NAME = 'OpenAI';
 
