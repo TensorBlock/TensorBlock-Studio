@@ -60,9 +60,9 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
     setCurrentProviderSettings({ ...currentProviderSettings, baseUrl: value });
   }
 
-  const handleEndpointChange = (endpoint: string, value: string) => {
-    setCurrentProviderSettings({ ...currentProviderSettings, [endpoint]: value });
-  }
+  // const handleEndpointChange = (endpoint: string, value: string) => {
+  //   setCurrentProviderSettings({ ...currentProviderSettings, [endpoint]: value });
+  // }
 
   const handleOnEndEditing = () => {
     onProviderSettingsChange(currentProviderSettings);
@@ -265,7 +265,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               />
             </div>
             
-            <div>
+            {/* <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Model Description
               </label>
@@ -276,7 +276,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={3}
               ></textarea>
-            </div>
+            </div> */}
             
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -462,15 +462,20 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                     value={currentProviderSettings.baseUrl || ''}
                     onChange={(e) => handleBaseUrlChange(e.target.value)}
                     onBlur={handleOnEndEditing}
-                    placeholder="https://your-custom-api.com/v1"
+                    placeholder="https://your-custom-api.com/"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <p className="mt-2 text-xs text-gray-500">
-                    The base URL for your custom OpenAI-compatible API
-                  </p>
+                  <div className="flex flex-row items-center justify-between">
+                    <p className="mt-2 text-xs text-gray-500">
+                      The base URL for your custom OpenAI-compatible API
+                    </p>
+                    <p className="mt-2 overflow-hidden text-xs text-gray-500">
+                      {currentProviderSettings.baseUrl}/v1/chat/completions
+                    </p>
+                  </div>
                 </div>
                 
-                <div className="pt-6 mt-6 border-t border-gray-200">
+                {/* <div className="pt-6 mt-6 border-t border-gray-200">
                   <h4 className="mb-4 font-medium text-md">API Endpoints</h4>
                   
                   <div className="space-y-4">                   
@@ -502,7 +507,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                       />
                     </div>
                   </div>
-                </div>
+                </div> */}
               </>
             )}
 

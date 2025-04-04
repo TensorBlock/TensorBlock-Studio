@@ -6,6 +6,7 @@ import { SettingsService } from '../settings-service';
 import { createOpenRouter, OpenRouterProvider } from '@openrouter/ai-sdk-provider';
 import { mapModelCapabilities } from '../../types/capabilities';
 import { AIServiceCapability } from '../../types/capabilities';
+import { ModelSettings } from '../../types/settings';
 
 export const OPENROUTER_PROVIDER_NAME = 'OpenRouter';
 
@@ -17,7 +18,7 @@ export class OpenRouterService implements AiServiceProvider {
   private _apiKey: string = '';
   private ProviderInstance: OpenRouterProvider;
 
-  private apiModels: string[] = [];
+  private apiModels: ModelSettings[] = [];
 
   /**
    * Create a new Anthropic service provider
@@ -41,33 +42,28 @@ export class OpenRouterService implements AiServiceProvider {
   }
 
   /**
+   * Get the ID of the service provider
+   */
+  get id(): string {
+    return OPENROUTER_PROVIDER_NAME;
+  }
+  /**
    * Get the available models for this provider
    */
-  get availableModels(): string[] | undefined {
-    return this.apiModels.length > 0 
-      ? this.apiModels 
-        : ['deepseek/deepseek-v3-base:free', 'qwen/qwen2.5-vl-3b-instruct:free'];
+  get availableModels(): ModelSettings[] | undefined {
+    return this.apiModels;
   }
 
   /**
    * Fetch the list of available models from OpenAI
    */
-  public async fetchAvailableModels(): Promise<string[]> {
-    this.apiModels = [
-      'deepseek/deepseek-v3-base:free',
-      'qwen/qwen2.5-vl-3b-instruct:free'
-    ];
+  public async fetchAvailableModels(): Promise<ModelSettings[]> {
+    const settingsService = SettingsService.getInstance();
+    const models = settingsService.getModels(OPENROUTER_PROVIDER_NAME);
+
+    this.apiModels = models;
 
     return this.apiModels;
-    
-    // try {
-    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-    //   this.apiModels = response.data.map(model => model.id);
-    //   return this.apiModels;
-    // } catch (error) {
-    //   console.error('Failed to fetch OpenAI models:', error);
-    //   return this.apiModels;
-    // }
   }
 
   /**

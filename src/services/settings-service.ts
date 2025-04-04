@@ -1,5 +1,5 @@
 import { AIServiceCapability } from "../types/capabilities";
-import { UserSettings, ProviderSettings } from "../types/settings";
+import { UserSettings, ProviderSettings, ModelSettings } from "../types/settings";
 import { DatabaseService } from "./database";
 
 /**
@@ -205,8 +205,8 @@ const DEFAULT_SETTINGS: UserSettings = {
       ]
     }
   },
-  selectedProvider: 'OpenAI',
-  selectedModel: 'gpt-3.5-turbo',
+  selectedProvider: '',
+  selectedModel: '',
   useStreaming: true,
   webSearchEnabled: false,
 };
@@ -326,6 +326,14 @@ export class SettingsService {
   }
 
   /**
+   * Get models for the specified provider or the currently selected provider
+   */
+  public getModels(provider?: string): ModelSettings[] {
+    const providerKey = provider || this.settings.selectedProvider;
+    return this.settings.providers[providerKey]?.models || [];
+  }
+
+  /**
    * Set API key for a specific provider
    */
   public async setApiKey(apiKey: string, provider?: string): Promise<void> {
@@ -358,9 +366,16 @@ export class SettingsService {
   /**
    * Get provider-specific settings
    */
-  public getProviderSettings(provider?: string): ProviderSettings {
-    const providerKey = provider || this.settings.selectedProvider;
-    return this.settings.providers[providerKey] || { apiKey: '' };
+  public getProviderSettings(provider: string): ProviderSettings {
+    if(this.settings.providers[provider]) {
+      return this.settings.providers[provider];
+    } else {
+      return {
+        ...DEFAULT_SETTINGS.providers[provider],
+        providerId: provider,
+        providerName: provider,
+      };
+    }
   }
 
   /**

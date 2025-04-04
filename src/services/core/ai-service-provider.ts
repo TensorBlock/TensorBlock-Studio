@@ -1,6 +1,7 @@
 import { Message } from '../../types/chat';
 import { StreamControlHandler } from '../streaming-control';
 import { AIServiceCapability } from '../../types/capabilities';
+import { ModelSettings } from '../../types/settings';
 
 /**
  * Configuration for AI service providers
@@ -34,11 +35,16 @@ export interface AiServiceProvider {
    * The name of the provider
    */
   name: string;
+
+  /**
+   * The ID of the provider
+   */
+  id: string;
   
   /**
    * The available models for this provider
    */
-  availableModels?: string[];
+  availableModels?: ModelSettings[];
   
   /**
    * Get the capabilities of a model with this provider
@@ -48,7 +54,7 @@ export interface AiServiceProvider {
   /**
    * Fetch available models from the provider API
    */
-  fetchAvailableModels(): Promise<string[]>;
+  fetchAvailableModels(): Promise<ModelSettings[]>;
   
   /**
    * Update the API key for this provider

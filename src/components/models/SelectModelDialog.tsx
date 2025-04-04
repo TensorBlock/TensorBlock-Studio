@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Loader, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { AIService, ModelOption } from '../../services/ai-service';
+import { SettingsService } from '../../services/settings-service';
 
 interface SelectModelDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectModel: (model: ModelOption, provider: string) => void;
   currentModelId?: string;
-  currentProviderName?: string;
+  currentProviderId?: string;
 }
 
 export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
@@ -15,13 +16,13 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   onClose,
   onSelectModel,
   currentModelId,
-  currentProviderName
+  currentProviderId
 }) => {
   const [models, setModels] = useState<ModelOption[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedModelId, setSelectedModelId] = useState<string | undefined>(currentModelId);
-  const [selectedProviderName, setSelectedProviderName] = useState<string | undefined>(currentProviderName);
+  const [selectedProviderId, setSelectedProviderId] = useState<string | undefined>(currentProviderId);
   const [collapsedList, setCollapsedList] = useState<Map<string, boolean>>(new Map());
   const [aiService] = useState(() => AIService.getInstance());
 
@@ -43,8 +44,8 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   }, [currentModelId]);
 
   useEffect(() => {
-    setSelectedProviderName(currentProviderName);
-  }, [currentProviderName]);
+    setSelectedProviderId(currentProviderId);
+  }, [currentProviderId]);
   
   const loadModels = async () => {
     try {
@@ -70,10 +71,10 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
     setSearchQuery(e.target.value);
   };
   
-  const handleSelectModel = (model: ModelOption, provider: string) => {
+  const handleSelectModel = (model: ModelOption, providerId: string) => {
     setSelectedModelId(model.id);
-    setSelectedProviderName(provider);
-    onSelectModel(model, provider);
+    setSelectedProviderId(providerId);
+    onSelectModel(model, providerId);
   };
   
   const handleCollapseProvider = (provider: string) => {
@@ -100,6 +101,12 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
     return groups;
   }, {} as Record<string, ModelOption[]>);
   
+  const getProviderName = (providerId: string) => {
+    const settingsService = SettingsService.getInstance();
+    const providerSettings = settingsService.getProviderSettings(providerId);
+    return providerSettings.providerName;
+  }
+
   if (!isOpen) return null;
   
   return (
@@ -155,26 +162,26 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
             </div>
           ) : (
             <div className="space-y-6">
-              {Object.entries(groupedModels).map(([provider, providerModels]) => (
-                <div key={provider} className="mb-6">
+              {Object.entries(groupedModels).map(([providerId, providerModels]) => (
+                <div key={providerId} className="mb-6">
                   
                   <div className="flex items-start justify-start">
-                    <h3 className="mb-2 text-lg font-medium text-white">{provider}</h3>
+                    <h3 className="mb-2 text-lg font-medium text-white">{getProviderName(providerId)}</h3>
                     <button 
-                      onClick={() => handleCollapseProvider(provider)}
+                      onClick={() => handleCollapseProvider(providerId)}
                       className="p-1 ml-2 text-gray-400 bg-gray-800 rounded-md hover:text-white"
                     >
-                      {collapsedList.get(provider) ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                      {collapsedList.get(providerId) ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                     </button>
                   </div>
 
-                  <div className="space-y-2" style={{display: (collapsedList.has(provider) && collapsedList.get(provider)) ? 'none' : 'block'}}>
+                  <div className="space-y-2" style={{display: (collapsedList.has(providerId) && collapsedList.get(providerId)) ? 'none' : 'block'}}>
                     {providerModels.map(model => (
                       <div
                         key={model.id}
-                        onClick={() => handleSelectModel(model, provider)}
+                        onClick={() => handleSelectModel(model, providerId)}
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${
-                          (selectedModelId === model.id && selectedProviderName === model.provider)
+                          (selectedModelId === model.id && selectedProviderId === providerId)
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
                         }`}
@@ -187,7 +194,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
                             </div>
                           )}
                         </div>
-                        {(selectedModelId === model.id && selectedProviderName === model.provider) && (
+                        {(selectedModelId === model.id && selectedProviderId === providerId) && (
                           <div className="ml-4 text-white">
                             <Check size={16} />
                           </div>

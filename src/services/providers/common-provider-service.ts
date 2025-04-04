@@ -6,7 +6,7 @@ import { SettingsService } from '../settings-service';
 import { StreamControlHandler } from '../streaming-control';
 import { AIServiceCapability } from '../../types/capabilities';
 import { mapModelCapabilities } from '../../types/capabilities';
-
+import { ModelSettings } from '../../types/settings';
 /**
  * Implementation of OpenAI service provider using the AI SDK
  */
@@ -14,7 +14,7 @@ export class CommonProviderHelper implements AiServiceProvider {
   private settingsService: SettingsService;
   public ProviderInstance: Provider;
   private _apiKey: string = '';
-  private apiModels: string[] = [];
+  private apiModels: ModelSettings[] = [];
 
   private providerName: string;
   private createProviderFunction: (apiKey: string) => Provider;
@@ -55,39 +55,30 @@ export class CommonProviderHelper implements AiServiceProvider {
   }
 
   /**
-   * Get the available models for this provider
+   * Get the ID of the service provider
    */
-  get availableModels(): string[] | undefined {
-    return this.apiModels.length > 0 
-      ? this.apiModels 
-      : ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+  get id(): string {
+    return this.providerName;
   }
 
-  set availableModels(models: string[]) {
+  /**
+   * Get the available models for this provider
+   */
+  get availableModels(): ModelSettings[] | undefined {
+    return this.apiModels.length > 0 
+      ? this.apiModels 
+      : [];
+  }
+
+  set availableModels(models: ModelSettings[]) {
     this.apiModels = models;
   }
 
   /**
    * Fetch the list of available models from OpenAI
    */
-  public async fetchAvailableModels(): Promise<string[]> {
-    this.apiModels = [
-      'gpt-4o',
-      'gpt-4o-mini',
-      'gpt-4-turbo',
-      'gpt-3.5-turbo'
-    ];
-
+  public async fetchAvailableModels(): Promise<ModelSettings[]> {
     return this.apiModels;
-    
-    // try {
-    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-    //   this.apiModels = response.data.map(model => model.id);
-    //   return this.apiModels;
-    // } catch (error) {
-    //   console.error('Failed to fetch OpenAI models:', error);
-    //   return this.apiModels;
-    // }
   }
 
   /**

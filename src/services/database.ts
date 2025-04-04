@@ -10,13 +10,30 @@ export class DatabaseService {
     private readonly DB_VERSION = 2; // Increase version to trigger upgrade
     private readonly ENCRYPTION_KEY = 'your-secure-encryption-key'; // In production, use a secure key management system
 
+    private isInitialized: boolean = false;
+    private isInitializing: boolean = false;
+
     async initialize(): Promise<void> {
+        if(this.isInitialized) return;
+
+        if(this.isInitializing) {
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if(this.isInitialized) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 50);
+            });
+        }
+
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
 
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 this.db = request.result;
+                this.isInitialized = true;
                 resolve();
             };
 

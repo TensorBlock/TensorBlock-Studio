@@ -28,6 +28,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   // Handle selecting a model
   const handleSelectModel = (modelId: string, provider: string) => {
+    console.log('--------------------Selecting Model: ', modelId, ' for Provider: ', provider);
     SettingsService.getInstance().setSelectedModel(modelId);
     SettingsService.getInstance().setSelectedProvider(provider);
   };

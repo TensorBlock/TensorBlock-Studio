@@ -6,7 +6,8 @@ import { CommonProviderHelper } from './common-provider-service';
 import { Provider } from 'ai';
 import { mapModelCapabilities } from '../../types/capabilities';
 import { AIServiceCapability } from '../../types/capabilities';
-
+import { ModelSettings } from '../../types/settings';
+import { SettingsService } from '../settings-service';
 export const FIREWORKS_PROVIDER_NAME = 'Fireworks.ai';
 
 /**
@@ -15,7 +16,7 @@ export const FIREWORKS_PROVIDER_NAME = 'Fireworks.ai';
 export class FireworksService implements AiServiceProvider {
 
   private commonProviderHelper: CommonProviderHelper;
-  private apiModels: string[] = [];
+  private apiModels: ModelSettings[] = [];
 
   /**
    * Create a new OpenAI service provider
@@ -38,34 +39,28 @@ export class FireworksService implements AiServiceProvider {
   }
 
   /**
+   * Get the ID of the service provider
+   */
+  get id(): string {
+    return FIREWORKS_PROVIDER_NAME;
+  }
+  /**
    * Get the available models for this provider
    */
-  get availableModels(): string[] | undefined {
-    return this.apiModels.length > 0 
-      ? this.apiModels 
-      : ['accounts/fireworks/models/deepseek-r1', 'accounts/fireworks/models/deepseek-v3', 'accounts/fireworks/models/qwen2p5-coder-32b-instruct'];
+  get availableModels(): ModelSettings[] | undefined {
+    return this.apiModels;
   }
 
   /**
    * Fetch the list of available models from OpenAI
    */
-  public async fetchAvailableModels(): Promise<string[]> {
-    this.apiModels = [
-      'accounts/fireworks/models/deepseek-r1',
-      'accounts/fireworks/models/deepseek-v3',
-      'accounts/fireworks/models/qwen2p5-coder-32b-instruct'
-    ];
+  public async fetchAvailableModels(): Promise<ModelSettings[]> {
+    const settingsService = SettingsService.getInstance();
+    const models = settingsService.getModels(FIREWORKS_PROVIDER_NAME);
+
+    this.apiModels = models;
 
     return this.apiModels;
-    
-    // try {
-    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-    //   this.apiModels = response.data.map(model => model.id);
-    //   return this.apiModels;
-    // } catch (error) {
-    //   console.error('Failed to fetch OpenAI models:', error);
-    //   return this.apiModels;
-    // }
   }
 
   /**

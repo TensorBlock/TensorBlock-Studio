@@ -1,7 +1,7 @@
 import { ChevronDown, Cpu, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SelectModelDialog } from '../models/SelectModelDialog';
-import { ModelOption } from '../../services/ai-service';
+import { AIService, ModelOption } from '../../services/ai-service';
 import { SettingsService } from '../../services/settings-service';
 
 interface TopBarProps {
@@ -12,11 +12,18 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) => {
   const [isModelDialogOpen, setIsModelDialogOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState('');
+  const [selectedModelName, setSelectedModelName] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
 
   useEffect(() => {
     const settingsService = SettingsService.getInstance();
     setSelectedModel(settingsService.getSelectedModel());
+    AIService.getInstance().getModelsForProvider(settingsService.getSelectedProvider()).then((models) => {
+      const model = models.find((model) => model.id === settingsService.getSelectedModel());
+      if (model) {
+        setSelectedModelName(model.name);
+      }
+    });
     setSelectedProvider(settingsService.getSelectedProvider());
   }, [SettingsService.getInstance().getSelectedModel(), SettingsService.getInstance().getSelectedProvider()]);
 
@@ -42,7 +49,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
           aria-label="Select AI model"
         >
           <Cpu className="w-5 h-5 p-0.5 text-gray-600" />
-          <span className='text-center truncate max-w-[200px]'>{selectedModel}</span>
+          <span className='text-center truncate max-w-[200px]'>{selectedModelName}</span>
           <ChevronDown className="w-5 h-5 text-gray-600" />
         </button>
       </div>
@@ -56,7 +63,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
         onClose={handleCloseModelDialog}
         onSelectModel={handleSelectModel}
         currentModelId={selectedModel}
-        currentProviderName={selectedProvider}
+        currentProviderId={selectedProvider}
       />
     </div>
   );

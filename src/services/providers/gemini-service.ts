@@ -7,6 +7,7 @@ import { SettingsService } from '../settings-service';
 import { AIServiceCapability } from '../../types/capabilities';
 import { mapModelCapabilities } from '../../types/capabilities';
 import { LanguageModel } from 'ai';
+import { ModelSettings } from '../../types/settings';
 
 export const GEMINI_PROVIDER_NAME = 'Gemini';
 
@@ -18,7 +19,7 @@ export class GeminiService implements AiServiceProvider {
   private _apiKey: string = '';
   private ProviderInstance: GoogleGenerativeAIProvider;
 
-  private apiModels: string[] = [];
+  private apiModels: ModelSettings[] = [];
 
   /**
    * Create a new Anthropic service provider
@@ -42,35 +43,29 @@ export class GeminiService implements AiServiceProvider {
   }
 
   /**
+   * Get the ID of the service provider
+   */
+  get id(): string {
+    return GEMINI_PROVIDER_NAME;
+  }
+  
+  /**
    * Get the available models for this provider
    */
-  get availableModels(): string[] | undefined {
-    return this.apiModels.length > 0 
-      ? this.apiModels 
-      : ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-2.0-flash-001', 'gemini-2.5-pro-exp-03-25'];
+  get availableModels(): ModelSettings[] | undefined {
+    return this.apiModels;
   }
 
   /**
    * Fetch the list of available models from OpenAI
    */
-  public async fetchAvailableModels(): Promise<string[]> {
-    this.apiModels = [
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest',
-      'gemini-2.0-flash-001',
-      'gemini-2.5-pro-exp-03-25'
-    ];
+  public async fetchAvailableModels(): Promise<ModelSettings[]> {
+    const settingsService = SettingsService.getInstance();
+    const models = settingsService.getModels(GEMINI_PROVIDER_NAME);
+
+    this.apiModels = models;
 
     return this.apiModels;
-    
-    // try {
-    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-    //   this.apiModels = response.data.map(model => model.id);
-    //   return this.apiModels;
-    // } catch (error) {
-    //   console.error('Failed to fetch OpenAI models:', error);
-    //   return this.apiModels;
-    // }
   }
 
   /**

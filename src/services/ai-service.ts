@@ -63,12 +63,11 @@ export class AIService {
   private addProviders(): void {
     const settingsService = SettingsService.getInstance();
     const settings = settingsService.getSettings();
+
     for (const provider of Object.keys(settings.providers)) {
       const providerSettings = settings.providers[provider];
-
-      // console.log('Provider: ', provider, ' Provider settings: ', providerSettings);
-
       if (!this.providers.has(provider) && providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
+
         const providerInstance = ProviderFactory.getNewProvider(provider);
         if (providerInstance) {
           this.providers.set(provider, providerInstance);
@@ -113,16 +112,6 @@ export class AIService {
   private setState(newState: Partial<AIState>): void {
     this.state = { ...this.state, ...newState };
     this.notifyListeners();
-  }
-
-  /**
-   * Start a new AI request
-   */
-  private startRequest(): void {
-    this.setState({
-      status: 'loading',
-      error: null
-    });
   }
 
   /**
@@ -333,7 +322,7 @@ export class AIService {
     const providerPromises = [];
     
     for (const provider of this.getAllProviders()) {
-      providerPromises.push(this.getModelsForProvider(provider.name));
+      providerPromises.push(this.getModelsForProvider(provider.id));
     }
     
     const results = await Promise.all(providerPromises);
@@ -378,9 +367,9 @@ export class AIService {
       
       // Convert to ModelOption format
       const modelOptions: ModelOption[] = models.map(model => ({
-        id: model,
-        name: model,
-        provider: providerName
+        id: model.modelId,
+        name: model.modelName,
+        provider: providerName,
       }));
 
       // Cache results

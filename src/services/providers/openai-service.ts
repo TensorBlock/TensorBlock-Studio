@@ -6,6 +6,7 @@ import { CommonProviderHelper } from './common-provider-service';
 import { Provider, ToolChoice, ToolSet } from 'ai';
 import { SettingsService } from '../settings-service';
 import { AIServiceCapability, mapModelCapabilities } from '../../types/capabilities';
+import { ModelSettings } from '../../types/settings';
 
 export const OPENAI_PROVIDER_NAME = 'OpenAI';
 
@@ -15,7 +16,7 @@ export const OPENAI_PROVIDER_NAME = 'OpenAI';
 export class OpenAIService implements AiServiceProvider {
 
   private commonProviderHelper: CommonProviderHelper;
-  private apiModels: string[] = [];
+  private apiModels: ModelSettings[] = [];
 
   /**
    * Create a new OpenAI service provider
@@ -40,35 +41,29 @@ export class OpenAIService implements AiServiceProvider {
   }
 
   /**
+   * Get the ID of the service provider
+   */
+  get id(): string {
+    return OPENAI_PROVIDER_NAME;
+  }
+
+  /**
    * Get the available models for this provider
    */
-  get availableModels(): string[] | undefined {
-    return this.apiModels.length > 0 
-      ? this.apiModels 
-      : ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+  get availableModels(): ModelSettings[] | undefined {
+    return this.apiModels;
   }
 
   /**
    * Fetch the list of available models from OpenAI
    */
-  public async fetchAvailableModels(): Promise<string[]> {
-    this.apiModels = [
-      'gpt-4o',
-      'gpt-4o-mini',
-      'gpt-4-turbo',
-      'gpt-3.5-turbo'
-    ];
+  public async fetchAvailableModels(): Promise<ModelSettings[]> {
+    const settingsService = SettingsService.getInstance();
+    const models = settingsService.getModels(OPENAI_PROVIDER_NAME);
+
+    this.apiModels = models;
 
     return this.apiModels;
-    
-    // try {
-    //   const response = await this.client.get<{ data: Array<{ id: string }> }>('/models');
-    //   this.apiModels = response.data.map(model => model.id);
-    //   return this.apiModels;
-    // } catch (error) {
-    //   console.error('Failed to fetch OpenAI models:', error);
-    //   return this.apiModels;
-    // }
   }
 
   /**

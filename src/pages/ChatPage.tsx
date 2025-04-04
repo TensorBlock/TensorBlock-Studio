@@ -1,17 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ChatHistoryList from '../components/chat/ChatHistoryList';
 import ChatMessageArea from '../components/chat/ChatMessageArea';
 import { Conversation, ConversationFolder } from '../types/chat';
 import { SETTINGS_CHANGE_EVENT, SettingsService } from '../services/settings-service';
 import { ChatService } from '../services/chat-service';
 import { AIService } from '../services/ai-service';
-interface ChatPageProps {
-  initialSelectedModel?: string;
-}
 
-export const ChatPage: React.FC<ChatPageProps> = ({ 
-  initialSelectedModel = '',
-}) => {
+export const ChatPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [folders, setFolders] = useState<ConversationFolder[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -53,19 +48,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
           setActiveConversationId(activeId);
         }
         
-        // Get streaming settings
-        const settingsService = SettingsService.getInstance();
-        
         setIsServiceInitialized(true);
-        
-        // Get saved model from settings if no initial model provided
-        if (!initialSelectedModel) {
-          const settings = settingsService.getSettings();
-          if (settings.selectedModel) {
-            settingsService.setSelectedModel(settings.selectedModel);
-          }
-          aiService.refreshModels();
-        }
         
         return () => {
           unsubscribe(); // Clean up the subscription
@@ -79,7 +62,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       initServices();
     }
     
-  }, [initialSelectedModel, isServiceInitialized]);
+  }, [isServiceInitialized]);
 
   // Load active conversation details when selected
   useEffect(() => {

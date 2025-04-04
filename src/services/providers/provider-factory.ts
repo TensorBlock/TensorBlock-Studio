@@ -6,6 +6,7 @@ import { ForgeService } from './forge-service';
 import { TogetherService } from './together-service';
 import { GeminiService } from './gemini-service';
 import { OpenRouterService } from './openrouter-service';
+import { CustomService } from './custom-service';
 
 /**
  * Factory for creating provider instances
@@ -14,38 +15,26 @@ export class ProviderFactory {
   /**
    * Get a provider instance
    */
-  public static getNewProvider(name: string): AiServiceProvider | undefined {
+  public static getNewProvider(providerID: string): AiServiceProvider {
 
-    let provider: AiServiceProvider | undefined;
-    
     // Create provider based on name
-    switch (name) {
+    switch (providerID) {
       case 'TensorBlock':
-        provider = new ForgeService();
-        break;
+        return new ForgeService();
       case 'OpenAI':
-        provider = new OpenAIService();
-        break;
+        return new OpenAIService();
       case 'Anthropic':
-        provider = new AnthropicService();
-        break;
+        return new AnthropicService();
       case 'Gemini':
-        provider = new GeminiService();
-        break;
+        return new GeminiService();
       case 'Fireworks.ai':
-        provider = new FireworksService();
-        break;
+        return new FireworksService();
       case 'Together.ai':
-        provider = new TogetherService();
-        break;
+        return new TogetherService();
       case 'OpenRouter':
-        provider = new OpenRouterService();
-        break;
+        return new OpenRouterService();
       default:
-        // Custom provider will be implemented separately
-        break;
+        return new CustomService(providerID);
     }
-    
-    return provider;
   }
 }
