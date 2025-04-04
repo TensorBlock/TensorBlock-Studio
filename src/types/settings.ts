@@ -33,6 +33,7 @@ export interface UserSettings {
 export interface ModelSettings {
     modelId: string;
     modelName: string;
+    modelCategory: string;
     modelDescription: string;
     modelCapabilities: AIServiceCapability[];
 

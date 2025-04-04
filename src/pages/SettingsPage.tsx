@@ -293,7 +293,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         {/* Main content */}
         <div className="flex flex-col flex-1 h-full">
           {/* Content area */}
-          <div className="flex-1 p-6 overflow-y-auto">
+          <div className="flex-1 px-6 py-4 overflow-y-auto">
             {/* API Management Tab */}
             {activeTab === 'api' && (
               <ApiManagement

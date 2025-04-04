@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, AlertCircle, Plus, Trash2 } from 'lucide-react';
-import { ProviderSettings } from '../../types/settings';
+import { ChevronRight, AlertCircle, Plus, Trash2, Edit2, Search, X, Brain, Eye, Wrench, Type, Database } from 'lucide-react';
+import { ProviderSettings, ModelSettings } from '../../types/settings';
+import { AIServiceCapability } from '../../types/capabilities';
 
 interface ApiManagementProps {
   selectedProvider: string;
@@ -24,6 +25,10 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   
   const [showApiKey, setShowApiKey] = useState(false);
   const [currentProviderSettings, setCurrentProviderSettings] = useState<ProviderSettings>({ apiKey: '', providerName: '', customProvider: false, providerId: '' });
+  const [showModelSearch, setShowModelSearch] = useState(false);
+  const [modelSearchQuery, setModelSearchQuery] = useState('');
+  const [isEditModelDialogOpen, setIsEditModelDialogOpen] = useState(false);
+  const [currentEditModel, setCurrentEditModel] = useState<ModelSettings | null>(null);
 
   // Get current provider settings
   useEffect(() => {
@@ -63,11 +68,276 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
     onProviderSettingsChange(currentProviderSettings);
   }
 
+  // Group models by category
+  const getGroupedModels = (): Record<string, ModelSettings[]> => {
+    if (!currentProviderSettings.models || currentProviderSettings.models.length === 0) {
+      return {};
+    }
+
+    const filteredModels = modelSearchQuery 
+      ? currentProviderSettings.models.filter(model => 
+          model.modelName.toLowerCase().includes(modelSearchQuery.toLowerCase()) ||
+          model.modelId.toLowerCase().includes(modelSearchQuery.toLowerCase())
+        )
+      : currentProviderSettings.models;
+
+    return filteredModels.reduce((groups, model) => {
+      const category = model.modelCategory || 'Uncategorized';
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(model);
+      return groups;
+    }, {} as Record<string, ModelSettings[]>);
+  };
+
+  // Handle adding a new model
+  const handleAddModel = () => {
+    const newModel: ModelSettings = {
+      modelId: '',
+      modelName: 'New Model',
+      modelCategory: 'Custom',
+      modelDescription: 'Custom model description',
+      modelCapabilities: [AIServiceCapability.TextCompletion]
+    };
+    
+    setCurrentEditModel(newModel);
+    setIsEditModelDialogOpen(true);
+  };
+
+  // Handle editing an existing model
+  const handleEditModel = (model: ModelSettings) => {
+    setCurrentEditModel({...model});
+    setIsEditModelDialogOpen(true);
+  };
+
+  // Handle deleting a model
+  const handleDeleteModel = (modelId: string) => {
+    if (!currentProviderSettings.models) return;
+    
+    const updatedModels = currentProviderSettings.models.filter(model => model.modelId !== modelId);
+    const updatedSettings = {
+      ...currentProviderSettings,
+      models: updatedModels
+    };
+    
+    setCurrentProviderSettings(updatedSettings);
+    onProviderSettingsChange(updatedSettings);
+  };
+
+  // Save model after editing
+  const handleSaveModel = (model: ModelSettings) => {
+    if (!model.modelId || !model.modelName) return;
+    
+    let updatedModels: ModelSettings[] = [];
+    
+    if (!currentProviderSettings.models) {
+      updatedModels = [model];
+    } else {
+      const existingModelIndex = currentProviderSettings.models.findIndex(m => m.modelId === model.modelId);
+      
+      if (existingModelIndex >= 0) {
+        // Update existing model
+        updatedModels = [...currentProviderSettings.models];
+        updatedModels[existingModelIndex] = model;
+      } else {
+        // Add new model
+        updatedModels = [...currentProviderSettings.models, model];
+      }
+    }
+    
+    const updatedSettings = {
+      ...currentProviderSettings,
+      models: updatedModels
+    };
+    
+    setCurrentProviderSettings(updatedSettings);
+    onProviderSettingsChange(updatedSettings);
+    setIsEditModelDialogOpen(false);
+    setCurrentEditModel(null);
+  };
+
+  // Handle capability change
+  const handleCapabilityChange = (capability: AIServiceCapability, isChecked: boolean) => {
+    if (!currentEditModel) return;
+    
+    let updatedCapabilities = [...currentEditModel.modelCapabilities];
+    
+    if (isChecked) {
+      if (!updatedCapabilities.includes(capability)) {
+        updatedCapabilities.push(capability);
+      }
+    } else {
+      updatedCapabilities = updatedCapabilities.filter(cap => cap !== capability);
+    }
+    
+    setCurrentEditModel({
+      ...currentEditModel,
+      modelCapabilities: updatedCapabilities
+    });
+  };
+
+  // Get capability icon
+  const getCapabilityIcon = (capability: AIServiceCapability) => {
+    switch (capability) {
+      case AIServiceCapability.TextCompletion:
+        return <Type size={16} className="text-blue-500" />;
+      case AIServiceCapability.Reasoning:
+        return <Brain size={16} className="text-purple-500" />;
+      case AIServiceCapability.VisionAnalysis:
+        return <Eye size={16} className="text-green-500" />;
+      case AIServiceCapability.ToolUsage:
+        return <Wrench size={16} className="text-orange-500" />;
+      case AIServiceCapability.Embedding:
+        return <Database size={16} className="text-yellow-500" />;
+      default:
+        return null;
+    }
+  };
+
+  // Render capability badge
+  const renderCapabilityBadge = (capability: AIServiceCapability) => {
+    const icon = getCapabilityIcon(capability);
+    return icon ? (
+      <div key={capability} className="flex items-center justify-center w-6 h-6 p-1 bg-gray-100 rounded-md" title={capability}>
+        {icon}
+      </div>
+    ) : null;
+  };
+
+  // Model edit dialog
+  const renderModelEditDialog = () => {
+    if (!isEditModelDialogOpen || !currentEditModel) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 mt-[29px]">
+        <div className="w-full max-w-lg max-h-full p-6 overflow-y-auto bg-white rounded-lg shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium">{currentEditModel.modelId ? 'Edit Model' : 'Add New Model'}</h3>
+            <button 
+              onClick={() => {
+                setIsEditModelDialogOpen(false);
+                setCurrentEditModel(null);
+              }}
+              className="p-1 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Model ID
+              </label>
+              <input
+                type="text"
+                value={currentEditModel.modelId}
+                onChange={(e) => setCurrentEditModel({...currentEditModel, modelId: e.target.value})}
+                placeholder="model-id"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Model Name
+              </label>
+              <input
+                type="text"
+                value={currentEditModel.modelName}
+                onChange={(e) => setCurrentEditModel({...currentEditModel, modelName: e.target.value})}
+                placeholder="Model Name"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Model Category
+              </label>
+              <input
+                type="text"
+                value={currentEditModel.modelCategory}
+                onChange={(e) => setCurrentEditModel({...currentEditModel, modelCategory: e.target.value})}
+                placeholder="Category"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Model Description
+              </label>
+              <textarea
+                value={currentEditModel.modelDescription}
+                onChange={(e) => setCurrentEditModel({...currentEditModel, modelDescription: e.target.value})}
+                placeholder="Description"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+              ></textarea>
+            </div>
+            
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Capabilities
+              </label>
+              <div className="space-y-2">
+                {[
+                  {capability: AIServiceCapability.TextCompletion, label: 'Text Completion'},
+                  {capability: AIServiceCapability.Reasoning, label: 'Reasoning'},
+                  {capability: AIServiceCapability.VisionAnalysis, label: 'Vision'},
+                  {capability: AIServiceCapability.ToolUsage, label: 'Tool Usage'},
+                  {capability: AIServiceCapability.Embedding, label: 'Embedding'}
+                ].map(({capability, label}) => (
+                  <div key={capability} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`capability-${capability}`}
+                      checked={currentEditModel.modelCapabilities.includes(capability)}
+                      onChange={(e) => handleCapabilityChange(capability, e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label 
+                      htmlFor={`capability-${capability}`}
+                      className="ml-2 text-sm text-gray-700"
+                    >
+                      {label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end mt-6 space-x-2">
+            <button
+              onClick={() => {
+                setIsEditModelDialogOpen(false);
+                setCurrentEditModel(null);
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => handleSaveModel(currentEditModel)}
+              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              disabled={!currentEditModel.modelId || !currentEditModel.modelName}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full max-h-screen">
       {/* Title area removed - settings are auto-saved */}
       
-      <div className="flex flex-1 max-h-[calc(100vh-8rem)]">
+      <div className="flex flex-1 max-h-full">
         {/* Provider Selection */}
         <div className="relative flex flex-col justify-between w-1/3 max-h-full pr-6 border-r border-gray-200">
           <div className="relative flex flex-col flex-1 max-h-full">
@@ -235,6 +505,101 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 </div>
               </>
             )}
+
+            {/* Model management section */}
+            <div className="pt-6 mt-6 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-md">Models</h4>
+                    <div className="flex items-center space-x-2">
+                      {showModelSearch ? (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={modelSearchQuery}
+                            onChange={(e) => setModelSearchQuery(e.target.value)}
+                            placeholder="Search models..."
+                            className="w-40 p-1 pl-8 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            autoFocus
+                          />
+                          <Search size={14} className="absolute text-gray-400 transform -translate-y-1/2 left-2 top-1/2" />
+                          <button
+                            onClick={() => {
+                              setShowModelSearch(false);
+                              setModelSearchQuery('');
+                            }}
+                            className="absolute text-gray-400 transform -translate-y-1/2 right-2 top-1/2 hover:text-gray-600"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowModelSearch(true)}
+                          className="p-1 text-gray-500 hover:text-gray-700"
+                          title="Search models"
+                        >
+                          <Search size={16} />
+                        </button>
+                      )}
+                      <button
+                        onClick={handleAddModel}
+                        className="flex items-center px-2 py-1 text-xs text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                      >
+                        <Plus size={14} className="mr-1" />
+                        Add Model
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {Object.entries(getGroupedModels()).map(([category, models]) => (
+                      <div key={category} className="space-y-2">
+                        <h5 className="text-sm font-medium text-gray-600">{category}</h5>
+                        {models.map((model) => (
+                          <div key={model.modelId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="flex-1">
+                              <div className="font-medium">{model.modelName}</div>
+                              <div className="text-xs text-gray-500">{model.modelId}</div>
+                            </div>
+                            <div className="flex items-center gap-2 mr-6">
+                              {model.modelCapabilities.map(cap => renderCapabilityBadge(cap))}
+                            </div>
+                            <div className="flex space-x-1">
+                              <button
+                                onClick={() => handleEditModel(model)}
+                                className="p-1 text-blue-600 hover:text-blue-800"
+                                title="Edit model"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteModel(model.modelId)}
+                                className="p-1 text-red-600 hover:text-red-800"
+                                title="Delete model"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                    
+                    {currentProviderSettings.models && 
+                     currentProviderSettings.models.length > 0 && 
+                     Object.keys(getGroupedModels()).length === 0 && (
+                      <div className="py-4 text-center text-gray-500">
+                        No models found matching "{modelSearchQuery}"
+                      </div>
+                    )}
+                    
+                    {(!currentProviderSettings.models || currentProviderSettings.models.length === 0) && (
+                      <div className="py-4 text-center text-gray-500">
+                        No models configured. Click "Add Model" to create one.
+                      </div>
+                    )}
+                  </div>
+                </div>
           </div>
           
           {saveStatus === 'error' && (
@@ -245,6 +610,8 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
           )}
         </div>
       </div>
+      
+      {renderModelEditDialog()}
     </div>
   );
 };

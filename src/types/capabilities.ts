@@ -3,6 +3,7 @@
  */
 export enum AIServiceCapability {
   TextCompletion = 'textCompletion',
+  Reasoning = 'reasoning',
   ImageGeneration = 'imageGeneration',
   ImageEditing = 'imageEditing',
   AudioTranscription = 'audioTranscription',
