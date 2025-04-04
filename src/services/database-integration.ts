@@ -1,7 +1,6 @@
 import { DatabaseService } from './database';
 import { SettingsService } from './settings-service';
 import { Conversation, Message, ConversationFolder } from '../types/chat';
-import { ProviderSettings } from '../types/settings';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -38,8 +37,8 @@ export class DatabaseIntegrationService {
             // Initialize database
             await this.dbService.initialize();
             
-            // Load and set settings from database to settings service
-            await this.loadApiSettings();
+            // Initialize settings service
+            await this.settingsService.initialize();
             
             this.initialized = true;
         } catch (error) {
@@ -243,51 +242,6 @@ export class DatabaseIntegrationService {
             await this.dbService.deleteConversation(conversationId);
         } catch (error) {
             console.error('Error deleting conversation:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Load API settings from database to settings service
-     */
-    private async loadApiSettings(): Promise<void> {
-        try {
-            const apiSettingsList = await this.dbService.getApiSettingsList();
-            
-            // Load each provider's settings
-            for (const apiSettings of apiSettingsList) {
-                
-                // Update settings service
-                this.settingsService.updateProviderSettings(apiSettings);
-            }
-            
-        } catch (error) {
-            console.error('Error loading API settings:', error);
-        }
-    }
-
-    /**
-     * Save API settings from settings service to database
-     */
-    public async saveApiSettings(): Promise<void> {
-        try {
-            const settings = this.settingsService.getSettings();
-            
-            // Save each provider's settings
-            for (const provider in settings.providers) {
-                const providerSettings = settings.providers[provider];
-                if (providerSettings) {
-                    // Create database settings object
-                    const dbSettings: ProviderSettings = {
-                        ...providerSettings,
-                    };
-                    
-                    // Save to database
-                    await this.dbService.saveApiSettings(dbSettings);
-                }
-            }
-        } catch (error) {
-            console.error('Error saving API settings:', error);
             throw error;
         }
     }

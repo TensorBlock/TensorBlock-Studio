@@ -2,17 +2,15 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatHistoryList from '../components/chat/ChatHistoryList';
 import ChatMessageArea from '../components/chat/ChatMessageArea';
 import { Conversation, ConversationFolder } from '../types/chat';
-import { SettingsService } from '../services/settings-service';
+import { SETTINGS_CHANGE_EVENT, SettingsService } from '../services/settings-service';
 import { ChatService } from '../services/chat-service';
 import { AIService } from '../services/ai-service';
 interface ChatPageProps {
   initialSelectedModel?: string;
-  apiKey?: string;
 }
 
 export const ChatPage: React.FC<ChatPageProps> = ({ 
   initialSelectedModel = '',
-  apiKey = ''
 }) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [folders, setFolders] = useState<ConversationFolder[]>([]);
@@ -21,6 +19,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   const [isServiceInitialized, setIsServiceInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('');
 
   // Initialize the services
   useEffect(() => {
@@ -108,6 +108,15 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       loadConversation();
     }
   }, [activeConversationId, isServiceInitialized]);
+
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      setSelectedProvider(SettingsService.getInstance().getSelectedProvider());
+      setSelectedModel(SettingsService.getInstance().getSelectedModel());
+    };
+
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+  }, []);
 
   // Get the active conversation
   const activeConversation = activeConversationId
@@ -209,10 +218,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     
     try {
       const chatService = chatServiceRef.current;
-      const selectedModel = SettingsService.getInstance().getSelectedModel();
-      const selectedProvider = SettingsService.getInstance().getSelectedProvider();
-      console.log('Using streaming with provider:', selectedProvider);
-      console.log('Using streaming with model:', selectedModel);
 
       // Send user message with streaming
       await chatService.sendMessage(
@@ -291,7 +296,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   }, [conversations.length, createNewChat, isServiceInitialized]);
 
   // Show API key missing message if needed
-  const isApiKeyMissing = !apiKey && SettingsService.getInstance().getSelectedModel();
+  const isApiKeyMissing = !SettingsService.getInstance().getApiKey(SettingsService.getInstance().getSelectedProvider());
 
   // Handle stopping a streaming response
   const handleStopStreaming = () => {
@@ -390,6 +395,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             onRegenerateResponse={handleRegenerateResponse}
             onEditMessage={handleEditMessage}
             isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming(activeConversationId) || false}
+            selectedProvider={selectedProvider}
+            selectedModel={selectedModel}
           />
         </div>
       </div>

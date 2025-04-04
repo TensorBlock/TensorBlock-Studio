@@ -29,7 +29,10 @@ export class AnthropicService implements AiServiceProvider {
     this._apiKey = providerSettings.apiKey || '';
 
     this.ProviderInstance = createAnthropic({
-      apiKey: this._apiKey
+      apiKey: this._apiKey,
+      headers: {
+        "anthropic-dangerous-direct-browser-access": "true",
+      }
     });
   }
 
@@ -46,7 +49,7 @@ export class AnthropicService implements AiServiceProvider {
   get availableModels(): string[] | undefined {
     return this.apiModels.length > 0 
       ? this.apiModels 
-      : ['claude-3-5-sonnet-20240620'];
+      : ['claude-3-5-sonnet-20241022'];
   }
 
   /**
@@ -54,7 +57,7 @@ export class AnthropicService implements AiServiceProvider {
    */
   public async fetchAvailableModels(): Promise<string[]> {
     this.apiModels = [
-      'claude-3-5-sonnet-20240620'
+      'claude-3-5-sonnet-20241022'
     ];
 
     return this.apiModels;

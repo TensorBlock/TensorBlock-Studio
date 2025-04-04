@@ -1,18 +1,25 @@
 import { ChevronDown, Cpu, Settings } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SelectModelDialog } from '../models/SelectModelDialog';
 import { ModelOption } from '../../services/ai-service';
+import { SettingsService } from '../../services/settings-service';
 
 interface TopBarProps {
   onSelectModel: (model: string, provider: string) => void;
-  selectedModel?: string;
-  selectedProvider?: string;
   onOpenSettingsDialog: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onSelectModel, selectedModel, selectedProvider, onOpenSettingsDialog }) => {
+const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) => {
   const [isModelDialogOpen, setIsModelDialogOpen] = useState(false);
-  
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('');
+
+  useEffect(() => {
+    const settingsService = SettingsService.getInstance();
+    setSelectedModel(settingsService.getSelectedModel());
+    setSelectedProvider(settingsService.getSelectedProvider());
+  }, [SettingsService.getInstance().getSelectedModel(), SettingsService.getInstance().getSelectedProvider()]);
+
   const handleOpenModelDialog = () => {
     setIsModelDialogOpen(true);
   };

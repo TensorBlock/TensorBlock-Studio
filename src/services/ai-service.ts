@@ -2,8 +2,7 @@ import { AiServiceProvider, CompletionOptions } from './core/ai-service-provider
 import { ProviderFactory } from './providers/provider-factory';
 import { Message } from '../types/chat';
 import { StreamControlHandler } from './streaming-control';
-import { AIProvider } from '../types/ai-providers';
-import { SettingsService } from './settings-service';
+import { SETTINGS_CHANGE_EVENT, SettingsService } from './settings-service';
 
 export interface ModelOption {
   id: string;
@@ -25,11 +24,6 @@ interface AIState {
   error: Error | null;
   isCachingModels: boolean;
 }
-
-/**
- * Custom event name for settings changes
- */
-export const SETTINGS_CHANGE_EVENT = 'tensorblock_settings_change';
 
 /**
  * Service for interacting with AI providers
@@ -75,7 +69,7 @@ export class AIService {
       // console.log('Provider: ', provider, ' Provider settings: ', providerSettings);
 
       if (!this.providers.has(provider) && providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
-        const providerInstance = ProviderFactory.getNewProvider(provider as AIProvider);
+        const providerInstance = ProviderFactory.getNewProvider(provider);
         if (providerInstance) {
           this.providers.set(provider, providerInstance);
         }
@@ -162,13 +156,13 @@ export class AIService {
   /**
    * Get a specific provider by name
    */
-  public getProvider(name: AIProvider): AiServiceProvider | undefined {
+  public getProvider(name: string): AiServiceProvider | undefined {
     if (this.providers.has(name)) {
       return this.providers.get(name);
     }
     
     // If provider not in cache, try to create it
-    const provider = ProviderFactory.getNewProvider(name as AIProvider);
+    const provider = ProviderFactory.getNewProvider(name);
     if (provider) {
       this.providers.set(name, provider);
       return provider;
@@ -199,7 +193,9 @@ export class AIService {
       const useStreaming = options.stream;
       
       // Get provider instance
-      const provider = this.getProvider(providerName as AIProvider);
+      const provider = this.getProvider(providerName);
+
+      console.log('Provider: ', providerName, ' Model: ', modelName, ' Use streaming: ', useStreaming);
       
       if (!provider) {
         throw new Error(`Provider ${providerName} not available`);
@@ -337,7 +333,7 @@ export class AIService {
     const providerPromises = [];
     
     for (const provider of this.getAllProviders()) {
-      providerPromises.push(this.getModelsForProvider(provider.name as AIProvider));
+      providerPromises.push(this.getModelsForProvider(provider.name));
     }
     
     const results = await Promise.all(providerPromises);
@@ -357,7 +353,7 @@ export class AIService {
   /**
    * Get models for a specific provider
    */
-  public async getModelsForProvider(providerName: AIProvider): Promise<ModelOption[]> {
+  public async getModelsForProvider(providerName: string): Promise<ModelOption[]> {
     // Check if we already have a cached result
     const cachedTime = this.lastFetchTime.get(providerName) || 0;
     const now = Date.now();

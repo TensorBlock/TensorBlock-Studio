@@ -5,7 +5,7 @@ import { SettingsService } from './settings-service';
 import { StreamControlHandler } from './streaming-control';
 import { MessageHelper } from './message-helper';
 import { AIServiceCapability } from '../types/capabilities';
-import { AIProvider as AIProviderType } from '../types/ai-providers';
+
 /**
  * Service for managing chat conversations
  */
@@ -151,6 +151,11 @@ export class ChatService {
       const provider = settingsService.getSelectedProvider();
       const model = settingsService.getSelectedModel();
 
+      const selectedModel = SettingsService.getInstance().getSelectedModel();
+      const selectedProvider = SettingsService.getInstance().getSelectedProvider();
+      console.log('Using streaming with provider:', selectedProvider);
+      console.log('Using streaming with model:', selectedModel);
+
       //#region Save user message to database and update title
       // eslint-disable-next-line prefer-const
       let {conversation: updatedConversation, message: userMessage} = await MessageHelper.addUserMessageToConversation(content, currentConversation);
@@ -232,8 +237,8 @@ export class ChatService {
       await this.aiService.getChatCompletion(
         messages, 
         {
-          model: settingsService.getSelectedModel(),
-          provider: settingsService.getSelectedProvider(),
+          model: selectedModel,
+          provider: selectedProvider,
           stream: isStreaming
         },
         streamController
@@ -642,7 +647,7 @@ export class ChatService {
 
   getCurrentProviderModelCapabilities(): AIServiceCapability[] {
     const settingsService = SettingsService.getInstance();
-    const provider = settingsService.getSelectedProvider() as AIProviderType;
+    const provider = settingsService.getSelectedProvider();
     const model = settingsService.getSelectedModel();
 
     const providerService = AIService.getInstance().getProvider(provider);

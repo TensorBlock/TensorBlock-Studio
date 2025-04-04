@@ -4,6 +4,7 @@ import { AIServiceCapability } from "./capabilities";
  * Provider-specific settings interface
  */
 export interface ProviderSettings {
+    providerId: string;
     providerName: string;
     apiKey: string;
     organizationId?: string;
@@ -15,15 +16,14 @@ export interface ProviderSettings {
     // Models and capabilities
     models?: ModelSettings[];
     // Add more provider-specific settings as needed
+    customProvider: boolean;
   }
   
 /**
  * User settings interface
  */
 export interface UserSettings {
-    providers: {
-        [key: string]: ProviderSettings;
-    };
+    providers: Record<string, ProviderSettings>;
     selectedProvider: string;
     selectedModel: string;
     useStreaming: boolean;

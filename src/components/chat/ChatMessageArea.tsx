@@ -18,6 +18,8 @@ interface ChatMessageAreaProps {
   onRegenerateResponse?: (messageId: string) => void;
   onEditMessage?: (messageId: string, newContent: string) => void;
   isCurrentlyStreaming?: boolean;
+  selectedProvider: string;
+  selectedModel: string;
 }
 
 export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
@@ -29,6 +31,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   onRegenerateResponse,
   onEditMessage,
   isCurrentlyStreaming = false,
+  selectedProvider,
+  selectedModel,
 }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -37,6 +41,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const [editingContent, setEditingContent] = useState('');
   const [messagesList, setMessagesList] = useState<Message[]>([]);
   const [webSearchActive, setWebSearchActive] = useState(false);
+  const [isWebSearchAllowed, setIsWebSearchAllowed] = useState(false);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -52,11 +57,25 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     }
   }, [activeConversation, activeConversation?.messages]);
 
+  // Load web search status on component mount
   useEffect(() => {
-    const webSearchActive = SettingsService.getInstance().getWebSearchEnabled();
-    setWebSearchActive(webSearchActive);
+    const loadWebSearchStatus = async () => {
+      try {
+        const settingsService = SettingsService.getInstance();
+        setWebSearchActive(settingsService.getWebSearchEnabled());
+      } catch (error) {
+        console.error('Failed to load web search status:', error);
+      }
+    };
     
-  }, [SettingsService.getInstance().getWebSearchEnabled()]);
+    loadWebSearchStatus();
+  }, []);
+
+  useEffect(() => {
+    console.log('Updated provider or model');
+    const result = ChatService.getInstance().getCurrentProviderModelCapabilities().includes(AIServiceCapability.WebSearch);
+    setIsWebSearchAllowed(result);
+  }, [selectedProvider, selectedModel]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -183,14 +202,17 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     return 0;
   }
 
-  const handleToggleWebSearch = () => {
-    setWebSearchActive(!webSearchActive);
-    SettingsService.getInstance().setWebSearchEnabled(!webSearchActive);
-  }
-  
-  const getWebSearchAllowed = () => {
-    return ChatService.getInstance().getCurrentProviderModelCapabilities().includes(AIServiceCapability.WebSearch);
-  }
+  // Handle toggle web search
+  const handleToggleWebSearch = async () => {
+    try {
+      const newStatus = !webSearchActive;
+      const settingsService = SettingsService.getInstance();
+      await settingsService.setWebSearchEnabled(newStatus);
+      setWebSearchActive(newStatus);
+    } catch (error) {
+      console.error('Failed to toggle web search:', error);
+    }
+  };
 
   // If no active conversation is selected
   if (!activeConversation) {
@@ -355,7 +377,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
 
         <div className="flex flex-row items-center justify-between px-2">
           {
-            getWebSearchAllowed() ? (
+            isWebSearchAllowed ? (
               <button
                 type="button"
                 onClick={handleToggleWebSearch}

@@ -1,6 +1,7 @@
 import { ProviderSettings } from '../types/settings';
 import { Conversation, Message, ConversationFolder } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
+import { UserSettings } from '../types/settings';
 
 // database.ts
 export class DatabaseService {
@@ -55,6 +56,13 @@ export class DatabaseService {
                 if (!db.objectStoreNames.contains('apiSettings')) {
                     db.createObjectStore('apiSettings', {
                         keyPath: 'providerName'
+                    });
+                }
+
+                // Create settings store
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings', {
+                        keyPath: 'id'
                     });
                 }
             };
@@ -423,6 +431,73 @@ export class DatabaseService {
             };
             
             convRequest.onerror = () => reject(convRequest.error);
+        });
+    }
+
+    // General Settings Methods
+    async saveSettings(settings: UserSettings): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('settings', 'readwrite');
+            const store = transaction.objectStore('settings');
+            
+            // Encrypt sensitive data
+            const encryptedSettings: UserSettings = {
+                ...settings,
+                providers: Object.entries(settings.providers).reduce((acc, [key, value]) => {
+                    acc[key] = {
+                        ...value,
+                        apiKey: this.encrypt(value.apiKey),
+                        organizationId: value.organizationId ? this.encrypt(value.organizationId) : undefined
+                    };
+                    return acc;
+                }, {} as {[key: string]: ProviderSettings})
+            };
+
+            const request = store.put({
+                id: 'user_settings', // Use a fixed ID for the settings
+                ...encryptedSettings
+            });
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getSettings(): Promise<UserSettings | null> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('settings', 'readonly');
+            const store = transaction.objectStore('settings');
+            const request = store.get('user_settings');
+
+            request.onsuccess = () => {
+                if (!request.result) {
+                    resolve(null);
+                    return;
+                }
+
+                const settings = request.result;
+                
+                // Decrypt sensitive data
+                const decryptedSettings: UserSettings = {
+                    ...settings,
+                    providers: Object.entries(settings.providers).reduce((acc, [key, value]) => {
+                        const providerSettings = value as ProviderSettings;
+                        acc[key] = {
+                            ...providerSettings,
+                            apiKey: this.decrypt(providerSettings.apiKey),
+                            organizationId: providerSettings.organizationId ? this.decrypt(providerSettings.organizationId) : undefined
+                        };
+                        return acc;
+                    }, {} as {[key: string]: ProviderSettings})
+                };
+                
+                resolve(decryptedSettings);
+            };
+            request.onerror = () => reject(request.error);
         });
     }
 }

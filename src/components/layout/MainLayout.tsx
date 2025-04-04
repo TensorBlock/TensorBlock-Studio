@@ -12,7 +12,6 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [activePage, setActivePage] = useState('chat');
   const [showSettings, setShowSettings] = useState(false);
-
   // Handle page changes
   const handlePageChange = (page: string) => {
     if (page === 'settings') {
@@ -25,12 +24,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   // Handle page changes
   const handleOpenSettingsDialog = () => {
     setShowSettings(true);
-  };
-
-  // Handle settings save
-  const handleSettingsSaved = () => {
-    // Refresh the page or reload the necessary components
-    console.log('Settings saved, updating components...');
   };
 
   // Handle selecting a model
@@ -54,8 +47,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           
           <TopBar 
             onSelectModel={handleSelectModel}
-            selectedModel={SettingsService.getInstance().getSelectedModel()}
-            selectedProvider={SettingsService.getInstance().getSelectedProvider()}
             onOpenSettingsDialog={handleOpenSettingsDialog}
           />
 
@@ -71,7 +62,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <SettingsPage 
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={handleSettingsSaved}
       />
     </div>
   );

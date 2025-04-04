@@ -3,14 +3,14 @@ import { Server, MessageSquare } from 'lucide-react';
 import { SettingsService } from '../services/settings-service';
 import { ProviderSettings } from '../types/settings';
 import { ApiManagement, ModelManagement, ChatSettings } from '../components/settings';
-import { AIProvider } from '../types/ai-providers';
 import { DatabaseIntegrationService } from '../services/database-integration';
 import { AIService } from '../services/ai-service';
+import { v4 as uuidv4 } from 'uuid';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 interface SettingsPageProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave?: () => void; // Optional callback when settings are saved
 }
 
 type SettingsTab = 'api' | 'models' | 'chat';
@@ -18,82 +18,53 @@ type SettingsTab = 'api' | 'models' | 'chat';
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   isOpen,
   onClose,
-  onSave,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('api');
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('TensorBlock');
+  const [selectedProvider, setSelectedProvider] = useState<string>('TensorBlock');
   const [providerSettings, setProviderSettings] = useState<Record<string, ProviderSettings>>({});
   const [selectedModel, setSelectedModel] = useState('');
   const [useStreaming, setUseStreaming] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [isDbInitialized, setIsDbInitialized] = useState(false);
   const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const settingsService = SettingsService.getInstance();
   const aiService = AIService.getInstance();
   
-  // Initialize database
+  // Initialize database and settings service
   useEffect(() => {
-    const initDb = async () => {
+    const initServices = async () => {
       try {
+        // Initialize database integration which will also initialize settings service
         const dbService = DatabaseIntegrationService.getInstance();
         await dbService.initialize();
         setIsDbInitialized(true);
       } catch (error) {
-        console.error('Failed to initialize database:', error);
+        console.error('Failed to initialize services:', error);
       }
     };
     
-    initDb();
+    initServices();
   }, []);
   
   // Load settings when the modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isDbInitialized) {
       const settings = settingsService.getSettings();
-      setSelectedProvider(settings.selectedProvider as AIProvider);
+      setSelectedProvider(settings.selectedProvider);
       setProviderSettings(settings.providers);
       setSelectedModel(settings.selectedModel);
       setUseStreaming(settings.useStreaming);
       setSaveStatus('idle');
       setHasApiKeyChanged(false);
     }
-  }, [isOpen, settingsService]);
+  }, [isOpen, isDbInitialized, settingsService]);
   
   // Handle provider change
-  const handleProviderChange = (provider: AIProvider) => {
+  const handleProviderChange = (provider: string) => {
+    console.log('Change to provider: ', provider);
     setSelectedProvider(provider);
-  };
-  
-  // Handle API key change
-  const handleApiKeyChange = (value: string) => {
-    const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
-    const currentApiKey = currentProviderSettings.apiKey || '';
-    
-    // Check if API key has changed
-    if (value !== currentApiKey) {
-      setHasApiKeyChanged(true);
-    }
-    
-    setProviderSettings({
-      ...providerSettings,
-      [selectedProvider]: {
-        ...currentProviderSettings,
-        apiKey: value
-      }
-    });
-  };
-  
-  // Handle API version change (Anthropic specific)
-  const handleApiVersionChange = (value: string) => {
-    const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
-    setProviderSettings({
-      ...providerSettings,
-      [selectedProvider]: {
-        ...currentProviderSettings,
-        apiVersion: value
-      }
-    });
   };
   
   // Handle model selection change
@@ -105,31 +76,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleStreamingChange = (enabled: boolean) => {
     setUseStreaming(enabled);
   };
-  
-  // Handle base URL change
-  const handleBaseUrlChange = (value: string) => {
+
+  const handleProviderSettingsChange = (newSettings: ProviderSettings) => {
     const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
+
+    if (newSettings.apiKey !== currentProviderSettings.apiKey) {
+      setHasApiKeyChanged(true);
+    }
+
     setProviderSettings({
       ...providerSettings,
       [selectedProvider]: {
         ...currentProviderSettings,
-        baseUrl: value
+        ...newSettings
       }
     });
+    console.log('Provider settings: ', providerSettings);
   };
-  
-  // Handle endpoint change for custom provider
-  const handleEndpointChange = (endpoint: string, value: string) => {
-    const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '' };
-    setProviderSettings({
-      ...providerSettings,
-      [selectedProvider]: {
-        ...currentProviderSettings,
-        [endpoint]: value
-      }
-    });
-  };
-  
+
   // Save all settings
   const handleSave = async () => {
     if (!isDbInitialized) {
@@ -140,17 +104,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setSaveStatus('saving');
     
     try {
-      // Update provider settings in memory
-      Object.keys(providerSettings).forEach(provider => {
-        settingsService.updateProviderSettings(providerSettings[provider], provider);
+      // Update all settings in one go
+      await settingsService.updateSettings({
+        providers: providerSettings,
+        useStreaming: useStreaming
       });
-      
-      // Update streaming setting
-      settingsService.setUseStreaming(useStreaming);
-      
-      // Save to database
-      const dbService = DatabaseIntegrationService.getInstance();
-      await dbService.saveApiSettings();
       
       // Refresh models if API key has changed
       if (hasApiKeyChanged) {
@@ -161,9 +119,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setSaveStatus('success');
       
       // Call the onSave callback if provided
-      if (onSave) {
-        onSave();
-      }
+      // if (onSave) {
+      //   onSave();
+      // }
       
       // Reset to idle after a short delay
       setTimeout(() => {
@@ -173,6 +131,107 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       console.error('Error saving settings:', err);
       setSaveStatus('error');
     }
+  };
+
+  const handleAddCustomProvider = async () => {
+    if (!isDbInitialized) {
+      setSaveStatus('error');
+      return;
+    }
+    
+    setSaveStatus('saving');
+    
+    try {
+      const newProviderId = uuidv4();
+
+      const newProvider: ProviderSettings = {
+        apiKey: '',
+        providerId: newProviderId,
+        providerName: 'New Custom Provider',
+        apiVersion: '',
+        baseUrl: '',
+        models: [],
+        organizationId: '',
+        modelsEndpoint: '',
+        chatCompletionsEndpoint: '',
+        customProvider: true,
+      };
+      
+      setProviderSettings({
+        ...providerSettings,
+        [newProviderId]: newProvider
+      });
+
+      // Update all settings in one go
+      await settingsService.updateProviderSettings(newProvider, newProviderId);
+      
+      // Refresh models if API key has changed
+      if (hasApiKeyChanged) {
+        void aiService.refreshModels();
+        setHasApiKeyChanged(false);
+      }
+      
+      setSaveStatus('success');
+      
+      handleProviderChange(newProvider.providerId);
+
+      // Reset to idle after a short delay
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 2000);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      setSaveStatus('error');
+    }
+  };
+  
+  const handleDeleteCustomProvider = async () => {
+    if (!isDbInitialized || !providerSettings[selectedProvider]?.customProvider) {
+      setSaveStatus('error');
+      return;
+    }
+    
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const confirmDeleteProvider = async () => {
+    setIsDeleteDialogOpen(false);
+    
+    setSaveStatus('saving');
+    
+    try {
+      // Create a copy of the providers without the current one
+      const updatedProviders = { ...providerSettings };
+      delete updatedProviders[selectedProvider];
+      
+      setProviderSettings(updatedProviders);
+
+      // Update settings
+      await settingsService.deleteProvider(selectedProvider);
+      
+      setSaveStatus('success');
+      
+      // Switch to another provider
+      const remainingProviders = Object.keys(updatedProviders);
+      if (remainingProviders.length > 0) {
+        handleProviderChange(remainingProviders[0]);
+      } else {
+        // Default provider if none exist
+        handleProviderChange('TensorBlock');
+      }
+      
+      // Reset to idle after a short delay
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 2000);
+    } catch (err) {
+      console.error('Error deleting provider:', err);
+      setSaveStatus('error');
+    }
+  };
+  
+  const cancelDeleteProvider = () => {
+    setIsDeleteDialogOpen(false);
   };
   
   if (!isOpen) return null;
@@ -220,7 +279,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           
           <div className="p-4 border-t border-gray-200">
             <button
-              onClick={onClose}
+              onClick={async () => {
+                await handleSave();
+                onClose();
+              }}
               className="w-full px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
             >
               Close
@@ -238,12 +300,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 selectedProvider={selectedProvider}
                 providerSettings={providerSettings}
                 onProviderChange={handleProviderChange}
-                onApiKeyChange={handleApiKeyChange}
-                onApiVersionChange={handleApiVersionChange}
-                onBaseUrlChange={handleBaseUrlChange}
-                onEndpointChange={handleEndpointChange}
+                onProviderSettingsChange={handleProviderSettingsChange}
                 saveStatus={saveStatus}
-                onSaveSettings={handleSave}
+                onAddCustomProvider={handleAddCustomProvider}
+                onDeleteCustomProvider={handleDeleteCustomProvider}
               />
             )}
             
@@ -267,6 +327,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="Delete Custom Provider"
+        message={`Are you sure you want to delete "${providerSettings[selectedProvider]?.providerName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmColor="red"
+        onConfirm={confirmDeleteProvider}
+        onCancel={cancelDeleteProvider}
+      />
     </div>
   );
 };

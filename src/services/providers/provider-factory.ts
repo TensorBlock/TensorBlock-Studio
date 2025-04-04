@@ -3,7 +3,6 @@ import { OpenAIService } from './openai-service';
 import { AnthropicService } from './anthropic-service';
 import { FireworksService } from './fireworks-service';
 import { ForgeService } from './forge-service';
-import { AIProvider } from '../../types/ai-providers';
 import { TogetherService } from './together-service';
 import { GeminiService } from './gemini-service';
 import { OpenRouterService } from './openrouter-service';
@@ -15,7 +14,7 @@ export class ProviderFactory {
   /**
    * Get a provider instance
    */
-  public static getNewProvider(name: AIProvider): AiServiceProvider | undefined {
+  public static getNewProvider(name: string): AiServiceProvider | undefined {
 
     let provider: AiServiceProvider | undefined;
     
@@ -42,7 +41,7 @@ export class ProviderFactory {
       case 'OpenRouter':
         provider = new OpenRouterService();
         break;
-      case 'Custom':
+      default:
         // Custom provider will be implemented separately
         break;
     }
