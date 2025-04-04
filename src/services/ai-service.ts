@@ -56,21 +56,25 @@ export class AIService {
    */
   private constructor() {
     // Initialize with default providers
-    this.addProviders();
+    this.refreshProviders();
     this.setupSettingsListener();
   }
 
-  private addProviders(): void {
+  private refreshProviders(): void {
     const settingsService = SettingsService.getInstance();
     const settings = settingsService.getSettings();
 
-    for (const provider of Object.keys(settings.providers)) {
-      const providerSettings = settings.providers[provider];
-      if (!this.providers.has(provider) && providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
+    for (const providerID of Object.keys(settings.providers)) {
+      const providerSettings = settings.providers[providerID];
 
-        const providerInstance = ProviderFactory.getNewProvider(provider);
+      if(this.providers.has(providerID)) {
+        this.providers.delete(providerID);
+        this.providers.set(providerID, ProviderFactory.getNewProvider(providerID));
+      }
+      else if (providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
+        const providerInstance = ProviderFactory.getNewProvider(providerID);
         if (providerInstance) {
-          this.providers.set(provider, providerInstance);
+          this.providers.set(providerID, providerInstance);
         }
       }
     }
@@ -393,7 +397,7 @@ export class AIService {
     this.modelCache.clear();
     this.lastFetchTime.clear();
     
-    this.addProviders();
+    this.refreshProviders();
 
     // Re-fetch all models
     await this.getCachedAllModels();

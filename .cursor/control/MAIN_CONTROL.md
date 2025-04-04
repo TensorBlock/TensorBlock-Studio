@@ -51,8 +51,6 @@ External Dependency:
 - axios v1.8.4
 - katex v0.16.21
 - lucide-react v0.344.0
-- primeicons v7.0.0
-- primereact v10.9.3
 - prism-themes v1.9.0
 - prismjs v1.30.0
 - react v18.3.1

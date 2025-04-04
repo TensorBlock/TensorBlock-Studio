@@ -16,6 +16,7 @@ export const ChatPage = () => {
   const [error, setError] = useState<Error | null>(null);
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
+  const [isApiKeyMissing, setIsApiKeyMissing] = useState(true);
 
   // Initialize the services
   useEffect(() => {
@@ -96,8 +97,11 @@ export const ChatPage = () => {
     const handleSettingsChange = () => {
       setSelectedProvider(SettingsService.getInstance().getSelectedProvider());
       setSelectedModel(SettingsService.getInstance().getSelectedModel());
+      setIsApiKeyMissing(!SettingsService.getInstance().getApiKey());
     };
 
+    setIsApiKeyMissing(!SettingsService.getInstance().getApiKey());
+    
     window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
   }, []);
 
@@ -277,9 +281,6 @@ export const ChatPage = () => {
       createNewChat();
     }
   }, [conversations.length, createNewChat, isServiceInitialized]);
-
-  // Show API key missing message if needed
-  const isApiKeyMissing = !SettingsService.getInstance().getApiKey(SettingsService.getInstance().getSelectedProvider());
 
   // Handle stopping a streaming response
   const handleStopStreaming = () => {

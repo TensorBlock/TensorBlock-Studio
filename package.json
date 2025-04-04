@@ -27,8 +27,6 @@
     "dotenv": "^16.4.7",
     "katex": "^0.16.21",
     "lucide-react": "^0.344.0",
-    "primeicons": "^7.0.0",
-    "primereact": "^10.9.3",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
     "react": "^18.3.1",

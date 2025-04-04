@@ -24,7 +24,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
 }) => {
   
   const [showApiKey, setShowApiKey] = useState(false);
-  const [currentProviderSettings, setCurrentProviderSettings] = useState<ProviderSettings>({ apiKey: '', providerName: '', customProvider: false, providerId: '' });
+  const [currentProviderSettings, setCurrentProviderSettings] = useState<ProviderSettings>({ apiKey: '', providerName: '', customProvider: true, providerId: '' });
   const [showModelSearch, setShowModelSearch] = useState(false);
   const [modelSearchQuery, setModelSearchQuery] = useState('');
   const [isEditModelDialogOpen, setIsEditModelDialogOpen] = useState(false);
@@ -32,8 +32,10 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
 
   // Get current provider settings
   useEffect(() => {
-    const currentProviderSettings = providerSettings[selectedProvider] || { apiKey: '', providerName: '', customProvider: false, providerId: '' };
-    setCurrentProviderSettings(currentProviderSettings);
+    if(selectedProvider.trim() !== '') {
+      const currentProviderSettings = providerSettings[selectedProvider];
+      setCurrentProviderSettings(currentProviderSettings);
+    }
   }, [selectedProvider, providerSettings]);
   
   const handleMapProviderSettings = () => {
@@ -373,247 +375,255 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
         </div>
         
         {/* Provider Settings */}
-        <div className="w-2/3 pl-6 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">{currentProviderSettings.providerName} Settings</h3>
-            {currentProviderSettings.customProvider && (
-              <button 
-                onClick={onDeleteCustomProvider}
-                className="flex items-center px-3 py-2 text-sm text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none"
-              >
-                <Trash2 size={16} className="mr-1" />
-                <span>Delete Provider</span>
-              </button>
-            )}
+        {(selectedProvider.trim() === '' || !currentProviderSettings) ? (
+          <div className="w-2/3 pl-6 overflow-y-auto">
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Please select a provider</p>
+            </div>
           </div>
-          
-          <div className="space-y-6 overflow-y-scroll">
-            {/* API Key - Common for all providers */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                API Key
-              </label>
-              <div className="relative">
-                <input
-                  type={showApiKey ? 'text' : 'password'}
-                  value={currentProviderSettings.apiKey || ''}
-                  onChange={(e) => handleApiKeyChange(e.target.value)}
-                  onBlur={handleOnEndEditing}
-                  placeholder={selectedProvider === 'OpenAI' ? 'sk-...' : 'Enter API key'}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  className="absolute text-gray-500 transform -translate-y-1/2 right-3 top-1/2"
-                  onClick={() => setShowApiKey(!showApiKey)}
+        ) : (
+          <div className="w-2/3 pl-6 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">{currentProviderSettings.providerName} Settings</h3>
+              {currentProviderSettings.customProvider && (
+                <button 
+                  onClick={onDeleteCustomProvider}
+                  className="flex items-center px-3 py-2 text-sm text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none"
                 >
-                  {showApiKey ? 'Hide' : 'Show'}
+                  <Trash2 size={16} className="mr-1" />
+                  <span>Delete Provider</span>
                 </button>
-              </div>
-              <p className="mt-2 text-xs text-gray-500">
-                Your API key is stored locally and never sent to our servers.
-              </p>
+              )}
             </div>
             
-            {/* Anthropic-specific settings */}
-            {selectedProvider === 'Anthropic' && (
+            <div className="space-y-6 overflow-y-scroll">
+              {/* API Key - Common for all providers */}
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
-                  API Version
+                  API Key
                 </label>
-                <select 
-                  value={currentProviderSettings.apiVersion || '2023-06-01'}
-                  onChange={(e) => handleApiVersionChange(e.target.value)}
-                  onBlur={handleOnEndEditing}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="2023-06-01">2023-06-01</option>
-                  <option value="2023-01-01">2023-01-01</option>
-                </select>
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={currentProviderSettings.apiKey || ''}
+                    onChange={(e) => handleApiKeyChange(e.target.value)}
+                    onBlur={handleOnEndEditing}
+                    placeholder={selectedProvider === 'OpenAI' ? 'sk-...' : 'Enter API key'}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    className="absolute text-gray-500 transform -translate-y-1/2 right-3 top-1/2"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                  >
+                    {showApiKey ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Your API key is stored locally and never sent to our servers.
+                </p>
+              </div>
+              
+              {/* Anthropic-specific settings */}
+              {selectedProvider === 'Anthropic' && (
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    API Version
+                  </label>
+                  <select 
+                    value={currentProviderSettings.apiVersion || '2023-06-01'}
+                    onChange={(e) => handleApiVersionChange(e.target.value)}
+                    onBlur={handleOnEndEditing}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="2023-06-01">2023-06-01</option>
+                    <option value="2023-01-01">2023-01-01</option>
+                  </select>
+                </div>
+              )}
+              
+              {/* Custom provider settings */}
+              {currentProviderSettings.customProvider && (
+                <>
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Provider Name
+                    </label>
+                    <input
+                      type="text"
+                      value={currentProviderSettings.providerName || ''}
+                      onChange={(e) => handleProviderNameChange(e.target.value)}
+                      onBlur={handleOnEndEditing}
+                      placeholder="Custom Provider Name"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="mt-2 text-xs text-gray-500">
+                      The name of your custom provider
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Base URL
+                    </label>
+                    <input
+                      type="text"
+                      value={currentProviderSettings.baseUrl || ''}
+                      onChange={(e) => handleBaseUrlChange(e.target.value)}
+                      onBlur={handleOnEndEditing}
+                      placeholder="https://your-custom-api.com/"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <div className="flex flex-row items-center justify-between">
+                      <p className="mt-2 text-xs text-gray-500">
+                        The base URL for your custom OpenAI-compatible API
+                      </p>
+                      <p className="mt-2 overflow-hidden text-xs text-gray-500">
+                        {currentProviderSettings.baseUrl}/v1/chat/completions
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* <div className="pt-6 mt-6 border-t border-gray-200">
+                    <h4 className="mb-4 font-medium text-md">API Endpoints</h4>
+                    
+                    <div className="space-y-4">                   
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Chat Completions Endpoint
+                        </label>
+                        <input
+                          type="text"
+                          value={currentProviderSettings.chatCompletionsEndpoint || '/chat/completions'}
+                          onChange={(e) => handleEndpointChange('chatCompletionsEndpoint', e.target.value)}
+                          onBlur={handleOnEndEditing}
+                          placeholder="/chat/completions"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Models Endpoint
+                        </label>
+                        <input
+                          type="text"
+                          value={currentProviderSettings.modelsEndpoint || '/models'}
+                          onChange={(e) => handleEndpointChange('modelsEndpoint', e.target.value)}
+                          onBlur={handleOnEndEditing}
+                          placeholder="/models"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div> */}
+                </>
+              )}
+
+              {/* Model management section */}
+              <div className="pt-6 mt-6 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium text-md">Models</h4>
+                      <div className="flex items-center space-x-2">
+                        {showModelSearch ? (
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={modelSearchQuery}
+                              onChange={(e) => setModelSearchQuery(e.target.value)}
+                              placeholder="Search models..."
+                              className="w-40 p-1 pl-8 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              autoFocus
+                            />
+                            <Search size={14} className="absolute text-gray-400 transform -translate-y-1/2 left-2 top-1/2" />
+                            <button
+                              onClick={() => {
+                                setShowModelSearch(false);
+                                setModelSearchQuery('');
+                              }}
+                              className="absolute text-gray-400 transform -translate-y-1/2 right-2 top-1/2 hover:text-gray-600"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowModelSearch(true)}
+                            className="p-1 text-gray-500 hover:text-gray-700"
+                            title="Search models"
+                          >
+                            <Search size={16} />
+                          </button>
+                        )}
+                        <button
+                          onClick={handleAddModel}
+                          className="flex items-center px-2 py-1 text-xs text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                        >
+                          <Plus size={14} className="mr-1" />
+                          Add Model
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {Object.entries(getGroupedModels()).map(([category, models]) => (
+                        <div key={category} className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-600">{category}</h5>
+                          {models.map((model) => (
+                            <div key={model.modelId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                              <div className="flex-1">
+                                <div className="font-medium">{model.modelName}</div>
+                                <div className="text-xs text-gray-500">{model.modelId}</div>
+                              </div>
+                              <div className="flex items-center gap-2 mr-6">
+                                {model.modelCapabilities.map(cap => renderCapabilityBadge(cap))}
+                              </div>
+                              <div className="flex space-x-1">
+                                <button
+                                  onClick={() => handleEditModel(model)}
+                                  className="p-1 text-blue-600 hover:text-blue-800"
+                                  title="Edit model"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteModel(model.modelId)}
+                                  className="p-1 text-red-600 hover:text-red-800"
+                                  title="Delete model"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                      
+                      {currentProviderSettings.models && 
+                      currentProviderSettings.models.length > 0 && 
+                      Object.keys(getGroupedModels()).length === 0 && (
+                        <div className="py-4 text-center text-gray-500">
+                          No models found matching "{modelSearchQuery}"
+                        </div>
+                      )}
+                      
+                      {(!currentProviderSettings.models || currentProviderSettings.models.length === 0) && (
+                        <div className="py-4 text-center text-gray-500">
+                          No models configured. Click "Add Model" to create one.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+            </div>
+            
+            {saveStatus === 'error' && (
+              <div className="flex items-center mt-4 text-red-600">
+                <AlertCircle size={16} className="mr-1" />
+                <span>Failed to save settings</span>
               </div>
             )}
-            
-            {/* Custom provider settings */}
-            {currentProviderSettings.customProvider && (
-              <>
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Provider Name
-                  </label>
-                  <input
-                    type="text"
-                    value={currentProviderSettings.providerName || ''}
-                    onChange={(e) => handleProviderNameChange(e.target.value)}
-                    onBlur={handleOnEndEditing}
-                    placeholder="Custom Provider Name"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    The name of your custom provider
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Base URL
-                  </label>
-                  <input
-                    type="text"
-                    value={currentProviderSettings.baseUrl || ''}
-                    onChange={(e) => handleBaseUrlChange(e.target.value)}
-                    onBlur={handleOnEndEditing}
-                    placeholder="https://your-custom-api.com/"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div className="flex flex-row items-center justify-between">
-                    <p className="mt-2 text-xs text-gray-500">
-                      The base URL for your custom OpenAI-compatible API
-                    </p>
-                    <p className="mt-2 overflow-hidden text-xs text-gray-500">
-                      {currentProviderSettings.baseUrl}/v1/chat/completions
-                    </p>
-                  </div>
-                </div>
-                
-                {/* <div className="pt-6 mt-6 border-t border-gray-200">
-                  <h4 className="mb-4 font-medium text-md">API Endpoints</h4>
-                  
-                  <div className="space-y-4">                   
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Chat Completions Endpoint
-                      </label>
-                      <input
-                        type="text"
-                        value={currentProviderSettings.chatCompletionsEndpoint || '/chat/completions'}
-                        onChange={(e) => handleEndpointChange('chatCompletionsEndpoint', e.target.value)}
-                        onBlur={handleOnEndEditing}
-                        placeholder="/chat/completions"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Models Endpoint
-                      </label>
-                      <input
-                        type="text"
-                        value={currentProviderSettings.modelsEndpoint || '/models'}
-                        onChange={(e) => handleEndpointChange('modelsEndpoint', e.target.value)}
-                        onBlur={handleOnEndEditing}
-                        placeholder="/models"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div> */}
-              </>
-            )}
-
-            {/* Model management section */}
-            <div className="pt-6 mt-6 border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium text-md">Models</h4>
-                    <div className="flex items-center space-x-2">
-                      {showModelSearch ? (
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={modelSearchQuery}
-                            onChange={(e) => setModelSearchQuery(e.target.value)}
-                            placeholder="Search models..."
-                            className="w-40 p-1 pl-8 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            autoFocus
-                          />
-                          <Search size={14} className="absolute text-gray-400 transform -translate-y-1/2 left-2 top-1/2" />
-                          <button
-                            onClick={() => {
-                              setShowModelSearch(false);
-                              setModelSearchQuery('');
-                            }}
-                            className="absolute text-gray-400 transform -translate-y-1/2 right-2 top-1/2 hover:text-gray-600"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setShowModelSearch(true)}
-                          className="p-1 text-gray-500 hover:text-gray-700"
-                          title="Search models"
-                        >
-                          <Search size={16} />
-                        </button>
-                      )}
-                      <button
-                        onClick={handleAddModel}
-                        className="flex items-center px-2 py-1 text-xs text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                      >
-                        <Plus size={14} className="mr-1" />
-                        Add Model
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {Object.entries(getGroupedModels()).map(([category, models]) => (
-                      <div key={category} className="space-y-2">
-                        <h5 className="text-sm font-medium text-gray-600">{category}</h5>
-                        {models.map((model) => (
-                          <div key={model.modelId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
-                            <div className="flex-1">
-                              <div className="font-medium">{model.modelName}</div>
-                              <div className="text-xs text-gray-500">{model.modelId}</div>
-                            </div>
-                            <div className="flex items-center gap-2 mr-6">
-                              {model.modelCapabilities.map(cap => renderCapabilityBadge(cap))}
-                            </div>
-                            <div className="flex space-x-1">
-                              <button
-                                onClick={() => handleEditModel(model)}
-                                className="p-1 text-blue-600 hover:text-blue-800"
-                                title="Edit model"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteModel(model.modelId)}
-                                className="p-1 text-red-600 hover:text-red-800"
-                                title="Delete model"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                    
-                    {currentProviderSettings.models && 
-                     currentProviderSettings.models.length > 0 && 
-                     Object.keys(getGroupedModels()).length === 0 && (
-                      <div className="py-4 text-center text-gray-500">
-                        No models found matching "{modelSearchQuery}"
-                      </div>
-                    )}
-                    
-                    {(!currentProviderSettings.models || currentProviderSettings.models.length === 0) && (
-                      <div className="py-4 text-center text-gray-500">
-                        No models configured. Click "Add Model" to create one.
-                      </div>
-                    )}
-                  </div>
-                </div>
           </div>
-          
-          {saveStatus === 'error' && (
-            <div className="flex items-center mt-4 text-red-600">
-              <AlertCircle size={16} className="mr-1" />
-              <span>Failed to save settings</span>
-            </div>
-          )}
-        </div>
+        )}
       </div>
       
       {renderModelEditDialog()}

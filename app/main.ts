@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { execSync } from 'child_process';
+import axios from 'axios';
 
 // Main window reference
 let win: BrowserWindow | null = null;
@@ -174,7 +175,38 @@ function createWindow(): BrowserWindow {
     app.quit();
   });
 
+  // testCallAnthropic();
+
   return win;
+}
+
+async function testCallAnthropic() {
+  try {
+    const response = await axios.post("https://api.anthropic.com/v1/messages", {
+      headers: {
+        "x-api-key": "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",
+        "Content-Type": "application/json",
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        messages: [{
+          role: "user",
+          content: "Hello, how are you?"
+        }],
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 1024,
+      }),
+    });
+  
+    console.log(response);
+  
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 }
 
 /**
