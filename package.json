@@ -13,14 +13,21 @@
     "electron:serve": "wait-on tcp:5173 && pnpm run electron:serve-tsc && electron . --serve",
     "electron:build:current_platform": "rimraf ./release/ && pnpm run build:prod && electron-builder build --publish=never",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "npm:dev": "concurrently \"npm run npm:electron:serve\" \"npm run npm:vite:dev\"",
+    "npm:vite:dev": "vite",
+    "npm:build": "vite build && npm run npm:electron:serve-tsc",
+    "npm:build:prod": "vite build --mode production && npm run npm:electron:serve-tsc",
+    "npm:electron:serve-tsc": "tsc -p app/tsconfig.json",
+    "npm:electron:serve": "wait-on tcp:5173 && npm run electron:serve-tsc && electron . --serve",
+    "npm:electron:build:current_platform": "rimraf ./release/ && npm run build:prod && electron-builder build --publish=never"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.2.4",
     "@ai-sdk/fireworks": "^0.2.5",
     "@ai-sdk/google": "^1.2.5",
     "@ai-sdk/openai": "^1.3.6",
     "@ai-sdk/togetherai": "^0.2.5",
+    "@anthropic-ai/sdk": "^0.39.0",
     "@openrouter/ai-sdk-provider": "^0.4.5",
     "ai": "^4.2.10",
     "axios": "^1.8.4",
