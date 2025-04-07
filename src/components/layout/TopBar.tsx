@@ -84,7 +84,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
   };
   
   return (
-    <div className="flex items-center justify-between h-16 bg-white app-region-drag">
+    <div className="flex items-center justify-between h-16 bg-main-background app-region-drag">
       {/* Logo area */}
       <div className="w-[68px] aspect-square flex items-center justify-center h-16">
         <div className="flex items-center justify-center w-10 h-10">

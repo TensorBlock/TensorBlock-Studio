@@ -54,9 +54,9 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
     setCurrentProviderSettings({ ...currentProviderSettings, apiKey: value });
   }
 
-  const handleApiVersionChange = (value: string) => {
-    setCurrentProviderSettings({ ...currentProviderSettings, apiVersion: value });
-  }
+  // const handleApiVersionChange = (value: string) => {
+  //   setCurrentProviderSettings({ ...currentProviderSettings, apiVersion: value });
+  // }
 
   const handleBaseUrlChange = (value: string) => {
     setCurrentProviderSettings({ ...currentProviderSettings, baseUrl: value });

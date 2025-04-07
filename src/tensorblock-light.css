@@ -1,0 +1,7 @@
+:root{
+    --primary-50: #F8F7F3;
+}
+
+@theme{
+    --color-main-background: var(--primary-50);
+}

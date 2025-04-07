@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@theme{
-  
-}
-
 /* Add these styles for Electron window dragging */
 .app-region-drag {
   -webkit-app-region: drag;
