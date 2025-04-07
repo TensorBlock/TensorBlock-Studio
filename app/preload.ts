@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
 /**
  * The preload script runs before the renderer process starts and has access to both
@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('electron', {
   minimize: () => ipcRenderer.invoke('minimize-window'),
   isMaximized: () => ipcRenderer.invoke('get-window-isMaximized'),
   closeApp: () => ipcRenderer.send('close-app'),
+  onWindowMaximizedChange: (callback: (event: IpcRendererEvent, maximized: boolean) => void) => ipcRenderer.on('window-maximized-change', callback),
   
   // System information
   getDeviceInfo: () => ipcRenderer.invoke('get-device-info'),

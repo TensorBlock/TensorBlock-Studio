@@ -26,11 +26,6 @@ function createWindow(): BrowserWindow {
     titleBarStyle: 'hidden',
     title: "TensorBlock Desktop",
     ...(process.platform === 'linux' ? { icon: path.resolve("resources/app.asar.unpacked/dist/logos/favicon.256x256.png") } : {}),
-    ...(process.platform !== 'linux' ?
-      {titleBarOverlay: {
-        height: 29,
-        color: 'rgb(243, 243, 243)'
-      }} : {}),
     frame: false,
     fullscreenable: false,
     autoHideMenuBar: true,
@@ -95,6 +90,15 @@ function createWindow(): BrowserWindow {
   ipcMain.handle('minimize-window', () => {
     win?.minimize();
     return win?.isMaximized();
+  });
+
+  // Emit when window's maximized state changes
+  win?.on('maximize', () => {
+    win?.webContents.send('window-maximized-change', true);
+  });
+
+  win?.on('unmaximize', () => {
+    win?.webContents.send('window-maximized-change', false);
   });
 
   // Get the local IP address

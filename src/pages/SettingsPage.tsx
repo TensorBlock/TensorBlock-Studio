@@ -237,8 +237,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white mt-[29px]">
-      <div className="flex w-full h-full overflow-hidden bg-white rounded-lg shadow-xl">
+    <div className="w-full h-full flex flex-1 items-center justify-center bg-white">
+      <div className="flex w-full h-full overflow-hidden bg-white">
         {/* Sidebar */}
         <div className="flex flex-col w-64 h-full bg-gray-100 border-r border-gray-200">
           <div className="p-4 border-b border-gray-200">

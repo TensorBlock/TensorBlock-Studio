@@ -425,7 +425,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               </div>
               
               {/* Anthropic-specific settings */}
-              {selectedProvider === 'Anthropic' && (
+              {/* {selectedProvider === 'Anthropic' && (
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
                     API Version
@@ -440,7 +440,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                     <option value="2023-01-01">2023-01-01</option>
                   </select>
                 </div>
-              )}
+              )} */}
               
               {/* Custom provider settings */}
               {currentProviderSettings.customProvider && (

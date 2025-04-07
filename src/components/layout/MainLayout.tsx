@@ -1,5 +1,4 @@
 import React, { ReactNode, useState } from 'react';
-import TitleBar from './TitleBar';
 import Sidebar from './Sidebar';
 import SettingsPage from '../../pages/SettingsPage';
 import TopBar from './TopBar';
@@ -34,7 +33,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <TitleBar />
+      {/* <TitleBar /> */}
+      <TopBar 
+        onSelectModel={handleSelectModel}
+        onOpenSettingsDialog={handleOpenSettingsDialog}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar 
@@ -44,25 +47,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         <div className="flex flex-col flex-1">
           {/* Main content */}
-          
-          <TopBar 
-            onSelectModel={handleSelectModel}
-            onOpenSettingsDialog={handleOpenSettingsDialog}
-          />
 
-          <div className="flex-1 overflow-auto">
-            {children}
-          </div>
-          
+          {showSettings ?
+            <SettingsPage
+              isOpen={showSettings}
+              onClose={() => setShowSettings(false)}
+            />
+          :
+            <div className="flex-1 overflow-auto">
+              {children}
+            </div>
+          }
           {/* <BottomBar loadedModels={loadedModels} /> */}
         </div>
       </div>
-
-      {/* Settings Modal */}
-      <SettingsPage 
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
+      
     </div>
   );
 };

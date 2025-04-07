@@ -12,5 +12,6 @@ interface Window {
       cpuUsage: number;
     }>;
     openUrl: (url: string) => Promise<void>;
+    onWindowMaximizedChange: (callback: (event: IpcRendererEvent, maximized: boolean) => void) => void;
   };
 } 
