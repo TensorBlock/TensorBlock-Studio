@@ -110,8 +110,8 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white mt-[29px]">
-      <div className="bg-gray-900 w-full h-[calc(100vh-29px)] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000033]">
+      <div className="flex flex-col w-3/4 bg-gray-900 h-4/5">
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h2 className="text-xl font-semibold text-white">Select Model</h2>
           <button 

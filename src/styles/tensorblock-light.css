@@ -1,0 +1,98 @@
+:root {
+    --primary-50: #F8F7F3;
+    --primary-100: #F1EFE8;
+    --primary-400: #B5B09B;
+    --primary-600: #7C765F;
+    --primary-700: #5B5748;
+
+    --surface-0: #FFFFFF;
+    --surface-500: #78716C;
+    --surface-900: #1C1917;
+}
+
+@layer utilities {
+    /* Main Background */
+    .bg-main-background-color {
+        background-color: var(--primary-50);
+    }
+
+    /* Primary Button */
+    .primary-btn-border {
+        border-width: 1px;
+        border-radius: 0.5rem;
+        border-color: var(--primary-400);
+    }
+
+    .primary-btn-bg-color {
+        background-color: var(--surface-0);
+    }
+
+    .primary-btn-bg-color:hover {
+        background-color: var(--primary-400);
+    }
+
+    .primary-btn-text-color {
+        color: var(--primary-600);
+    }
+
+    .primary-btn-text-color:hover {
+        color: var(--surface-900);
+    }
+
+    /* Major Area */
+    .major-area-border {
+        border-left-width: 1px;
+        border-top-width: 1px;
+        border-start-start-radius: 1rem;
+        border-color: var(--primary-400);
+    }
+
+    .major-area-bg-color {
+        background-color: var(--surface-0);
+    }
+
+    /* Conversation Item */
+    .conversation-item-border {
+        border-radius: 0.5rem;
+    }
+    
+    .conversation-item-bg-color {
+        background-color: transparent;
+    }
+
+    .conversation-item-bg-color:hover {
+        background-color: var(--primary-400);
+    }
+
+    .conversation-item-text-color {
+        color: var(--surface-500);
+    }
+
+    .conversation-item-text-color:hover {
+        color: var(--surface-900);
+    }
+
+    .conversation-selected-item-bg-color {
+        background-color: var(--primary-100);
+    }
+
+    .conversation-selected-item-bg-color:hover {
+        background-color: var(--primary-400);
+    }
+
+    .conversation-selected-item-text-color {
+        color: var(--primary-700);
+    }
+
+    .conversation-selected-item-text-color:hover {
+        color: var(--surface-900);
+    }
+
+    .message-model-text-color {
+        color: var(--primary-700);
+    }
+
+    .message-provider-text-color {
+        color: var(--primary-700);
+    }
+}

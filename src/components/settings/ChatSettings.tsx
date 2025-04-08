@@ -3,14 +3,12 @@ import React from 'react';
 interface ChatSettingsProps {
   useStreaming: boolean;
   onStreamingChange: (enabled: boolean) => void;
-  saveStatus: 'idle' | 'saving' | 'success' | 'error';
   onSaveSettings: () => void;
 }
 
 export const ChatSettings: React.FC<ChatSettingsProps> = ({
   useStreaming,
   onStreamingChange,
-  saveStatus,
   onSaveSettings
 }) => {
   return (
@@ -44,17 +42,6 @@ export const ChatSettings: React.FC<ChatSettingsProps> = ({
         </div>
       </div>
       
-      {saveStatus === 'success' && (
-        <div className="py-2 mt-2 text-sm text-center text-green-600 rounded bg-green-50">
-          Settings saved successfully!
-        </div>
-      )}
-      
-      {saveStatus === 'error' && (
-        <div className="py-2 mt-2 text-sm text-center text-red-600 rounded bg-red-50">
-          Error saving settings. Please try again.
-        </div>
-      )}
     </div>
   );
 };

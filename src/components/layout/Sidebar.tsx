@@ -8,12 +8,12 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activePage, onChangePage }) => {
   return (
-    <div className="w-[68px] h-full bg-[#f8f8f8] border-r border-gray-200 flex flex-col">
+    <div className="w-[68px] h-full bg-main-background-color flex flex-col">
  
       {/* Navigation buttons */}
       <div className="flex flex-col items-center flex-1 pt-2">
         <button 
-          className={`w-12 h-12 rounded-lg flex items-center justify-center mb-2 ${
+          className={`w-12 h-12 rounded-lg flex items-center justify-center ${
             activePage === 'chat' 
               ? 'bg-gray-200 text-black' 
               : 'text-gray-600 hover:bg-gray-100'
@@ -28,9 +28,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onChangePage }) =>
       </div>
 
       {/* Settings button at bottom */}
-      <div className="flex justify-center p-4">
+      <div className="flex justify-center mb-4">
         <button 
-          className="flex items-center justify-center w-12 h-12 text-gray-600 rounded-lg hover:bg-gray-100"
+          className={`flex items-center justify-center w-12 h-12 text-gray-600 rounded-lg ${
+            activePage === 'settings' 
+              ? 'bg-gray-200 text-black' 
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
           onClick={() => onChangePage('settings')}
           aria-label="Settings"
         >

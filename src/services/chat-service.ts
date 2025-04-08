@@ -669,7 +669,7 @@ export class ChatService {
   /**
    * Create a new folder
    */
-  public async createFolder(folderName: string, colorFlag: string = '#808080'): Promise<ConversationFolder> {
+  public async createFolder(folderName: string, colorFlag: string = '#E6E3DB'): Promise<ConversationFolder> {
     if (!this.dbService) {
       throw new Error('Database service not initialized');
     }

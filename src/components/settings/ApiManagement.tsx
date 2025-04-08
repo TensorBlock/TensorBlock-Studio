@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, AlertCircle, Plus, Trash2, Edit2, Search, X, Brain, Eye, Wrench, Type, Database } from 'lucide-react';
+import { ChevronRight, Plus, Trash2, Edit2, Search, X, Brain, Eye, Wrench, Type, Database } from 'lucide-react';
 import { ProviderSettings, ModelSettings } from '../../types/settings';
 import { AIServiceCapability } from '../../types/capabilities';
 
@@ -8,7 +8,6 @@ interface ApiManagementProps {
   providerSettings: Record<string, ProviderSettings>;
   onProviderChange: (provider: string) => void;
   onProviderSettingsChange: (providerSettings: ProviderSettings) => void;
-  saveStatus: 'idle' | 'saving' | 'success' | 'error';
   onAddCustomProvider: () => void;
   onDeleteCustomProvider: () => void;
 }
@@ -18,7 +17,6 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   providerSettings,
   onProviderChange,
   onProviderSettingsChange,
-  saveStatus,
   onAddCustomProvider,
   onDeleteCustomProvider
 }) => {
@@ -616,12 +614,6 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   </div>
             </div>
             
-            {saveStatus === 'error' && (
-              <div className="flex items-center mt-4 text-red-600">
-                <AlertCircle size={16} className="mr-1" />
-                <span>Failed to save settings</span>
-              </div>
-            )}
           </div>
         )}
       </div>

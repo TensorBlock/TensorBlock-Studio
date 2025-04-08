@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import Sidebar from './Sidebar';
-import SettingsPage from '../../pages/SettingsPage';
+import SettingsPage from '../pages/SettingsPage';
 import TopBar from './TopBar';
 import { SettingsService } from '../../services/settings-service';
 
@@ -11,18 +11,25 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [activePage, setActivePage] = useState('chat');
   const [showSettings, setShowSettings] = useState(false);
+
   // Handle page changes
   const handlePageChange = (page: string) => {
+    if(activePage === 'settings' && page !== activePage){
+      // Save settings
+    }
+
     if (page === 'settings') {
       setShowSettings(true);
+      setActivePage('settings');
     } else {
+      setShowSettings(false);
       setActivePage(page);
     }
   };
 
   // Handle page changes
   const handleOpenSettingsDialog = () => {
-    setShowSettings(true);
+    handlePageChange('settings');
   };
 
   // Handle selecting a model
@@ -45,19 +52,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onChangePage={handlePageChange}
         />
 
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 bg-main-background-color">
           {/* Main content */}
 
-          {showSettings ?
+          <div className='flex flex-col flex-1 overflow-hidden major-area-border major-area-bg-color'>
             <SettingsPage
               isOpen={showSettings}
-              onClose={() => setShowSettings(false)}
             />
-          :
-            <div className="flex-1 overflow-auto">
-              {children}
-            </div>
-          }
+
+            {!showSettings &&
+              <div className="flex-1 overflow-auto">
+                {children}
+              </div>
+            }
+          </div>
+
           {/* <BottomBar loadedModels={loadedModels} /> */}
         </div>
       </div>

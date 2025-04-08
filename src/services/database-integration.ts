@@ -267,7 +267,7 @@ export class DatabaseIntegrationService {
     /**
      * Create a new folder
      */
-    public async createFolder(folderName: string, colorFlag: string = '#808080'): Promise<ConversationFolder> {
+    public async createFolder(folderName: string, colorFlag: string): Promise<ConversationFolder> {
         try {
             return await this.dbService.createFolder(folderName, colorFlag);
         } catch (error) {

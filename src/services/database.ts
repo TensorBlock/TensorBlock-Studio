@@ -329,7 +329,7 @@ export class DatabaseService {
     }
 
     // Folder Methods
-    async createFolder(folderName: string, colorFlag: string = '#808080'): Promise<ConversationFolder> {
+    async createFolder(folderName: string, colorFlag: string): Promise<ConversationFolder> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 

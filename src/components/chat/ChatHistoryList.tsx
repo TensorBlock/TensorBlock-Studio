@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Conversation, ConversationFolder } from '../../types/chat';
-import { MessageSquare, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, MessageSquarePlus, FolderPlus, Folder, ChevronDown } from 'lucide-react';
+import { MessageSquare, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, FolderPlus, Folder, ChevronDown, PlusCircle } from 'lucide-react';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
@@ -255,7 +255,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     // Add some ghost image effect
     if (e.dataTransfer.setDragImage) {
       const elem = document.createElement('div');
-      elem.classList.add('bg-blue-100', 'p-2', 'rounded', 'shadow', 'text-sm', 'w-fit');
+      elem.classList.add('conversation-selected-item-bg-color', 'p-2', 'rounded', 'shadow', 'text-sm', 'w-fit');
       elem.innerText = conversations.find(c => c.conversationId === item.id)?.title || 'Moving...';
       document.body.appendChild(elem);
       e.dataTransfer.setDragImage(elem, 10, 10);
@@ -389,7 +389,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       ref={sidebarRef}
       onMouseEnter={handleSidebarMouseEnter}
       onMouseLeave={handleSidebarMouseLeave}
-      className={`flex flex-col h-full border-r border-gray-200 bg-gray-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-0' : 'w-64'} relative`}
+      className={`flex flex-col h-full border-r border-gray-200 major-area-bg-color transition-all duration-300 ease-in-out ${isCollapsed ? 'w-0' : 'w-64'} relative`}
       onDragOver={(e) => handleDragOver(e, 'root', 'root')}
       onDrop={(e) => handleDrop(e, 'root', 'root')}
     >
@@ -413,26 +413,26 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
         onMouseLeave={handleButtonMouseLeave}
         onFocus={() => setIsButtonVisible(true)}
         onBlur={() => !isSidebarHovered && setIsButtonVisible(false)}
-        className={`absolute z-10 flex items-center justify-center w-6 h-20 transform -translate-y-1/2 bg-gray-200 -right-6 top-1/2 hover:bg-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-opacity duration-300 ${isButtonVisible || isButtonHovered ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute z-10 flex items-center justify-center w-6 h-20 transform -translate-y-1/2 bg-gray-200 -right-6 top-1/2 hover:bg-gray-300 rounded-r-md transition-opacity duration-300 ${isButtonVisible || isButtonHovered ? 'opacity-100' : 'opacity-0'}`}
         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
       
-      <div className={`p-2 border-b border-gray-200 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'flex justify-between items-center'}`}>
+      <div className={`p-2 h-12 major-area-bg-color transition-all duration-100 ease-in-out ${isCollapsed ? 'opacity-0 pointer-events-none' : 'flex justify-between items-center gap-2'}`}>
         <button
           onClick={onCreateNewFolder}
-          className="flex items-center justify-center p-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md aspect-square hover:bg-gray-50 checked:outline-none checked:ring-2 checked:ring-blue-500"
+          className="flex items-center justify-center h-full text-sm font-medium transition-colors aspect-square primary-btn-border primary-btn-bg-color primary-btn-text-color"
         >
           <FolderPlus size={16}/>
         </button>
         
         <button
           onClick={onCreateNewChat}
-          className="flex items-center justify-center gap-1 p-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:bg-gray-50 checked:outline-none checked:ring-2 checked:ring-blue-500"
+          className="flex items-center justify-center flex-1 h-full gap-2 pr-2 text-sm font-medium transition-all duration-100 primary-btn-border primary-btn-bg-color primary-btn-text-color"
         >
-          <MessageSquarePlus size={16}/>
+          <PlusCircle size={16}/>
           <span className="text-sm">New Chat</span>
         </button>
         
@@ -447,7 +447,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
             {!isCollapsed && <p className="text-sm">No conversations yet</p>}
           </div>
         ) : (
-          <ul className="py-2">
+          <ul className="flex flex-col gap-0.5 py-2">
             {rootItems.map(({ type, item }) => (
               <li 
                 key={type === 'folder' ? `folder-${item.folderId}` : `conv-${(item as Conversation).conversationId}`} 
@@ -479,7 +479,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                         onDrop={(e) => handleDrop(e, (item as ConversationFolder).folderId, 'folder')}
                       >
                         {isCollapsed ? (
-                          <Folder size={16} className="mx-auto text-gray-600" />
+                          <Folder fill={(item as ConversationFolder).colorFlag} size={16} className="mx-auto text-gray-600" />
                         ) : (
                           <>
                             <div 
@@ -492,7 +492,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                                   <ChevronRight size={16} className="text-gray-500" />
                                 }
                               </button>
-                              <Folder size={16} className="flex-shrink-0 mr-1 text-gray-600" />
+                              <Folder fill={(item as ConversationFolder).colorFlag} size={16} className="flex-shrink-0 mr-1 text-gray-600" />
                               <span className="font-medium truncate select-none">{(item as ConversationFolder).folderName}</span>
                             </div>
                             <div onClick={(e) => handleMenuClick(e, (item as ConversationFolder).folderId, 'folder')}>
@@ -508,14 +508,14 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                         items={getFolderContextMenuItems(item as ConversationFolder)}
                         isOpen={openMenuId === (item as ConversationFolder).folderId}
                         onClose={() => setOpenMenuId(null)}
-                        position={{ top: '100%', right: '12px' }}
+                        position={{ top: '2.5rem', right: '12px' }}
                         width="10rem"
                       />
                     )}
                     
                     {/* Folder contents */}
                     {!isCollapsed && expandedFolders[(item as ConversationFolder).folderId] && (
-                      <ul className="pl-6 mt-1">
+                      <ul className="pl-6 mt-1 mr-2">
                         {conversationsByFolder[(item as ConversationFolder).folderId]?.map((conversation) => (
                           <li key={conversation.conversationId} className="relative">
                             {editingId === conversation.conversationId ? (
@@ -538,10 +538,10 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                                 onDragOver={(e) => handleDragOver(e, (item as ConversationFolder).folderId, 'folder')}
                                 onDrop={(e) => handleDrop(e, (item as ConversationFolder).folderId, 'folder')}
                                 onClick={() => onSelectConversation(conversation.conversationId)}
-                                className={`flex items-center justify-between w-full px-2 py-1 text-left rounded-sm ${
+                                className={`flex items-center justify-between w-full px-3 py-2 text-left conversation-item-border ${
                                   activeConversationId === conversation.conversationId
-                                    ? 'bg-blue-50 text-blue-600'
-                                    : 'text-gray-700 hover:bg-gray-100'
+                                    ? 'conversation-selected-item-bg-color conversation-selected-item-text-color'
+                                    : 'conversation-item-bg-color conversation-item-text-color'
                                 } 
                                 ${draggingItem?.id === conversation.conversationId ? 'opacity-50' : ''}
                                 ${
@@ -550,11 +550,11 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                                 }`}
                               >
                                 <div className="flex items-center truncate">
-                                  <MessageSquare size={14} className="flex-shrink-0 mr-1" />
-                                  <span className="text-sm truncate">{conversation.title}</span>
+                                  <MessageSquare size={16} className="flex-shrink-0 mr-1" />
+                                  <span className="truncate">{conversation.title}</span>
                                 </div>
                                 <div onClick={(e) => handleMenuClick(e, conversation.conversationId, 'conversation')}>
-                                  <MoreVertical size={14} className="flex-shrink-0 text-gray-400 hover:text-gray-600" />
+                                  <MoreVertical size={16} className="flex-shrink-0" />
                                 </div>
                               </div>
                             )}
@@ -594,10 +594,10 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                         onDragStart={(e) => handleDragStart(e, { id: (item as Conversation).conversationId, type: 'conversation' })}
                         onDragEnd={handleDragEnd}
                         onClick={() => onSelectConversation((item as Conversation).conversationId)}
-                        className={`flex items-center justify-between w-full ${isCollapsed ? 'px-0 py-3 flex-col' : 'px-4 py-2'} text-left ${
+                        className={`flex flex-1 items-center justify-between mx-2 conversation-item-border px-3 py-2 text-left transition-all duration-100 ${
                           activeConversationId === (item as Conversation).conversationId
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'conversation-selected-item-bg-color conversation-selected-item-text-color'
+                            : 'conversation-item-bg-color conversation-item-text-color'
                         } ${draggingItem?.id === (item as Conversation).conversationId ? 'opacity-50' : ''}`}
                         title={isCollapsed ? (item as Conversation).title : undefined}
                       >
@@ -610,7 +610,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                               <span className="truncate">{(item as Conversation).title}</span>
                             </div>
                             <div onClick={(e) => handleMenuClick(e, (item as Conversation).conversationId, 'conversation')}>
-                              <MoreVertical size={16} className="flex-shrink-0 text-gray-400 hover:text-gray-600" />
+                              <MoreVertical size={16} className="flex-shrink-0" />
                             </div>
                           </>
                         )}

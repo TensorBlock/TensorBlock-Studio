@@ -84,7 +84,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
   };
   
   return (
-    <div className="flex items-center justify-between h-16 bg-main-background app-region-drag">
+    <div className="flex items-center justify-between h-16 bg-main-background-color app-region-drag">
       {/* Logo area */}
       <div className="w-[68px] aspect-square flex items-center justify-center h-16">
         <div className="flex items-center justify-center w-10 h-10">
@@ -100,19 +100,27 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
         </div>
       </div>
 
-      <div className='flex items-center justify-center gap-8 w-full'>
-        <div className="flex items-center w-1/3 gap-2">
+      <div className='flex items-center justify-center w-full gap-2'>
+        <div className="flex items-center w-2/5 gap-2">
           <button 
-            className="btn hover:bg-gray-200 w-full bg-gray-100 border-0 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 flex justify-between app-region-no-drag"
+            className="
+              btn primary-btn-border primary-btn-bg-color
+              w-full px-3 py-1.5 text-sm font-medium primary-btn-text-color flex justify-between app-region-no-drag
+              transition-all duration-100"
             onClick={handleOpenModelDialog}
             aria-label="Select AI model"
           >
-            <Cpu className="w-5 h-5 p-0.5 text-gray-600" />
-            <span className='text-center truncate max-w-[200px]'>{selectedModelName}</span>
-            <ChevronDown className="w-5 h-5 text-gray-600" />
+            <Cpu className="w-5 h-5 p-0.5" />
+            <div className='flex items-center gap-2'>
+              <span className='text-center truncate max-w-[200px]'>{selectedModelName}</span>
+              <span className='text-center text-xs truncate max-w-[100px] bg-gray-200 rounded-full px-2 py-0.5'>{selectedProvider}</span>
+            </div>
+            <ChevronDown className="w-5 h-5" />
           </button>
         </div>
-        <button className="flex items-center justify-center gap-2 px-2 py-1 text-sm text-gray-600 border border-gray-200 rounded-md hover:text-gray-900 app-region-no-drag" onClick={onOpenSettingsDialog}>
+        <button
+          className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm transition-all duration-100 btn primary-btn-border primary-btn-bg-color primary-btn-text-color app-region-no-drag"
+          onClick={onOpenSettingsDialog}>
           <Settings className="w-5 h-5 p-0.5" />
           <span className='truncate max-w-[200px]'>API</span>
         </button>
@@ -126,7 +134,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
         />
       </div>
 
-      <div className='flex items-start justify-center gap-1 h-full'>
+      <div className='flex items-start justify-center h-full gap-1'>
         <button 
           className='btn hover:bg-gray-200 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 flex justify-center items-center app-region-no-drag'
           onClick={handleMinimize}

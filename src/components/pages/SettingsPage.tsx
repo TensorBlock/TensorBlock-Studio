@@ -1,30 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Server, MessageSquare } from 'lucide-react';
-import { SettingsService } from '../services/settings-service';
-import { ProviderSettings } from '../types/settings';
-import { ApiManagement, ModelManagement, ChatSettings } from '../components/settings';
-import { DatabaseIntegrationService } from '../services/database-integration';
-import { AIService } from '../services/ai-service';
+import { SettingsService } from '../../services/settings-service';
+import { ProviderSettings } from '../../types/settings';
+import { ApiManagement, ModelManagement, ChatSettings } from '../settings';
+import { DatabaseIntegrationService } from '../../services/database-integration';
+import { AIService } from '../../services/ai-service';
 import { v4 as uuidv4 } from 'uuid';
-import ConfirmDialog from '../components/ui/ConfirmDialog';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 interface SettingsPageProps {
   isOpen: boolean;
-  onClose: () => void;
 }
 
 type SettingsTab = 'api' | 'models' | 'chat';
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   isOpen,
-  onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('api');
   const [selectedProvider, setSelectedProvider] = useState<string>('TensorBlock');
   const [providerSettings, setProviderSettings] = useState<Record<string, ProviderSettings>>({});
   const [selectedModel, setSelectedModel] = useState('');
   const [useStreaming, setUseStreaming] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [isDbInitialized, setIsDbInitialized] = useState(false);
   const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -32,6 +29,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const settingsService = SettingsService.getInstance();
   const aiService = AIService.getInstance();
   
+  const lastOpenedSettings = useRef(false);
+
   // Initialize database and settings service
   useEffect(() => {
     const initServices = async () => {
@@ -56,8 +55,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setProviderSettings(settings.providers);
       setSelectedModel(settings.selectedModel);
       setUseStreaming(settings.useStreaming);
-      setSaveStatus('idle');
       setHasApiKeyChanged(false);
+      lastOpenedSettings.current = true;
+    }
+
+    if(!isOpen && lastOpenedSettings.current){
+      handleSave();
+      lastOpenedSettings.current = false;
     }
   }, [isOpen, isDbInitialized, settingsService]);
   
@@ -94,14 +98,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     console.log('Provider settings: ', providerSettings);
   };
 
-  // Save all settings
   const handleSave = async () => {
+    console.log('Saving settings');
+
     if (!isDbInitialized) {
-      setSaveStatus('error');
       return;
     }
-    
-    setSaveStatus('saving');
+
+    if(!settingsService.isInitialized){
+      return;
+    }
     
     try {
       // Update all settings in one go
@@ -115,31 +121,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         void aiService.refreshModels();
         setHasApiKeyChanged(false);
       }
-      
-      setSaveStatus('success');
-      
-      // Call the onSave callback if provided
-      // if (onSave) {
-      //   onSave();
-      // }
-      
-      // Reset to idle after a short delay
-      setTimeout(() => {
-        setSaveStatus('idle');
-      }, 2000);
+
     } catch (err) {
       console.error('Error saving settings:', err);
-      setSaveStatus('error');
     }
   };
 
   const handleAddCustomProvider = async () => {
     if (!isDbInitialized) {
-      setSaveStatus('error');
       return;
     }
-    
-    setSaveStatus('saving');
     
     try {
       const newProviderId = uuidv4();
@@ -171,23 +162,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         setHasApiKeyChanged(false);
       }
       
-      setSaveStatus('success');
-      
       handleProviderChange(newProvider.providerId);
-
-      // Reset to idle after a short delay
-      setTimeout(() => {
-        setSaveStatus('idle');
-      }, 2000);
     } catch (err) {
       console.error('Error saving settings:', err);
-      setSaveStatus('error');
     }
   };
   
   const handleDeleteCustomProvider = async () => {
     if (!isDbInitialized || !providerSettings[selectedProvider]?.customProvider) {
-      setSaveStatus('error');
       return;
     }
     
@@ -196,8 +178,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   
   const confirmDeleteProvider = async () => {
     setIsDeleteDialogOpen(false);
-    
-    setSaveStatus('saving');
     
     try {
       // Create a copy of the providers without the current one
@@ -209,8 +189,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       // Update settings
       await settingsService.deleteProvider(selectedProvider);
       
-      setSaveStatus('success');
-      
       // Switch to another provider
       const remainingProviders = Object.keys(updatedProviders);
       if (remainingProviders.length > 0) {
@@ -220,13 +198,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         handleProviderChange('TensorBlock');
       }
       
-      // Reset to idle after a short delay
-      setTimeout(() => {
-        setSaveStatus('idle');
-      }, 2000);
     } catch (err) {
       console.error('Error deleting provider:', err);
-      setSaveStatus('error');
     }
   };
   
@@ -237,7 +210,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   if (!isOpen) return null;
   
   return (
-    <div className="w-full h-full flex flex-1 items-center justify-center bg-white">
+    <div className="flex items-center justify-center flex-1 w-full h-full bg-white">
       <div className="flex w-full h-full overflow-hidden bg-white">
         {/* Sidebar */}
         <div className="flex flex-col w-64 h-full bg-gray-100 border-r border-gray-200">
@@ -277,17 +250,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </button>*/}
           </div>
           
-          <div className="p-4 border-t border-gray-200">
+          {/* <div className="p-4 border-t border-gray-200">
             <button
               onClick={async () => {
                 await handleSave();
-                onClose();
               }}
               className="w-full px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
             >
               Close
             </button>
-          </div>
+          </div> */}
         </div>
         
         {/* Main content */}
@@ -301,7 +273,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 providerSettings={providerSettings}
                 onProviderChange={handleProviderChange}
                 onProviderSettingsChange={handleProviderSettingsChange}
-                saveStatus={saveStatus}
                 onAddCustomProvider={handleAddCustomProvider}
                 onDeleteCustomProvider={handleDeleteCustomProvider}
               />
@@ -312,7 +283,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <ChatSettings
                 useStreaming={useStreaming}
                 onStreamingChange={handleStreamingChange}
-                saveStatus={saveStatus}
                 onSaveSettings={handleSave}
               />
             )}

@@ -220,10 +220,10 @@ export const SETTINGS_CHANGE_EVENT = 'tensorblock_settings_change';
  * Service for managing user settings
  */
 export class SettingsService {
+  public isInitialized: boolean = false;
   private static instance: SettingsService;
   private settings: UserSettings;
   private dbService: DatabaseService;
-  private isInitialized: boolean = false;
 
   private constructor() {
     this.settings = { ...DEFAULT_SETTINGS };
@@ -253,11 +253,23 @@ export class SettingsService {
       // Load settings
       await this.loadSettings();
       
+      this.addAllDefaultProviders();
+
       this.isInitialized = true;
     } catch (error) {
       console.error('Error initializing settings service:', error);
       // Fall back to default settings
       this.settings = { ...DEFAULT_SETTINGS };
+    }
+  }
+
+  private addAllDefaultProviders() {
+    for(const provider in DEFAULT_SETTINGS.providers) {
+      if(!this.settings.providers[provider]) {
+        this.settings.providers[provider] = {
+          ...DEFAULT_SETTINGS.providers[provider],
+        };
+      }
     }
   }
 

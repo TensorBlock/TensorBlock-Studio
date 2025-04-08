@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import ChatHistoryList from '../components/chat/ChatHistoryList';
-import ChatMessageArea from '../components/chat/ChatMessageArea';
-import { Conversation, ConversationFolder } from '../types/chat';
-import { SETTINGS_CHANGE_EVENT, SettingsService } from '../services/settings-service';
-import { ChatService } from '../services/chat-service';
-import { AIService } from '../services/ai-service';
+import ChatHistoryList from '../chat/ChatHistoryList';
+import ChatMessageArea from '../chat/ChatMessageArea';
+import { Conversation, ConversationFolder } from '../../types/chat';
+import { SETTINGS_CHANGE_EVENT, SettingsService } from '../../services/settings-service';
+import { ChatService } from '../../services/chat-service';
+import { AIService } from '../../services/ai-service';
 
 export const ChatPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);

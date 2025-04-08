@@ -1,6 +1,6 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation, Message } from '../../types/chat';
-import { Send, Square, Copy, RotateCcw, Share2, Pencil, Loader2, Globe } from 'lucide-react';
+import { Send, Square, Copy, RotateCcw, Pencil, Loader2, Globe } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
@@ -70,7 +70,6 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   }, []);
 
   useEffect(() => {
-    console.log('Updated provider or model');
     const result = ChatService.getInstance().getCurrentProviderModelCapabilities().includes(AIServiceCapability.WebSearch);
     setIsWebSearchAllowed(result);
   }, [selectedProvider, selectedModel]);
@@ -135,9 +134,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   };
 
   // Placeholder error handler for other actions
-  const handleActionError = (action: string) => {
-    console.error(`Function not implemented yet: ${action}`);
-  };
+  // const handleActionError = (action: string) => {
+  //   console.error(`Function not implemented yet: ${action}`);
+  // };
   
   const getMessagesList = () => {
     return messagesList;
@@ -212,6 +211,16 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     }
   };
 
+  const getModelName = (modelID: string) => {
+    const providerSettings = SettingsService.getInstance().getProviderSettings(selectedProvider);
+    if(!providerSettings.models) return modelID;
+
+    const model = providerSettings.models?.find(m => m.modelId === modelID);
+    if(!model) return modelID;
+
+    return model.modelName;
+  }
+
   // If no active conversation is selected
   if (!activeConversation) {
     return (
@@ -255,12 +264,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   label: 'Copy',
                   onClick: () => handleCopyMessage(message.content),
                 },
-                {
-                  id: 'share',
-                  icon: Share2,
-                  label: 'Share',
-                  onClick: () => handleActionError('share message'),
-                },
+                // {
+                //   id: 'share',
+                //   icon: Share2,
+                //   label: 'Share',
+                //   onClick: () => handleActionError('share message'),
+                // },
                 {
                   id: 'regenerate',
                   icon: RotateCcw,
@@ -303,6 +312,13 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 </div>
               ) : (
                 <>
+                  {!isUserMessage &&
+                    <div className="flex items-center flex-1 gap-2 px-2 mb-4 justify-left">
+                      <span className="text-sm text-gray-500">{getModelName(message.model)}</span>
+                      <span className="text-sm text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">{message.provider}</span>
+                    </div>
+                  }
+
                   <div 
                     className={`max-w-[80%] rounded-lg p-3 ${
                       isUserMessage 

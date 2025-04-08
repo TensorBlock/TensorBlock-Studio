@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ChatPage } from './pages/ChatPage';
+import { ChatPage } from './components/pages/ChatPage';
 import MainLayout from './components/layout/MainLayout';
 import DatabaseInitializer from './components/core/DatabaseInitializer';
 
