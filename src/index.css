@@ -4,6 +4,49 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    display: none;
+  }
+}
+
+@keyframes move-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+    display: none;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    display: block;
+  }
+}
+
+@keyframes move-out {
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+    display: none;
+  }
+}
+
+.move-in {
+  animation: move-in 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+.move-out {
+  animation: move-out 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+}
+
+.fade-out {
+  animation: fade-out 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+}
+
 /* Add these styles for Electron window dragging */
 .app-region-drag {
   -webkit-app-region: drag;

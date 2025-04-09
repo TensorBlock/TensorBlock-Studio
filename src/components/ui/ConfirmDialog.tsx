@@ -71,7 +71,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 mt-[29px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div 
         className="relative w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl focus:outline-none"
         onClick={handleDialogClick}

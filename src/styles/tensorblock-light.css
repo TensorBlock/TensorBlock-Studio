@@ -1,19 +1,60 @@
 :root {
     --primary-50: #F8F7F3;
     --primary-100: #F1EFE8;
+    --primary-200: #E6E3DB;
+    --primary-300: #CFCCBE;
     --primary-400: #B5B09B;
+    --primary-500: #9B9378;
     --primary-600: #7C765F;
     --primary-700: #5B5748;
+    --primary-800: #3E3B32;
 
     --surface-0: #FFFFFF;
+    --surface-100: #F5F5F4;
+    --surface-400: #A8A29E;
     --surface-500: #78716C;
+    --surface-700: #44403C;
     --surface-900: #1C1917;
+
+    --red-400: #EE8080;
+    --red-500: #E45757;
+
+    --green-100: #E2FAEB;
+    --green-200: #C7F4D7;
+    --green-500: #46C173;
+    --green-600: #3AA461;
+
 }
 
-@layer utilities {
+@layer components {
     /* Main Background */
     .bg-main-background-color {
         background-color: var(--primary-50);
+    }
+
+    /* Navigation */
+    .navigation-item {
+        background-color: transparent;
+    }
+
+    .navigation-item:hover {
+        background-color: var(--primary-200);
+    }
+
+    .navigation-item-selected {
+        background-color: var(--primary-300);
+    }
+
+    .navigation-item-selected:hover {
+        background-color: var(--primary-400);
+    }
+    
+    .navigation-item-text {
+        color: var(--primary-600);
+    }
+
+    .navigation-item-text:hover {
+        color: var(--primary-700);
     }
 
     /* Primary Button */
@@ -37,6 +78,15 @@
 
     .primary-btn-text-color:hover {
         color: var(--surface-900);
+    }
+
+    /* Input */
+    .input-border {
+        outline: 1px solid var(--primary-200);
+    }
+
+    .input-border:focus-within {
+        outline: 2px solid var(--primary-400);
     }
 
     /* Major Area */
@@ -88,11 +138,167 @@
         color: var(--surface-900);
     }
 
-    .message-model-text-color {
+    .conversation-folder-item {
+        background-color: transparent;
+        border: 2px solid transparent;
+    }
+
+    .conversation-folder-item:hover {
+        background-color: var(--primary-50);
+    }
+
+    .conversation-folder-item-text {
+        color: var(--surface-500);
+        font-weight: 500;
+    }
+
+    .conversation-folder-item-text:hover {
+        color: var(--surface-900);
+    }
+
+    .conversation-send-button {
+        background-color: var(--primary-500);
+        color: var(--surface-0);
+    }
+    
+    .conversation-send-button:hover {
+        background-color: var(--primary-600);
+        color: var(--surface-0);
+    }
+
+    .conversation-send-button:disabled {
+        background-color: var(--primary-200);
+        color: var(--surface-0);
+    }
+
+    .conversation-stop-button {
+        background-color: var(--red-400);
+        color: var(--surface-0);
+    }
+
+    .conversation-stop-button:hover {
+        background-color: var(--red-500);
+        color: var(--surface-0);
+    }
+
+    .frame-right-border {
+        border-right-width: 1px;
+        border-color: var(--primary-100);
+    }
+
+    /* Settings */
+    .settings-category-item {
+        border-radius: 0.5rem;
+        background-color: transparent;
+    }
+
+    .settings-category-item:hover {
+        border-radius: 0.5rem;
+        background-color: var(--primary-50);
+    }
+
+    .settings-category-item-text {
+        color: var(--surface-500);
+    }
+    
+    .settings-category-selected-item {
+        border-radius: 0.5rem;
+        background-color: var(--primary-100);
+    }
+
+    .settings-category-selected-item-text {
         color: var(--primary-700);
     }
 
-    .message-provider-text-color {
+    .settings-provider-item {
+        background-color: transparent;
+        border-radius: 0.5rem;
+        border-width: 1px;
+        border-color: var(--primary-400);
+    }
+    
+    .settings-provider-item:hover {
+        background-color: var(--primary-100);
+    }
+
+    .settings-provider-item-text {
+        color: var(--surface-500);
+    }
+
+    .settings-provider-item-text:hover {
+        color: var(--surface-900);
+    }
+
+    .settings-provider-item-selected {
+        background-color: var(--primary-100);
+        border-radius: 0.5rem;
+        border-width: 1px;
+        border-color: transparent;
+    }
+
+    .settings-provider-item-selected:hover {
+        background-color: var(--primary-100);
+    }
+
+    .settings-provider-item-selected-text {
         color: var(--primary-700);
+    }
+
+    .settings-provider-item-selected-text:hover {
+        color: var(--surface-900);
+    }
+
+    /* Message */
+    .message-model-tag {
+        background-color: transparent;
+        color: var(--primary-600);
+    }
+
+    .message-provider-tag {
+        background-color: var(--primary-100);
+        border-radius: 9999px;
+        color: var(--primary-600);
+    }
+
+    .message-user {
+        background-color: var(--primary-300);
+        color: var(--surface-900);
+    }
+
+    .message-assistant {
+        background-color: var(--surface-100);
+        color: var(--primary-800);
+    }
+
+    .message-icon{
+        background-color: transparent;
+        color: var(--primary-600);
+    }
+
+    .message-icon:hover {
+        background-color: var(--primary-100);
+        color: var(--primary-700);
+    }
+
+    .message-icon:active {
+        transition-duration: 0s;
+        background-color: var(--green-200);
+        color: var(--green-500);
+    }
+
+    /* Select Model Dialog */
+    .select-model-dialog {
+        border-radius: 1rem;
+        background-color: var(--surface-0);
+        color: var(--surface-700);
+    }
+
+    .select-model-dialog-close-button {
+        color: var(--primary-600);
+    }
+
+    .select-model-dialog-close-button:hover {
+        background-color: var(--primary-100);
+        color: var(--surface-700);
     }
 }

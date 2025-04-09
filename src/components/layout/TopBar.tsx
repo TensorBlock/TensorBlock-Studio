@@ -1,4 +1,4 @@
-import { ChevronDown, Cpu, Minimize2, Minus, Settings, Square, X } from 'lucide-react';
+import { ChevronDown, Cpu, Minus, Settings, Square, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SelectModelDialog } from '../models/SelectModelDialog';
 import { AIService, ModelOption } from '../../services/ai-service';
@@ -101,7 +101,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
       </div>
 
       <div className='flex items-center justify-center w-full gap-2'>
-        <div className="flex items-center w-2/5 gap-2">
+        <div className="flex items-center w-3/5 gap-2 md:w-2/5">
           <button 
             className="
               btn primary-btn-border primary-btn-bg-color
@@ -111,10 +111,16 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
             aria-label="Select AI model"
           >
             <Cpu className="w-5 h-5 p-0.5" />
+            {selectedModelName !== '' ? 
+              <div className='flex items-center gap-2'>
+                <span className='text-center truncate max-w-[200px]'>{selectedModelName}</span>
+                <span className='text-center text-xs truncate max-w-[100px] font-medium message-provider-tag px-3 py-0.5'>{selectedProvider}</span>
+              </div>
+            : 
             <div className='flex items-center gap-2'>
-              <span className='text-center truncate max-w-[200px]'>{selectedModelName}</span>
-              <span className='text-center text-xs truncate max-w-[100px] bg-gray-200 rounded-full px-2 py-0.5'>{selectedProvider}</span>
+              <span className='text-center truncate max-w-[200px]'>Select a model to chat</span>
             </div>
+            }
             <ChevronDown className="w-5 h-5" />
           </button>
         </div>
@@ -146,7 +152,13 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
           className='btn hover:bg-gray-200 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 flex justify-center items-center app-region-no-drag'
           onClick={handleMaximize}
         >
-          {isMaximized ? <Minimize2 className='w-5 h-5' /> : <Square className='w-5 h-5 p-0.5' />}
+          {isMaximized ? 
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className='w-5 h-5 py-0.5'>
+              <path d="M2 16.5V6.5C2 5.67157 2.67157 5 3.5 5H13.5C14.3284 5 15 5.67157 15 6.5V16.5C15 17.3284 14.3284 18 13.5 18H3.5C2.67157 18 2 17.3284 2 16.5Z" stroke="#111" stroke-width="1.67"/>
+              <path d="M6 5V3.5C6 2.67157 6.67157 2 7.5 2H16.5C17.3284 2 18 2.67157 18 3.5V12.5C18 13.3284 17.3284 14 16.5 14H15" stroke="#111" stroke-width="1.67" stroke-linecap="round"/>
+            </svg>
+          : 
+            <Square className='w-5 h-5 p-0.5' />}
         </button>
 
         <button

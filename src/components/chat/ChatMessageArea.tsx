@@ -1,6 +1,6 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation, Message } from '../../types/chat';
-import { Send, Square, Copy, RotateCcw, Pencil, Loader2, Globe } from 'lucide-react';
+import { Send, Square, Copy, Pencil, Loader2, Globe, RefreshCw, Check, X } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
@@ -8,6 +8,7 @@ import { DatabaseIntegrationService } from '../../services/database-integration'
 import { SettingsService } from '../../services/settings-service';
 import { ChatService } from '../../services/chat-service';
 import { AIServiceCapability } from '../../types/capabilities';
+import ProviderIcon from '../ui/ProviderIcon';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -34,8 +35,10 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   selectedProvider,
   selectedModel,
 }) => {
-  const [input, setInput] = useState('');
+  const [inputValue, setInput] = useState('');
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const editingContentRef = useRef<HTMLTextAreaElement>(null);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -50,9 +53,11 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     }, 50);
 
     if(activeConversation) {
-      const messagesList = MessageHelper.mapMessagesTreeToList(activeConversation);
+      const messagesList = MessageHelper.mapMessagesTreeToList(activeConversation, false);
       setMessagesList(messagesList);
     }
+
+    handleCancelEdit();
   }, [activeConversation, activeConversation?.messages]);
 
   // Load web search status on component mount
@@ -77,9 +82,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
-    if (!input.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading) return;
     
-    onSendMessage(input);
+    onSendMessage(inputValue);
     
     setInput('');
   };
@@ -172,7 +177,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       updatedFatherMessage.conversationId
     );
 
-    setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation));
+    setMessagesList(MessageHelper.mapMessagesTreeToList(activeConversation, false));
   };
 
   const getCurrentMessageIndex = (messageId: string) => {
@@ -211,8 +216,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     }
   };
 
-  const getModelName = (modelID: string) => {
-    const providerSettings = SettingsService.getInstance().getProviderSettings(selectedProvider);
+  const getModelName = (modelID: string, provider: string) => {
+    const providerSettings = SettingsService.getInstance().getProviderSettings(provider);
     if(!providerSettings.models) return modelID;
 
     const model = providerSettings.models?.find(m => m.modelId === modelID);
@@ -272,12 +277,14 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 // },
                 {
                   id: 'regenerate',
-                  icon: RotateCcw,
+                  icon: RefreshCw,
                   label: 'Regenerate',
                   onClick: () => handleRegenerateResponse(message.messageId),
                 }
               ];
-              
+             
+          if(message.role === 'system') return null;
+          
           return (
             <div 
               key={message.messageId}
@@ -286,44 +293,61 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               onMouseLeave={() => setHoveredMessageId(null)}
             >
               {isEditing && isUserMessage ? (
-                <div className="w-[80%]">
-                  <textarea 
+                <form 
+                  onSubmit={handleSendEditedMessage}
+                  onClick={() => {
+                    editingContentRef.current?.focus();
+                  }}
+                  onFocus={() => {
+                    editingContentRef.current?.focus();
+                  }}
+                  onKeyDown={(e) => {
+                    if(e.key === 'Escape') {
+                      handleCancelEdit();
+                    }
+                  }}
+                  className="w-[80%] px-3 py-2 input-border rounded-lg cursor-text transition-all duration-200"
+                >
+                  <textarea
+                    ref={editingContentRef}
                     value={editingContent}
                     onChange={(e) => setEditingContent(e.target.value)}
-                    className="w-full px-3 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg resize-none focus:outline-none"
                     rows={3}
-                    autoFocus
+                    autoFocus={true}
                   />
                   <div className="flex justify-end mt-2 space-x-2">
                     <button 
+                      type="button"
                       onClick={handleCancelEdit} 
-                      className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+                      className="p-2 text-sm text-red-400 transition-all duration-200 rounded-md hover:text-red-500 message-icon"
                     >
-                      Cancel
+                      <X size={18} />
                     </button>
-                    <button 
-                      onClick={handleSendEditedMessage} 
-                      className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
+                    <button
+                      type="submit"
+                      className="p-2 text-sm transition-all duration-200 rounded-md message-icon"
                       disabled={!editingContent.trim()}
                     >
-                      Send
+                      <Check size={18} />
                     </button>
                   </div>
-                </div>
+                </form>
               ) : (
                 <>
                   {!isUserMessage &&
                     <div className="flex items-center flex-1 gap-2 px-2 mb-4 justify-left">
-                      <span className="text-sm text-gray-500">{getModelName(message.model)}</span>
-                      <span className="text-sm text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">{message.provider}</span>
+                      <ProviderIcon providerName={message.provider} className="w-4 h-4 mr-2" />
+                      <span className="text-sm message-model-tag">{getModelName(message.model, message.provider)}</span>
+                      <span className="px-3 py-1 text-xs font-medium message-provider-tag">{message.provider}</span>
                     </div>
                   }
 
                   <div 
                     className={`max-w-[80%] rounded-lg p-3 ${
                       isUserMessage 
-                        ? 'bg-blue-500 text-white rounded-tr-none' 
-                        : 'bg-gray-200 text-gray-800 rounded-tl-none'
+                        ? 'message-user rounded-tr-none' 
+                        : 'message-assistant rounded-tl-none'
                     }`}
                   >
                     {isUserMessage ? (
@@ -377,19 +401,42 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       </div>
       
       {/* Input form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2 px-4 pt-4 pb-2 m-2 mb-4 border border-gray-200 rounded-lg">
+      <form onSubmit={handleSubmit}
+        onClick={() => {
+          inputRef.current?.focus();
+        }}
+        onFocus={() => {
+          inputRef.current?.focus();
+        }}
+        className="flex flex-col gap-2 px-4 pt-3 pb-2 m-2 mb-4 transition-all duration-200 rounded-lg input-border cursor-text"
+      >
         <div className="flex space-x-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+          <textarea
+            ref={inputRef}
+            value={inputValue}
+            onChange={(e) => {
+              setInput(e.target.value);
+              // Adjust height based on content
+              const textarea = e.target;
+              textarea.style.height = 'auto'; // Reset height
+              
+              // Calculate new height based on scrollHeight, with min and max constraints
+              const minHeight = 38; // Approx height for 1 row
+              const maxHeight = 38 * 3; // Approx height for 3 rows
+              
+              const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+              textarea.style.height = `${newHeight}px`;
+            }}
             placeholder="Type your message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-2 pt-1 pb-2 resize-none focus:outline-none"
             disabled={isLoading}
-          />
+            inputMode='text'
+            rows={1}
+            style={{ minHeight: '38px', maxHeight: '114px', height: '38px', overflow: 'auto' }}
+          ></textarea>
         </div>
 
-        <div className="flex flex-row items-center justify-between px-2">
+        <div className="flex flex-row items-center justify-between px-1">
           {
             isWebSearchAllowed ? (
               <button
@@ -422,18 +469,19 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             <button
               type="button"
               onClick={handleStopStreaming}
-              className="flex items-center justify-center w-10 h-10 text-white bg-red-500 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="flex items-center justify-center w-10 h-10 transition-all duration-200 rounded-full conversation-stop-button focus:outline-none"
               aria-label="Stop response"
               title="Stop response"
             >
-              <Square size={20} />
+              <Square size={20} fill="currentColor" />
             </button>
           ) : (
             <button
               type="submit"
-              disabled={isLoading || !input.trim()}
-              className="flex items-center justify-center w-10 h-10 text-white bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              aria-label="Send message"
+              disabled={isLoading || !inputValue.trim()}
+              className="flex items-center justify-center w-10 h-10 transition-all duration-200 rounded-full conversation-send-button focus:outline-none disabled:cursor-not-allowed"
+              aria-label={isLoading || !inputValue.trim() ? 'Cannot send message' : 'Send message'}
+              title={isLoading || !inputValue.trim() ? 'Cannot send message' : 'Send message'}
             >
               <Send size={20} />
             </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Loader, Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { AIService, ModelOption } from '../../services/ai-service';
 import { SettingsService } from '../../services/settings-service';
 
@@ -110,16 +110,16 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000033]">
-      <div className="flex flex-col w-3/4 bg-gray-900 h-4/5">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <h2 className="text-xl font-semibold text-white">Select Model</h2>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#00000033]">
+      <div className="flex flex-col w-3/4 p-4 h-4/5 select-model-dialog">
+        <div className="flex items-center justify-between pb-2 border-b border-gray-700">
+          <h2 className="p-2 text-xl font-semibold">Select Model</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="p-2 rounded-full select-model-dialog-close-button"
             aria-label="Close dialog"
           >
-            <ChevronDown size={20} />
+            <X size={20} />
           </button>
         </div>
         
@@ -206,22 +206,6 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
               ))}
             </div>
           )}
-        </div>
-        
-        <div className="flex justify-end p-4 border-t border-gray-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 mr-4 text-white bg-gray-700 rounded-md hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onClose}
-            disabled={!selectedModelId}
-            className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Confirm Selection
-          </button>
         </div>
       </div>
     </div>

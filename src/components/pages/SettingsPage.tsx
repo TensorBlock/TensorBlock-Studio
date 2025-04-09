@@ -207,21 +207,21 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setIsDeleteDialogOpen(false);
   };
   
-  if (!isOpen) return null;
+  // if (!isOpen) return null;
   
   return (
-    <div className="flex items-center justify-center flex-1 w-full h-full bg-white">
-      <div className="flex w-full h-full overflow-hidden bg-white">
+    <div className={`absolute flex-none inset-0 z-20 items-center justify-center w-full h-full ${isOpen ? 'move-in flex' : (lastOpenedSettings.current ? 'move-out' : 'hidden')}`}>
+      <div className="flex w-full h-full overflow-hidden major-area-bg-color ">
         {/* Sidebar */}
-        <div className="flex flex-col w-64 h-full bg-gray-100 border-r border-gray-200">
-          <div className="p-4 border-b border-gray-200">
+        <div className="flex flex-col w-64 h-full frame-right-border">
+          <div className="p-4">
             <h2 className="text-xl font-semibold">Settings</h2>
           </div>
           
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 px-2 overflow-y-auto">
             <button
-              className={`flex items-center w-full px-4 py-3 text-left ${
-                activeTab === 'api' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-200'
+              className={`flex items-center w-full px-4 py-3 text-left transition-all duration-200 ${
+                activeTab === 'api' ? 'settings-category-selected-item settings-category-selected-item-text font-medium' : 'settings-category-item settings-category-item-text'
               }`}
               onClick={() => setActiveTab('api')}
             >
@@ -230,8 +230,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </button>
             
             <button
-              className={`flex items-center w-full px-4 py-3 text-left ${
-                activeTab === 'chat' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-200'
+              className={`flex items-center w-full px-4 py-3 text-left transition-all duration-200 ${
+                activeTab === 'chat' ? 'settings-category-selected-item settings-category-selected-item-text font-medium' : 'settings-category-item settings-category-item-text'
               }`}
               onClick={() => setActiveTab('chat')}
             >
@@ -265,7 +265,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         {/* Main content */}
         <div className="flex flex-col flex-1 h-full">
           {/* Content area */}
-          <div className="flex-1 px-6 py-4 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
             {/* API Management Tab */}
             {activeTab === 'api' && (
               <ApiManagement

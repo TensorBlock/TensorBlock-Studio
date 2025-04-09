@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { API_CONFIG } from './config';
+import { APP_CONFIG } from './config';
 
 /**
  * Configuration options for the HTTP client
@@ -26,10 +26,10 @@ export interface RetryConfig {
  * Default retry configuration
  */
 const DEFAULT_RETRY_CONFIG: RetryConfig = {
-  maxRetries: API_CONFIG.http.retries.max,
-  initialDelayMs: API_CONFIG.http.retries.initialDelayMs,
-  backoffFactor: API_CONFIG.http.retries.backoffFactor,
-  maxDelayMs: API_CONFIG.http.retries.maxDelayMs,
+  maxRetries: APP_CONFIG.http.retries.max,
+  initialDelayMs: APP_CONFIG.http.retries.initialDelayMs,
+  backoffFactor: APP_CONFIG.http.retries.backoffFactor,
+  maxDelayMs: APP_CONFIG.http.retries.maxDelayMs,
   shouldRetry: (error: AxiosError) => {
     // Retry on network errors or specific HTTP status codes
     return (
@@ -69,7 +69,7 @@ export class HttpClient {
 
     this.client = axios.create({
       baseURL: config.baseURL,
-      timeout: config.timeout || API_CONFIG.http.defaultTimeout,
+      timeout: config.timeout || APP_CONFIG.http.defaultTimeout,
       headers: {
         'Content-Type': 'application/json',
         ...config.headers

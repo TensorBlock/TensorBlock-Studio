@@ -55,16 +55,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <div className="flex flex-col flex-1 bg-main-background-color">
           {/* Main content */}
 
-          <div className='flex flex-col flex-1 overflow-hidden major-area-border major-area-bg-color'>
+          <div className='relative flex flex-col flex-1 overflow-hidden major-area-border major-area-bg-color'>
+            <div className="flex-1 overflow-auto">
+              {children}
+            </div>
+            
             <SettingsPage
               isOpen={showSettings}
             />
-
-            {!showSettings &&
-              <div className="flex-1 overflow-auto">
-                {children}
-              </div>
-            }
           </div>
 
           {/* <BottomBar loadedModels={loadedModels} /> */}

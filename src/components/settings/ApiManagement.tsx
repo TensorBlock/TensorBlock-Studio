@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, Plus, Trash2, Edit2, Search, X, Brain, Eye, Wrench, Type, Database } from 'lucide-react';
+import { ChevronRight, Plus, Trash2, Edit2, Search, X, Brain, Eye, Wrench, Type, Database, EyeOff } from 'lucide-react';
 import { ProviderSettings, ModelSettings } from '../../types/settings';
 import { AIServiceCapability } from '../../types/capabilities';
+import { v4 as uuidv4 } from 'uuid';
+import ProviderIcon from '../ui/ProviderIcon';
 
 interface ApiManagementProps {
   selectedProvider: string;
@@ -98,7 +100,8 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
       modelName: 'New Model',
       modelCategory: 'Custom',
       modelDescription: 'Custom model description',
-      modelCapabilities: [AIServiceCapability.TextCompletion]
+      modelCapabilities: [AIServiceCapability.TextCompletion],
+      modelRefUUID: uuidv4()
     };
     
     setCurrentEditModel(newModel);
@@ -210,7 +213,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
     if (!isEditModelDialogOpen || !currentEditModel) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 mt-[29px]">
+      <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50">
         <div className="w-full max-w-lg max-h-full p-6 overflow-y-auto bg-white rounded-lg shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium">{currentEditModel.modelId ? 'Edit Model' : 'Add New Model'}</h3>
@@ -337,33 +340,36 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
     <div className="flex flex-col h-full max-h-screen">
       {/* Title area removed - settings are auto-saved */}
       
-      <div className="flex flex-1 max-h-full">
+      <div className="flex flex-1 h-full max-h-full py-1 pr-1">
         {/* Provider Selection */}
-        <div className="relative flex flex-col justify-between w-1/3 max-h-full pr-6 border-r border-gray-200">
-          <div className="relative flex flex-col flex-1 max-h-full">
+        <div className="relative flex flex-col justify-between w-1/3 max-h-full p-6 frame-right-border">
+          <div className="relative flex flex-col flex-1 h-full max-h-full">
             <h3 className="mb-4 text-xl font-semibold">API Management</h3>
             <p className="mb-4 text-sm text-gray-600">
               Select an AI service provider to configure its API settings.
             </p>
             
-            <div className="relative max-h-full pr-2 mb-2 space-y-2 overflow-y-scroll">
+            <div className="relative flex-1 h-full max-h-full mb-2 space-y-2 overflow-y-auto">
               {handleMapProviderSettings().map((provider) => (
                 <button
                   key={provider.providerId}
-                  className={`flex items-center justify-between w-full px-4 py-3 text-left rounded-lg ${
+                  className={`flex items-center justify-between w-full px-4 py-3 text-left rounded-lg transition-all duration-200 ${
                     selectedProvider === provider.providerId 
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200' 
-                      : 'bg-white border border-gray-200 hover:bg-gray-50'
+                      ? 'settings-provider-item-selected settings-provider-item-selected-text' 
+                      : 'settings-provider-item settings-provider-item-text'
                   }`}
                   onClick={() => onProviderChange(provider.providerId)}
                 >
-                  <span>{provider.providerName}</span>
+                  <div className="flex items-center gap-2">
+                    <ProviderIcon providerName={provider.providerName} className="w-4 h-4" />
+                    <span>{provider.providerName}</span>
+                  </div>
                   {selectedProvider === provider.providerId && <ChevronRight size={16} />}
                 </button>
               ))}
             </div>
 
-            <div className="w-full">
+            <div className="sticky bottom-0 w-full">
               <button onClick={() => onAddCustomProvider()} className="flex items-center w-full px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:text-gray-800">
                 <Plus size={16} className="mr-2 text-base" />
                 <span>Add Custom Provider</span>
@@ -380,7 +386,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
             </div>
           </div>
         ) : (
-          <div className="w-2/3 pl-6 overflow-y-auto">
+          <div className="w-2/3 px-6 py-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium">{currentProviderSettings.providerName} Settings</h3>
               {currentProviderSettings.customProvider && (
@@ -407,14 +413,14 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                     onChange={(e) => handleApiKeyChange(e.target.value)}
                     onBlur={handleOnEndEditing}
                     placeholder={selectedProvider === 'OpenAI' ? 'sk-...' : 'Enter API key'}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="button"
                     className="absolute text-gray-500 transform -translate-y-1/2 right-3 top-1/2"
                     onClick={() => setShowApiKey(!showApiKey)}
                   >
-                    {showApiKey ? 'Hide' : 'Show'}
+                    {showApiKey ? <Eye size={16} /> : <EyeOff size={16} />}
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">

@@ -13,10 +13,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onChangePage }) =>
       {/* Navigation buttons */}
       <div className="flex flex-col items-center flex-1 pt-2">
         <button 
-          className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+          className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
             activePage === 'chat' 
-              ? 'bg-gray-200 text-black' 
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'navigation-item-selected navigation-item-text' 
+              : 'navigation-item navigation-item-text'
           }`}
           onClick={() => onChangePage('chat')}
           aria-label="Chat"
@@ -30,10 +30,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onChangePage }) =>
       {/* Settings button at bottom */}
       <div className="flex justify-center mb-4">
         <button 
-          className={`flex items-center justify-center w-12 h-12 text-gray-600 rounded-lg ${
+          className={`flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 ${
             activePage === 'settings' 
-              ? 'bg-gray-200 text-black' 
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'navigation-item-selected navigation-item-text' 
+              : 'navigation-item navigation-item-text'
           }`}
           onClick={() => onChangePage('settings')}
           aria-label="Settings"

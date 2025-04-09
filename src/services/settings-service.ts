@@ -1,6 +1,8 @@
 import { AIServiceCapability } from "../types/capabilities";
 import { UserSettings, ProviderSettings, ModelSettings } from "../types/settings";
 import { DatabaseService } from "./database";
+import { v4 as uuidv4 } from 'uuid';
+
 
 /**
  * Default settings
@@ -20,6 +22,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'GPT 4',
           modelDescription: 'GPT-4o is the latest and most powerful model from OpenAI.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
       ]
     },
@@ -36,6 +39,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'GPT 4',
           modelDescription: 'GPT-4o is the latest and most powerful model from OpenAI.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'GPT-4o-mini',
@@ -43,6 +47,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'GPT 4',
           modelDescription: 'GPT-4o-mini is the latest and most powerful model from OpenAI.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'GPT-4-turbo',
@@ -50,6 +55,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'GPT 4',
           modelDescription: 'GPT-4-turbo is the latest and most powerful model from OpenAI.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'GPT-3.5-turbo',
@@ -57,6 +63,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'GPT 3.5',
           modelDescription: 'GPT-3.5-turbo is the latest and most powerful model from OpenAI.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
       ]
     },
@@ -73,6 +80,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Claude 3.5',
           modelDescription: 'Claude-3-5-sonnet-20241022 is the latest and most powerful model from Anthropic.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
       ]
     },
@@ -90,6 +98,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Gemini 1.5',
           modelDescription: 'Gemini-1.5-flash-latest is the latest and most powerful model from Gemini.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'Gemini-1.5-pro-latest',
@@ -97,6 +106,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Gemini 1.5',
           modelDescription: 'Gemini-1.5-pro-latest is the latest and most powerful model from Gemini.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'Gemini-2.0-flash-001',
@@ -104,6 +114,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Gemini 2.0',
           modelDescription: 'Gemini-2.0-flash-001 is the latest and most powerful model from Gemini.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'Gemini-2.5-pro-exp-03-25',
@@ -111,6 +122,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Gemini 2.5',
           modelDescription: 'Gemini-2.5-pro-exp-03-25 is the latest and most powerful model from Gemini.',
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
         },
       ]
     },
@@ -127,6 +139,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'DeepSeek',
           modelDescription: 'DeepSeek-R1 is the latest and most powerful model from Fireworks.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'DeepSeek-V3',
@@ -134,6 +147,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'DeepSeek',
           modelDescription: 'DeepSeek-V3 is the latest and most powerful model from Fireworks.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'Qwen2P5-Coder-32B-Instruct',
@@ -141,6 +155,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Qwen',
           modelDescription: 'Qwen2P5-Coder-32B-Instruct is the latest and most powerful model from Fireworks.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
       ]
     },
@@ -157,6 +172,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Llama 3.1',
           modelDescription: 'Llama-3.1-70B-Instruct-Turbo is the latest and most powerful model from Together.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'Llama-3.1-8B-Instruct-Turbo',
@@ -164,6 +180,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Llama 3.1',
           modelDescription: 'Llama-3.1-8B-Instruct-Turbo is the latest and most powerful model from Together.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'DeepSeek-V3',
@@ -171,6 +188,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'DeepSeek',
           modelDescription: 'DeepSeek-V3 is the latest and most powerful model from Together.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'Qwen2.5-72B-Instruct-Turbo',
@@ -178,6 +196,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Qwen',
           modelDescription: 'Qwen2.5-72B-Instruct-Turbo is the latest and most powerful model from Together.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
       ]
     },
@@ -194,6 +213,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'DeepSeek',
           modelDescription: 'DeepSeek-V3 is the latest and most powerful model from OpenRouter.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
         {
           modelName: 'Qwen2.5-VL-3B-Instruct',
@@ -201,6 +221,7 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCategory: 'Qwen',
           modelDescription: 'Qwen2.5-VL-3B-Instruct is the latest and most powerful model from OpenRouter.',
           modelCapabilities: [AIServiceCapability.TextCompletion],
+          modelRefUUID: uuidv4(),
         },
       ]
     }

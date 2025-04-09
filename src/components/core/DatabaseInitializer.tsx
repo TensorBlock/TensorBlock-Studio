@@ -61,7 +61,18 @@ const DatabaseInitializer: React.FC<DatabaseInitializerProps> = ({ children }) =
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <div className={`fixed flex inset-0 z-50 items-center justify-center w-screen h-screen bg-white 
+        ${isInitialized ? 'fade-out' : ''}`}>
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 border-4 border-t-4 border-blue-500 border-opacity-50 rounded-full animate-bounce" />
+          <p className="mt-4 text-lg text-gray-600">Initializing database...</p>
+        </div>
+      </div>
+      {children}
+    </>
+  );
 };
 
 export default DatabaseInitializer; 
