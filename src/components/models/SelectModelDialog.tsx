@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader, Check, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Search, Check, ChevronDown, ChevronUp, X, Loader2 } from 'lucide-react';
 import { AIService, ModelOption } from '../../services/ai-service';
 import { SettingsService } from '../../services/settings-service';
 
@@ -57,15 +57,15 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
     }
   };
   
-  const handleRefresh = async () => {
-    try {
-      await aiService.refreshModels();
-      const refreshedModels = await aiService.getCachedAllModels();
-      setModels(refreshedModels);
-    } catch (error) {
-      console.error("Error refreshing models:", error);
-    }
-  };
+  // const handleRefresh = async () => {
+  //   try {
+  //     await aiService.refreshModels();
+  //     const refreshedModels = await aiService.getCachedAllModels();
+  //     setModels(refreshedModels);
+  //   } catch (error) {
+  //     console.error("Error refreshing models:", error);
+  //   }
+  // };
   
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -110,9 +110,15 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#00000033]">
-      <div className="flex flex-col w-3/4 p-4 h-4/5 select-model-dialog">
-        <div className="flex items-center justify-between pb-2 border-b border-gray-700">
+    <div 
+      className="fixed inset-0 z-40 flex items-center justify-center bg-[#00000033] fade-in app-region-no-drag"
+      onClick={onClose}
+    >
+      <div 
+        className="flex flex-col w-3/4 p-4 h-4/5 select-model-dialog move-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between pb-2 border-b frame-separator-border-color">
           <h2 className="p-2 text-xl font-semibold">Select Model</h2>
           <button 
             onClick={onClose}
@@ -123,37 +129,37 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
           </button>
         </div>
         
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b frame-separator-border-color">
           <div className="relative flex-1 max-w-md">
             <input
               type="text"
               placeholder="Search models..."
               value={searchQuery}
               onChange={handleSearch}
-              className="w-full p-2 pl-10 text-white bg-gray-800 border border-gray-700 rounded-md focus:border-blue-500 focus:outline-none"
+              className="w-full p-2 pl-10 rounded-md input-box"
             />
-            <div className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2">
+            <div className="absolute transform -translate-y-1/2 left-3 top-1/2">
               <Search size={16} />
             </div>
           </div>
           
-          <button
+          {/* <button
             onClick={handleRefresh}
             disabled={isLoading}
             className="flex items-center gap-2 px-4 py-2 ml-4 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <Loader className="animate-spin" size={16} />
+              <Loader2 className="animate-spin" size={16} />
             ) : (
               'Refresh Models'
             )}
-          </button>
+          </button> */}
         </div>
         
         <div className="flex-1 p-4 overflow-y-auto">
           {isLoading && models.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64">
-              <Loader className="mb-4 text-4xl text-blue-500 animate-spin" size={40} />
+              <Loader2 className="mb-4 text-4xl text-blue-500 animate-spin" size={40} />
               <p className="text-gray-400">Loading available models...</p>
             </div>
           ) : filteredModels.length === 0 ? (
@@ -166,10 +172,10 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
                 <div key={providerId} className="mb-6">
                   
                   <div className="flex items-start justify-start">
-                    <h3 className="mb-2 text-lg font-medium text-white">{getProviderName(providerId)}</h3>
+                    <h3 className="mb-2 text-lg font-medium">{getProviderName(providerId)}</h3>
                     <button 
                       onClick={() => handleCollapseProvider(providerId)}
-                      className="p-1 ml-2 text-gray-400 bg-gray-800 rounded-md hover:text-white"
+                      className="p-1 ml-2 select-model-dialog-expand-button"
                     >
                       {collapsedList.get(providerId) ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                     </button>
@@ -182,8 +188,8 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
                         onClick={() => handleSelectModel(model, providerId)}
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${
                           (selectedModelId === model.id && selectedProviderId === providerId)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+                            ? 'settings-provider-item-selected settings-provider-item-selected-text'
+                            : 'settings-provider-item settings-provider-item-tex'
                         }`}
                       >
                         <div className="flex-1">
@@ -195,7 +201,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
                           )}
                         </div>
                         {(selectedModelId === model.id && selectedProviderId === providerId) && (
-                          <div className="ml-4 text-white">
+                          <div className="ml-4">
                             <Check size={16} />
                           </div>
                         )}

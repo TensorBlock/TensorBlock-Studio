@@ -63,11 +63,11 @@ const ProviderIcon: React.FC<ProviderIconProps> = ({
 
   return (
     <div
-      className={`${className} flex items-center justify-center bg-gray-200 text-gray-700 rounded-full`}
+      className={`${className} flex items-center justify-center settings-provider-text-icon`}
       aria-label={alt || providerName}
       title={providerName}
     >
-      <span className="text-xs font-semibold">{firstLetter}</span>
+      <span className="flex-1 p-2 text-xs font-semibold">{firstLetter}</span>
     </div>
   );
 };

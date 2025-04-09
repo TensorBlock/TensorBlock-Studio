@@ -49,7 +49,7 @@ const MessageToolboxMenu: React.FC<MessageToolboxMenuProps> = ({
           <button
             onClick={action.onClick}
             disabled={action.disabled}
-            className={`flex items-center justify-center p-1.5 message-icon rounded transition-all duration-300 ${
+            className={`flex items-center justify-center p-1.5 message-icon-btn rounded transition-all duration-300 ${
               action.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}
             title={action.label}

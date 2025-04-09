@@ -306,7 +306,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                       handleCancelEdit();
                     }
                   }}
-                  className="w-[80%] px-3 py-2 input-border rounded-lg cursor-text transition-all duration-200"
+                  className="w-[80%] px-3 py-2 form-textarea-border rounded-lg cursor-text transition-all duration-200"
                 >
                   <textarea
                     ref={editingContentRef}
@@ -320,13 +320,13 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     <button 
                       type="button"
                       onClick={handleCancelEdit} 
-                      className="p-2 text-sm text-red-400 transition-all duration-200 rounded-md hover:text-red-500 message-icon"
+                      className="p-2 text-sm text-red-400 transition-all duration-200 rounded-md hover:text-red-500 message-icon-btn"
                     >
                       <X size={18} />
                     </button>
                     <button
                       type="submit"
-                      className="p-2 text-sm transition-all duration-200 rounded-md message-icon"
+                      className="p-2 text-sm transition-all duration-200 rounded-md message-icon-btn"
                       disabled={!editingContent.trim()}
                     >
                       <Check size={18} />
@@ -408,7 +408,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
         onFocus={() => {
           inputRef.current?.focus();
         }}
-        className="flex flex-col gap-2 px-4 pt-3 pb-2 m-2 mb-4 transition-all duration-200 rounded-lg input-border cursor-text"
+        className="flex flex-col gap-2 px-4 pt-3 pb-2 m-2 mb-4 transition-all duration-200 rounded-lg form-textarea-border cursor-text"
       >
         <div className="flex space-x-2">
           <textarea

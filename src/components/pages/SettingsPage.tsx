@@ -21,7 +21,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [selectedProvider, setSelectedProvider] = useState<string>('TensorBlock');
   const [providerSettings, setProviderSettings] = useState<Record<string, ProviderSettings>>({});
   const [selectedModel, setSelectedModel] = useState('');
-  const [useStreaming, setUseStreaming] = useState(true);
+  const [useWebSearch, setUseWebSearch] = useState(true);
   const [isDbInitialized, setIsDbInitialized] = useState(false);
   const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -54,7 +54,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setSelectedProvider(settings.selectedProvider);
       setProviderSettings(settings.providers);
       setSelectedModel(settings.selectedModel);
-      setUseStreaming(settings.useStreaming);
+      setUseWebSearch(settings.webSearchEnabled);
       setHasApiKeyChanged(false);
       lastOpenedSettings.current = true;
     }
@@ -76,9 +76,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setSelectedModel(modelId);
   };
   
-  // Handle streaming setting change
-  const handleStreamingChange = (enabled: boolean) => {
-    setUseStreaming(enabled);
+  // Handle web search setting change
+  const handleWebSearchChange = (enabled: boolean) => {
+    console.log('Web search setting changed to: ', enabled);
+    setUseWebSearch(enabled);
   };
 
   const handleProviderSettingsChange = (newSettings: ProviderSettings) => {
@@ -113,7 +114,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       // Update all settings in one go
       await settingsService.updateSettings({
         providers: providerSettings,
-        useStreaming: useStreaming
+        webSearchEnabled: useWebSearch
       });
       
       // Refresh models if API key has changed
@@ -281,8 +282,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             {/* Chat Settings Tab */}
             {activeTab === 'chat' && (
               <ChatSettings
-                useStreaming={useStreaming}
-                onStreamingChange={handleStreamingChange}
+                useWebSearch={useWebSearch}
+                onWebSearchChange={handleWebSearchChange}
                 onSaveSettings={handleSave}
               />
             )}

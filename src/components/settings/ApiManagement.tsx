@@ -132,12 +132,16 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   const handleSaveModel = (model: ModelSettings) => {
     if (!model.modelId || !model.modelName) return;
     
+    if (model.modelRefUUID === '') {
+      model.modelRefUUID = uuidv4();
+    }
+
     let updatedModels: ModelSettings[] = [];
     
     if (!currentProviderSettings.models) {
       updatedModels = [model];
     } else {
-      const existingModelIndex = currentProviderSettings.models.findIndex(m => m.modelId === model.modelId);
+      const existingModelIndex = currentProviderSettings.models.findIndex(m => m.modelRefUUID === model.modelRefUUID);
       
       if (existingModelIndex >= 0) {
         // Update existing model
@@ -161,24 +165,24 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   };
 
   // Handle capability change
-  const handleCapabilityChange = (capability: AIServiceCapability, isChecked: boolean) => {
-    if (!currentEditModel) return;
+  // const handleCapabilityChange = (capability: AIServiceCapability, isChecked: boolean) => {
+  //   if (!currentEditModel) return;
     
-    let updatedCapabilities = [...currentEditModel.modelCapabilities];
+  //   let updatedCapabilities = [...currentEditModel.modelCapabilities];
     
-    if (isChecked) {
-      if (!updatedCapabilities.includes(capability)) {
-        updatedCapabilities.push(capability);
-      }
-    } else {
-      updatedCapabilities = updatedCapabilities.filter(cap => cap !== capability);
-    }
+  //   if (isChecked) {
+  //     if (!updatedCapabilities.includes(capability)) {
+  //       updatedCapabilities.push(capability);
+  //     }
+  //   } else {
+  //     updatedCapabilities = updatedCapabilities.filter(cap => cap !== capability);
+  //   }
     
-    setCurrentEditModel({
-      ...currentEditModel,
-      modelCapabilities: updatedCapabilities
-    });
-  };
+  //   setCurrentEditModel({
+  //     ...currentEditModel,
+  //     modelCapabilities: updatedCapabilities
+  //   });
+  // };
 
   // Get capability icon
   const getCapabilityIcon = (capability: AIServiceCapability) => {
@@ -238,7 +242,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 value={currentEditModel.modelId}
                 onChange={(e) => setCurrentEditModel({...currentEditModel, modelId: e.target.value})}
                 placeholder="model-id"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
               />
             </div>
             
@@ -251,7 +255,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 value={currentEditModel.modelName}
                 onChange={(e) => setCurrentEditModel({...currentEditModel, modelName: e.target.value})}
                 placeholder="Model Name"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
               />
             </div>
             
@@ -264,7 +268,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 value={currentEditModel.modelCategory}
                 onChange={(e) => setCurrentEditModel({...currentEditModel, modelCategory: e.target.value})}
                 placeholder="Category"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
               />
             </div>
             
@@ -281,7 +285,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               ></textarea>
             </div> */}
             
-            <div>
+            {/* <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Capabilities
               </label>
@@ -310,7 +314,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
           
           <div className="flex justify-end mt-6 space-x-2">
@@ -319,13 +323,13 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 setIsEditModelDialogOpen(false);
                 setCurrentEditModel(null);
               }}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+              className="px-4 py-2 cancel-btn"
             >
               Cancel
             </button>
             <button
               onClick={() => handleSaveModel(currentEditModel)}
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-4 py-2 confirm-btn"
               disabled={!currentEditModel.modelId || !currentEditModel.modelName}
             >
               Save
@@ -370,7 +374,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
             </div>
 
             <div className="sticky bottom-0 w-full">
-              <button onClick={() => onAddCustomProvider()} className="flex items-center w-full px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:text-gray-800">
+              <button onClick={() => onAddCustomProvider()} className="flex items-center w-full px-4 py-2 settings-add-custom-provider-btn">
                 <Plus size={16} className="mr-2 text-base" />
                 <span>Add Custom Provider</span>
               </button>
@@ -392,7 +396,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               {currentProviderSettings.customProvider && (
                 <button 
                   onClick={onDeleteCustomProvider}
-                  className="flex items-center px-3 py-2 text-sm text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none"
+                  className="flex items-center px-3 py-2 text-sm transition-all duration-200 settings-delete-provider-btn"
                 >
                   <Trash2 size={16} className="mr-1" />
                   <span>Delete Provider</span>
@@ -413,7 +417,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                     onChange={(e) => handleApiKeyChange(e.target.value)}
                     onBlur={handleOnEndEditing}
                     placeholder={selectedProvider === 'OpenAI' ? 'sk-...' : 'Enter API key'}
-                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-[calc(100%-0.5rem)] p-3 pr-10 mx-1 input-box"
                   />
                   <button
                     type="button"
@@ -459,7 +463,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                       onChange={(e) => handleProviderNameChange(e.target.value)}
                       onBlur={handleOnEndEditing}
                       placeholder="Custom Provider Name"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
                     />
                     <p className="mt-2 text-xs text-gray-500">
                       The name of your custom provider
@@ -476,7 +480,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                       onChange={(e) => handleBaseUrlChange(e.target.value)}
                       onBlur={handleOnEndEditing}
                       placeholder="https://your-custom-api.com/"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
                     />
                     <div className="flex flex-row items-center justify-between">
                       <p className="mt-2 text-xs text-gray-500">
@@ -561,7 +565,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                         )}
                         <button
                           onClick={handleAddModel}
-                          className="flex items-center px-2 py-1 text-xs text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                          className="flex items-center px-2 py-1 text-xs settings-add-model-btn"
                         >
                           <Plus size={14} className="mr-1" />
                           Add Model
@@ -572,12 +576,12 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                     <div className="space-y-4">
                       {Object.entries(getGroupedModels()).map(([category, models]) => (
                         <div key={category} className="space-y-2">
-                          <h5 className="text-sm font-medium text-gray-600">{category}</h5>
+                          <h5 className="text-sm font-medium settings-model-category-text">{category}</h5>
                           {models.map((model) => (
-                            <div key={model.modelId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                            <div key={model.modelId} className="flex items-center justify-between p-3 settings-model-item">
                               <div className="flex-1">
-                                <div className="font-medium">{model.modelName}</div>
-                                <div className="text-xs text-gray-500">{model.modelId}</div>
+                                <div className="font-medium settings-model-item-name-text">{model.modelName}</div>
+                                <div className="text-xs settings-model-item-id-text">{model.modelId}</div>
                               </div>
                               <div className="flex items-center gap-2 mr-6">
                                 {model.modelCapabilities.map(cap => renderCapabilityBadge(cap))}
@@ -585,14 +589,14 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                               <div className="flex space-x-1">
                                 <button
                                   onClick={() => handleEditModel(model)}
-                                  className="p-1 text-blue-600 hover:text-blue-800"
+                                  className="p-2 settings-model-edit-button"
                                   title="Edit model"
                                 >
                                   <Edit2 size={16} />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteModel(model.modelId)}
-                                  className="p-1 text-red-600 hover:text-red-800"
+                                  className="p-2 settings-model-delete-button"
                                   title="Delete model"
                                 >
                                   <Trash2 size={16} />

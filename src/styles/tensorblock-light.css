@@ -26,6 +26,51 @@
 
 }
 
+@layer base {
+    @keyframes fade-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+          display: none;
+        }
+      }
+      
+      @keyframes move-in {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+          display: none;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+          display: block;
+        }
+      }
+      
+      @keyframes move-out {
+        to {
+          transform: translateY(100%);
+          opacity: 0;
+          display: none;
+        }
+      }
+      
+      .move-in {
+        animation: move-in 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+      }
+      
+      .move-out {
+        animation: move-out 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+      }
+      
+      .fade-out {
+        animation: fade-out 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+      }
+}
+
 @layer components {
     /* Main Background */
     .bg-main-background-color {
@@ -81,12 +126,28 @@
     }
 
     /* Input */
-    .input-border {
+    .form-textarea-border {
         outline: 1px solid var(--primary-200);
     }
 
-    .input-border:focus-within {
+    .form-textarea-border:focus-within {
         outline: 2px solid var(--primary-400);
+    }
+
+    .input-box{
+        border-radius: 0.5rem;
+        outline: 1px solid var(--primary-400);
+        color: var(--primary-600);
+    }
+
+    .input-box::placeholder {
+        color: var(--surface-400);
+    }
+
+    .input-box:focus-within {
+        border-radius: 0.5rem;
+        outline: 2px solid var(--primary-400);
+        color: var(--surface-900);
     }
 
     /* Major Area */
@@ -181,8 +242,13 @@
         color: var(--surface-0);
     }
 
+    /* Frame */
     .frame-right-border {
         border-right-width: 1px;
+        border-color: var(--primary-100);
+    }
+
+    .frame-separator-border-color {
         border-color: var(--primary-100);
     }
 
@@ -210,6 +276,7 @@
         color: var(--primary-700);
     }
 
+    /* Api Management */
     .settings-provider-item {
         background-color: transparent;
         border-radius: 0.5rem;
@@ -248,6 +315,109 @@
         color: var(--surface-900);
     }
 
+    .settings-provider-text-icon{
+        background-color: var(--surface-0);
+        border-radius: 9999px;
+        border: 1px solid var(--primary-200);
+        color: var(--primary-600);
+    }
+
+    .settings-model-item {
+        background-color: var(--primary-50);
+        border-radius: 0.5rem;
+        border: 1px solid var(--primary-200);
+    }
+
+    .settings-model-item-name-text {
+        color: var(--primary-700);
+    }
+
+    .settings-model-item-id-text {
+        color: var(--surface-500);
+    }
+    
+    .settings-model-category-text {
+        color: var(--surface-700);
+    }
+
+    .settings-model-edit-button {
+        background-color: transparent;
+        color: var(--primary-600);
+    }
+
+    .settings-model-edit-button:hover {
+        border-radius: 0.5rem;
+        background-color: var(--primary-300);
+        color: var(--surface-900);
+    }
+
+    .settings-model-edit-button:active {
+        background-color: var(--primary-400);
+        color: var(--surface-900);
+    }
+
+    .settings-model-delete-button {
+        border-radius: 0.5rem;
+        background-color: transparent;
+        color: var(--red-400);
+    }
+
+    .settings-model-delete-button:hover {   
+        background-color: var(--primary-300);
+        color: var(--red-500);
+    }
+    
+    .settings-delete-provider-btn {
+        border-radius: 0.5rem;
+        background-color: transparent;
+        color: var(--red-500);
+    }
+
+    .settings-delete-provider-btn:hover {
+        background-color: var(--red-400);
+        color: var(--surface-0);
+    }
+
+    .settings-delete-provider-btn:active {
+        transition-duration: 0s;
+        background-color: var(--red-500);
+        color: var(--surface-0);
+    }
+
+    .settings-add-model-btn {
+        border-radius: 0.5rem;
+        background-color: var(--primary-500);
+        color: var(--surface-0);
+    }
+
+    .settings-add-model-btn:hover {
+        background-color: var(--primary-600);
+        color: var(--surface-0);
+    }
+
+    .settings-add-model-btn:active {
+        transition-duration: 0s;
+        background-color: var(--primary-700);
+        color: var(--surface-0);
+    }
+
+    .settings-add-custom-provider-btn {
+        border-radius: 9999px;
+        border: 1px solid var(--primary-400);
+        background-color: transparent;
+        color: var(--primary-700);
+    }
+
+    .settings-add-custom-provider-btn:hover {
+        background-color: var(--primary-100);
+        color: var(--primary-700);
+    }
+
+    .settings-add-custom-provider-btn:active {
+        background-color: var(--primary-200);
+        color: var(--primary-700);
+    }
+
     /* Message */
     .message-model-tag {
         background-color: transparent;
@@ -270,17 +440,17 @@
         color: var(--primary-800);
     }
 
-    .message-icon{
+    .message-icon-btn{
         background-color: transparent;
         color: var(--primary-600);
     }
 
-    .message-icon:hover {
+    .message-icon-btn:hover {
         background-color: var(--primary-100);
         color: var(--primary-700);
     }
 
-    .message-icon:active {
+    .message-icon-btn:active {
         transition-duration: 0s;
         background-color: var(--green-200);
         color: var(--green-500);
@@ -301,4 +471,76 @@
         background-color: var(--primary-100);
         color: var(--surface-700);
     }
+
+    .select-model-dialog-expand-button {
+        border-radius: 0.25rem;
+        background-color: var(--primary-100);
+        color: var(--primary-600);  
+    }
+
+    .select-model-dialog-expand-button:hover {
+        background-color: var(--primary-200);
+        color: var(--surface-700);
+    }
+
+    .select-model-dialog-expand-button:active {
+        background-color: var(--primary-300);
+        color: var(--surface-900);
+    }
+
+    /* Common Buttons */
+    .confirm-btn {
+        border-radius: 0.5rem;
+        background-color: var(--primary-500);
+        color: var(--surface-0);
+    }
+
+    .confirm-btn:hover {
+        background-color: var(--primary-600);
+        color: var(--surface-0);
+    }
+
+    .confirm-btn:active {
+        background-color: var(--primary-700);
+        color: var(--surface-0);
+    }
+
+    .cancel-btn {
+        border-radius: 0.5rem;
+        background-color: transparent;
+        color: var(--primary-600);
+    }
+
+    .cancel-btn:hover {
+        background-color: var(--primary-100);
+        color: var(--primary-700);
+    }
+
+    .cancel-btn:active {
+        background-color: var(--primary-200);
+        color: var(--primary-700);
+    }
+
+    .checkbox-input {
+        background-color: var(--surface-0);
+        border-radius: 0.5rem;
+        border: 1px solid var(--primary-400);
+        color: var(--primary-600);
+    }
+
+    .checkbox-input:checked {
+        background-color: var(--primary-500);
+        color: var(--surface-0);
+    }
+
+    .checkbox-input:hover {
+        background-color: var(--primary-100);
+        color: var(--primary-700);
+    }
+
+    .checkbox-input:active {
+        background-color: var(--primary-200);
+        color: var(--primary-700);
+    }
+    
 }
