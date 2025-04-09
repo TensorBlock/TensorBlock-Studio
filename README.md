@@ -16,7 +16,6 @@ An Electron-based desktop application for interacting with various AI models via
 
 - Node.js (v18+)
 - npm
-- pnpm (v10.x)
 
 ### Installation
 
@@ -26,70 +25,25 @@ An Electron-based desktop application for interacting with various AI models via
    cd tensorblock-studio
    ```
 
-2. Install pnpm globally (If you don't have it installed)
+2. Install dependencies:
    ```bash
-   npm install -g pnpm@latest-10
+   npm install
    ```
-
-3. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-### Migrate from npm
-
-1. Remove current `node_modules` folder. (If you have it)
-
-2. Remove `package-lock.json` file from the root. (If you have it)
-
-3. Install pnpm globally (If you don't have it installed)
-   ```bash
-   npm install -g pnpm@latest-10
-   ```
-
-4. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-5. If you receive the warning:
-  ```base
-  ╭ Warning ───────────────────────────────────────────────────────────────────────────────────╮
-  │                                                                                            │
-  │   Ignored build scripts: electron, esbuild.                                                │
-  │   Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.   │
-  │                                                                                            │
-  ╰────────────────────────────────────────────────────────────────────────────────────────────╯
-  ```
-  Run ```pnpm approve-builds``` and allow all build scripts.
 
 ### Development
 
 Run the application in development mode:
 
 ```bash
-pnpm run dev
+npm run dev
 ```
-
-Or:
-
-```bash
-npm run dev  # This will also use pnpm to run the scripts
-```
-
 
 ### Building for Production
 
 Package the application for your current platform:
 
 ```bash
-pnpm run electron:build:current_platform
-```
-
-Or:
-
-```bash
-npm run electron:build:current_platform  # This will also use pnpm to run the scripts
+npm run electron:build:current_platform
 ```
 
 ## Architecture

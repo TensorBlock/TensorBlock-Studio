@@ -5,22 +5,15 @@
   "type": "module",
   "main": "app/out-tsc/main.js",
   "scripts": {
-    "dev": "concurrently \"pnpm electron:serve\" \"pnpm vite:dev\"",
+    "dev": "concurrently \"npm run npm:electron:serve\" \"npm run npm:vite:dev\"",
     "vite:dev": "vite",
-    "build": "vite build && pnpm run electron:serve-tsc",
-    "build:prod": "vite build --mode production && pnpm run electron:serve-tsc",
+    "build": "vite build && npm run npm:electron:serve-tsc",
+    "build:prod": "vite build --mode production && npm run npm:electron:serve-tsc",
     "electron:serve-tsc": "tsc -p app/tsconfig.json",
-    "electron:serve": "wait-on tcp:5173 && pnpm run electron:serve-tsc && electron . --serve",
-    "electron:build:current_platform": "rimraf ./release/ && pnpm run build:prod && electron-builder build --publish=never",
+    "electron:serve": "wait-on tcp:5173 && npm run electron:serve-tsc && electron . --serve",
+    "electron:build:current_platform": "rimraf ./release/ && npm run build:prod && electron-builder build --publish=never",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "npm:dev": "concurrently \"npm run npm:electron:serve\" \"npm run npm:vite:dev\"",
-    "npm:vite:dev": "vite",
-    "npm:build": "vite build && npm run npm:electron:serve-tsc",
-    "npm:build:prod": "vite build --mode production && npm run npm:electron:serve-tsc",
-    "npm:electron:serve-tsc": "tsc -p app/tsconfig.json",
-    "npm:electron:serve": "wait-on tcp:5173 && npm run electron:serve-tsc && electron . --serve",
-    "npm:electron:build:current_platform": "rimraf ./release/ && npm run build:prod && electron-builder build --publish=never"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@ai-sdk/fireworks": "^0.2.5",
