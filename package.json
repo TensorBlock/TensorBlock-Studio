@@ -5,10 +5,10 @@
   "type": "module",
   "main": "app/out-tsc/main.js",
   "scripts": {
-    "dev": "concurrently \"npm run npm:electron:serve\" \"npm run npm:vite:dev\"",
+    "dev": "concurrently \"npm run electron:serve\" \"npm run vite:dev\"",
     "vite:dev": "vite",
-    "build": "vite build && npm run npm:electron:serve-tsc",
-    "build:prod": "vite build --mode production && npm run npm:electron:serve-tsc",
+    "build": "vite build && npm run electron:serve-tsc",
+    "build:prod": "vite build --mode production && npm run electron:serve-tsc",
     "electron:serve-tsc": "tsc -p app/tsconfig.json",
     "electron:serve": "wait-on tcp:5173 && npm run electron:serve-tsc && electron . --serve",
     "electron:build:current_platform": "rimraf ./release/ && npm run build:prod && electron-builder build --publish=never",

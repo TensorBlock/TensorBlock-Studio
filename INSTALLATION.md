@@ -1,15 +1,5 @@
 # TensorBlock Studio
 
-An Electron-based desktop application for interacting with various AI models via API.
-
-## Features
-
-- Chat with AI via OpenAI's API
-- Extensible architecture for adding multiple AI service providers
-- Built with React, Vite, TypeScript, and TailwindCSS
-- Electron for cross-platform desktop support
-- Model selection dialog with provider-specific model lists
-
 ## Getting Started
 
 ### Prerequisites
