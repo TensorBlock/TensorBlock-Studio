@@ -54,7 +54,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setSelectedProvider(settings.selectedProvider);
       setProviderSettings(settings.providers);
       setSelectedModel(settings.selectedModel);
-      setUseWebSearch(settings.webSearchEnabled);
+      setUseWebSearch(settings.enableWebSearch_Preview);
       setHasApiKeyChanged(false);
       lastOpenedSettings.current = true;
     }
@@ -80,6 +80,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleWebSearchChange = (enabled: boolean) => {
     console.log('Web search setting changed to: ', enabled);
     setUseWebSearch(enabled);
+    handleSave();
   };
 
   const handleProviderSettingsChange = (newSettings: ProviderSettings) => {
@@ -114,7 +115,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       // Update all settings in one go
       await settingsService.updateSettings({
         providers: providerSettings,
-        webSearchEnabled: useWebSearch
+        enableWebSearch_Preview: useWebSearch
       });
       
       // Refresh models if API key has changed

@@ -114,7 +114,7 @@ export class GeminiService implements AiServiceProvider {
     options: CompletionOptions,
     streamController: StreamControlHandler
   ): Promise<Message> {
-    const isWebSearchActive = SettingsService.getInstance().getWebSearchEnabled();
+    const isWebSearchActive = SettingsService.getInstance().getWebSearchActive();
 
     let modelInstance: LanguageModel;
 

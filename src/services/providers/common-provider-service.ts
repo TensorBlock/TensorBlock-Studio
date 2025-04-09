@@ -7,6 +7,7 @@ import { StreamControlHandler } from '../streaming-control';
 import { AIServiceCapability } from '../../types/capabilities';
 import { mapModelCapabilities } from '../../types/capabilities';
 import { ModelSettings } from '../../types/settings';
+import { MessageHelper } from '../message-helper';
 /**
  * Implementation of OpenAI service provider using the AI SDK
  */
@@ -147,7 +148,7 @@ export class CommonProviderHelper implements AiServiceProvider {
     try {
       const formattedMessages = messages.map(msg => ({
         role: msg.role,
-        content: msg.content
+        content: MessageHelper.MessageContentToText(msg.content)
       }));
 
       let fullText = '';
@@ -205,7 +206,7 @@ export class CommonProviderHelper implements AiServiceProvider {
         messageId: uuidv4(),
         conversationId: messages[0].conversationId,
         role: 'assistant' as MessageRole,
-        content: fullText,
+        content: MessageHelper.pureTextMessage(fullText),
         timestamp: new Date(),
         provider: options.provider,
         model: options.model,

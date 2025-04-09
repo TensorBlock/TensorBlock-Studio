@@ -1,4 +1,4 @@
-import { Conversation, Message } from "../types/chat";
+import { Conversation, Message, MessageContent, MessageContentType } from "../types/chat";
 import { DatabaseIntegrationService } from "./database-integration";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,7 +14,7 @@ export class MessageHelper {
             uuidv4(),
             conversation.conversationId,
             'user',
-            content,
+            MessageHelper.pureTextMessage(content),
             'provider: user',
             'model: user',
             0,
@@ -62,7 +62,7 @@ export class MessageHelper {
             uuidv4(),
             conversation.conversationId,
             'user',
-            newContent,
+            MessageHelper.pureTextMessage(newContent),
             'user', // provider
             'user', // model
             0,
@@ -154,7 +154,7 @@ export class MessageHelper {
             messageId: 'streaming-' + Date.now(),
             conversationId: conversationId,
             role: 'assistant',
-            content: '',
+            content: MessageHelper.pureTextMessage(''),
             timestamp: new Date(),
             provider: provider,
             model: model,
@@ -214,5 +214,24 @@ export class MessageHelper {
         const mapedMessages = MessageHelper.mapMessagesTreeToList(conversation, false, null);
         console.log('Maped messages:', mapedMessages);
         return mapedMessages[mapedMessages.length - 1];
+    }
+
+    public static pureTextMessage(contentText: string): MessageContent[] {
+        return [
+            {
+                type: MessageContentType.Text,
+                content: contentText,
+                dataJson: ''
+            }
+        ]
+    }
+
+    public static MessageContentToText(messageContent: MessageContent[]): string {
+        return messageContent.map(content => { 
+            if(content.type === MessageContentType.Text) {
+                return content.content;
+            }
+            return '';
+        }).join('');
     }
 }

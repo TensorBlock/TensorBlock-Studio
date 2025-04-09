@@ -1,10 +1,25 @@
 export type MessageRole = 'user' | 'assistant' | 'system';
 
+export enum MessageContentType {
+  Text = 'text',
+  File = 'file',
+  Image = 'image',
+  Audio = 'audio',
+  Reference = 'reference',
+  SystemMessage = 'systemMessage',
+}
+
+export interface MessageContent {
+  type: MessageContentType;
+  content: string;
+  dataJson: string;
+}
+
 export interface Message {
   messageId: string;
   conversationId: string;
   role: MessageRole;
-  content: string;
+  content: MessageContent[];
   timestamp: Date;
   provider: string;
   model: string;

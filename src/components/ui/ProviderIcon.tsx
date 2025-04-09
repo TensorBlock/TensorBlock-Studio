@@ -67,7 +67,7 @@ const ProviderIcon: React.FC<ProviderIconProps> = ({
       aria-label={alt || providerName}
       title={providerName}
     >
-      <span className="flex-1 p-2 text-xs font-semibold">{firstLetter}</span>
+      <span className="flex-1 p-2">{firstLetter}</span>
     </div>
   );
 };

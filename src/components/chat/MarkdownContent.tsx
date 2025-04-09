@@ -8,9 +8,11 @@ import 'katex/dist/katex.min.css';
 import 'prism-themes/themes/prism-vsc-dark-plus.css';
 import type { Components } from 'react-markdown'
 import type { HTMLProps } from 'react';
+import { MessageContent } from '../../types/chat';
+import { MessageHelper } from '../../services/message-helper';
 
 interface MarkdownContentProps {
-  content: string;
+  content: MessageContent[];
 }
 
 type CodeProps = React.ClassAttributes<HTMLElement> & 
@@ -33,7 +35,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => 
       return parts.join(replace);
     }
     
-    let processed = content;
+    let processed = MessageHelper.MessageContentToText(content);
     
     // Check if content contains thinking block
     const thinkMatch = processed.match(/<think>([\s\S]*?)<\/think>([\s\S]*)/);
@@ -49,8 +51,8 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => 
       // Process the actual content
       processed = actualContent;
     } 
-    else if (content.startsWith('<think>')) {
-      setThinkContent(content.substring(7));
+    else if (processed.startsWith('<think>')) {
+      setThinkContent(processed.substring(7));
 
       processed = "";
     }

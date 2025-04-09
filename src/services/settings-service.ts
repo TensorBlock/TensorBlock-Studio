@@ -230,6 +230,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   selectedModel: '',
   useStreaming: true,
   webSearchEnabled: false,
+  enableWebSearch_Preview: false,
 };
 
 /**
@@ -384,8 +385,15 @@ export class SettingsService {
   /**
    * Get whether web search is enabled
    */
-  public getWebSearchEnabled(): boolean {
-    return this.settings.webSearchEnabled;
+  public getWebSearchActive(): boolean {
+    return this.settings.webSearchEnabled && this.settings.enableWebSearch_Preview;
+  }
+
+  /**
+   * Get whether web search is enabled
+   */
+  public getWebSearchPreviewEnabled(): boolean {
+    return this.settings.enableWebSearch_Preview;
   }
 
   /**

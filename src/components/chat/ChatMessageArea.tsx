@@ -5,7 +5,7 @@ import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
 import { DatabaseIntegrationService } from '../../services/database-integration';
-import { SettingsService } from '../../services/settings-service';
+import { SETTINGS_CHANGE_EVENT, SettingsService } from '../../services/settings-service';
 import { ChatService } from '../../services/chat-service';
 import { AIServiceCapability } from '../../types/capabilities';
 import ProviderIcon from '../ui/ProviderIcon';
@@ -43,8 +43,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [messagesList, setMessagesList] = useState<Message[]>([]);
+  const [ableToWebSearch, setAbleToWebSearch] = useState(false);
   const [webSearchActive, setWebSearchActive] = useState(false);
-  const [isWebSearchAllowed, setIsWebSearchAllowed] = useState(false);
+  const [isWebSearchPreviewEnabled, setIsWebSearchPreviewEnabled] = useState(false);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -65,24 +66,35 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     const loadWebSearchStatus = async () => {
       try {
         const settingsService = SettingsService.getInstance();
-        setWebSearchActive(settingsService.getWebSearchEnabled());
+        setWebSearchActive(settingsService.getWebSearchActive());
+        setIsWebSearchPreviewEnabled(settingsService.getWebSearchPreviewEnabled());
       } catch (error) {
         console.error('Failed to load web search status:', error);
       }
     };
     
     loadWebSearchStatus();
+
+    window.addEventListener(SETTINGS_CHANGE_EVENT, () => {
+      loadWebSearchStatus();
+    });
   }, []);
 
   useEffect(() => {
     const result = ChatService.getInstance().getCurrentProviderModelCapabilities().includes(AIServiceCapability.WebSearch);
-    setIsWebSearchAllowed(result);
+    setAbleToWebSearch(result);
   }, [selectedProvider, selectedModel]);
+
+  useEffect(() => {
+    if(isCurrentlyStreaming) {
+      inputRef.current?.focus();
+    }
+  }, [isCurrentlyStreaming]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || isCurrentlyStreaming) return;
     
     onSendMessage(inputValue);
     
@@ -113,6 +125,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
 
   // Handle send edited message
   const handleSendEditedMessage = () => {
+    if(isCurrentlyStreaming) return;
+
     if (editingMessageId && onEditMessage && editingContent.trim()) {
       const newContent = editingContent;
 
@@ -253,13 +267,13 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'edit',
                   icon: Pencil,
                   label: 'Edit',
-                  onClick: () => handleEditMessage(message.messageId, message.content),
+                  onClick: () => handleEditMessage(message.messageId, MessageHelper.MessageContentToText(message.content)),
                 },
                 {
                   id: 'copy',
                   icon: Copy,
                   label: 'Copy',
-                  onClick: () => handleCopyMessage(message.content),
+                  onClick: () => handleCopyMessage(MessageHelper.MessageContentToText(message.content)),
                 }
               ]
             : [
@@ -267,7 +281,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   id: 'copy',
                   icon: Copy,
                   label: 'Copy',
-                  onClick: () => handleCopyMessage(message.content),
+                  onClick: () => handleCopyMessage(MessageHelper.MessageContentToText(message.content)),
                 },
                 // {
                 //   id: 'share',
@@ -327,7 +341,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     <button
                       type="submit"
                       className="p-2 text-sm transition-all duration-200 rounded-md message-icon-btn"
-                      disabled={!editingContent.trim()}
+                      disabled={!editingContent.trim() || isCurrentlyStreaming}
                     >
                       <Check size={18} />
                     </button>
@@ -351,9 +365,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     }`}
                   >
                     {isUserMessage ? (
-                      <p className="whitespace-pre-wrap">{message.content}</p>
+                      <p className="whitespace-pre-wrap">{MessageHelper.MessageContentToText(message.content)}</p>
                     ) : (
-                      message.content === '' ? (
+                      (message.content.length === 0 || MessageHelper.MessageContentToText(message.content).length === 0) ? (
                         <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"></div>
                       ) : (
                         <MarkdownContent content={message.content} />
@@ -427,6 +441,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
               textarea.style.height = `${newHeight}px`;
             }}
+            onKeyDown={(e) => {
+              if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
             placeholder="Type your message..."
             className="flex-1 px-2 pt-1 pb-2 resize-none focus:outline-none"
             disabled={isLoading}
@@ -438,32 +458,39 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
 
         <div className="flex flex-row items-center justify-between px-1">
           {
-            isWebSearchAllowed ? (
-              <button
-                type="button"
-                onClick={handleToggleWebSearch}
-                className={`flex items-center justify-center w-fit h-8 p-2 transition-all duration-200 rounded-full outline outline-2 hover:outline
-                  ${webSearchActive ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
-                aria-label="Toggle Web Search"
-                title="Toggle Web Search"
-              >
-                <Globe className={`mr-1 ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
-                <span className={`text-sm font-light ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>Web Search</span>
-              </button>
+            isWebSearchPreviewEnabled ? (
+              ableToWebSearch ? (
+                <button
+                  type="button"
+                  onClick={handleToggleWebSearch}
+                  className={`flex items-center justify-center w-fit h-8 p-2 transition-all duration-200 rounded-full outline outline-2 hover:outline
+                    ${webSearchActive ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
+                  aria-label="Toggle Web Search"
+                  title="Toggle Web Search"
+                >
+                  <Globe className={`mr-1 ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
+                  <span className={`text-sm font-light ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>Web Search</span>
+                </button>
+              )
+              :
+              (
+                <button
+                  type="button"
+                  className={`flex items-center justify-center bg-gray-100 w-fit h-8 p-2 ml-2 transition-all duration-200 rounded-full cursor-not-allowed`}
+                  aria-label="Toggle Web Search"
+                  title="Toggle Web Search"
+                >
+                  <Globe className={`mr-1 text-gray-400 transition-all duration-200`} size={20} />
+                  <span className={`text-sm font-light text-gray-400 transition-all duration-200`}>Web Search (Not available)</span>
+                </button>
+              )
             )
-            :
-            (
-              <button
-                type="button"
-                className={`flex items-center justify-center bg-gray-100 w-fit h-8 p-2 ml-2 transition-all duration-200 rounded-full cursor-not-allowed`}
-                aria-label="Toggle Web Search"
-                title="Toggle Web Search"
-              >
-                <Globe className={`mr-1 text-gray-400 transition-all duration-200`} size={20} />
-                <span className={`text-sm font-light text-gray-400 transition-all duration-200`}>Web Search (Not available)</span>
-              </button>
-            )
+            :<></>
           }
+
+          <span className={`flex-1 hidden text-xs text-center pt-4 text-gray-300 md:block truncate ${isWebSearchPreviewEnabled ? 'pr-6 lg:pr-12' : ''}`}>
+            {isWebSearchPreviewEnabled ? 'Press Shift+Enter to change lines' : ''}
+          </span>
 
           {isCurrentlyStreaming || hasStreamingMessage ? (
             <button

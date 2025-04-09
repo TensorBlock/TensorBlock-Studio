@@ -8,6 +8,7 @@ import { AIServiceCapability } from '../../types/capabilities';
 import { ModelSettings } from '../../types/settings';
 import { LanguageModelUsage } from 'ai';
 import { v4 as uuidv4 } from 'uuid';
+import { MessageHelper } from '../message-helper';
 
 export const ANTHROPIC_PROVIDER_NAME = 'Anthropic';
 
@@ -131,10 +132,10 @@ export class AnthropicService implements AiServiceProvider {
     messages: Message[],
     options: CompletionOptions,
     streamController: StreamControlHandler
-  ){
+  ): Promise<Message> {
     const formattedMessages: Anthropic.MessageParam[] = messages.map((message) => ({
       role: message.role === 'system' ? 'user' : message.role as Anthropic.MessageParam['role'],
-      content: message.content as Anthropic.MessageParam['content'],
+      content: MessageHelper.MessageContentToText(message.content) as Anthropic.MessageParam['content'],
     }));
     
     const response = await this.anthropic.messages.create({
@@ -159,7 +160,7 @@ export class AnthropicService implements AiServiceProvider {
         messageId: uuidv4(),
         conversationId: messages[0].conversationId,
         role: 'assistant' as MessageRole,
-        content: fullText,
+        content: MessageHelper.pureTextMessage(fullText),
         timestamp: new Date(),
         provider: options.provider,
         model: options.model,
@@ -180,7 +181,7 @@ export class AnthropicService implements AiServiceProvider {
   ){
     const formattedMessages: Anthropic.MessageParam[] = messages.map((message) => ({
       role: message.role === 'system' ? 'user' : message.role as Anthropic.MessageParam['role'],
-      content: message.content as Anthropic.MessageParam['content'],
+      content: MessageHelper.MessageContentToText(message.content) as Anthropic.MessageParam['content'],
     }));
 
     let fullText = '';
@@ -210,7 +211,7 @@ export class AnthropicService implements AiServiceProvider {
           messageId: uuidv4(),
           conversationId: messages[0].conversationId,
           role: 'assistant' as MessageRole,
-          content: fullText,
+          content: MessageHelper.pureTextMessage(fullText),
           timestamp: new Date(),
           provider: options.provider,
           model: options.model,
@@ -226,7 +227,7 @@ export class AnthropicService implements AiServiceProvider {
           messageId: uuidv4(),
           conversationId: messages[0].conversationId,
           role: 'assistant' as MessageRole,
-          content: fullText,
+          content: MessageHelper.pureTextMessage(fullText),
           timestamp: new Date(),
           provider: options.provider,
           model: options.model,

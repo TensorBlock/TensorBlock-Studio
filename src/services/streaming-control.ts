@@ -1,6 +1,7 @@
 import { LanguageModelUsage } from "ai";
 import { Conversation, Message } from "../types/chat";
 import { v4 as uuidv4 } from 'uuid';
+import { MessageHelper } from "./message-helper";
 
 export class StreamControlHandler {
     public targetConverstation: Conversation;
@@ -42,7 +43,7 @@ export class StreamControlHandler {
         const updatedMessages = new Map(this.targetConverstation.messages);
         updatedMessages.set(this.placeholderMessage.messageId, {
             ...this.placeholderMessage,
-            content: this.fullText
+            content: MessageHelper.pureTextMessage(streamingFullText)
         });
 
         const updatedConversation = {
@@ -58,7 +59,7 @@ export class StreamControlHandler {
     public onFinish(usage: LanguageModelUsage | null) {
         const finalMessage: Message = {
             messageId: uuidv4(),
-            content: this.fullText,
+            content: MessageHelper.pureTextMessage(this.fullText),
             conversationId: this.targetConverstation.conversationId,
             role: 'assistant',
             timestamp: new Date(),

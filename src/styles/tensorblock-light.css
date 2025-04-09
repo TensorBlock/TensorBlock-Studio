@@ -281,7 +281,7 @@
         background-color: transparent;
         border-radius: 0.5rem;
         border-width: 1px;
-        border-color: var(--primary-400);
+        border-color: var(--primary-100);
     }
     
     .settings-provider-item:hover {
@@ -316,10 +316,11 @@
     }
 
     .settings-provider-text-icon{
-        background-color: var(--surface-0);
-        border-radius: 9999px;
-        border: 1px solid var(--primary-200);
-        color: var(--primary-600);
+        background-color: transparent;
+        color: var(--primary-700);
+        font-weight: bold;
+        font-size: 1rem;
+        font-family: 'Inter', sans-serif;
     }
 
     .settings-model-item {

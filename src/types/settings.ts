@@ -9,6 +9,7 @@ export interface UserSettings {
   selectedModel: string;
   useStreaming: boolean;
   webSearchEnabled: boolean;
+  enableWebSearch_Preview: boolean;
 }
 
 /**

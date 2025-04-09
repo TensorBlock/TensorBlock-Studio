@@ -1,7 +1,15 @@
 import { DatabaseService } from './database';
 import { SettingsService } from './settings-service';
-import { Conversation, Message, ConversationFolder } from '../types/chat';
+import { Conversation, Message, ConversationFolder, MessageContent, MessageContentType } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
+
+const SYSTEM_MESSAGE_CONTENT: MessageContent[] = [
+    {
+        type: MessageContentType.Text,
+        content: 'You are a helpful assistant. Be concise in your responses.',
+        dataJson: ''
+    }
+];
 
 /**
  * Service for integrating database operations with app components
@@ -113,7 +121,7 @@ export class DatabaseIntegrationService {
                 messageId: firstMessageId,
                 conversationId: dbConversation.conversationId,
                 role: 'system',
-                content: 'You are a helpful assistant. Be concise in your responses.',
+                content: SYSTEM_MESSAGE_CONTENT,
                 timestamp: new Date(),
                 model: 'unknown',
                 provider: 'unknown',
@@ -147,7 +155,7 @@ export class DatabaseIntegrationService {
         messageId: string,
         conversationId: string, 
         role: 'user' | 'assistant' | 'system', 
-        content: string,
+        content: MessageContent[],
         provider: string,
         model: string,
         tokens: number,
