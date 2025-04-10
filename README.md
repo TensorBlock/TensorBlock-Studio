@@ -118,10 +118,10 @@ We welcome contributions from the community!
 7. Open a Pull Request
 
 ### Development Guidelines
-- Follow the code style guide
+- Follow the [Code Style Guide](docs/CODE_STYLE_GUIDE.md)
 - Write tests for new features
 - Update documentation for any changes
-- See CONTRIBUTING.md for detailed guidelines
+- See [Contributing Guide](docs/CONTRIBUTING.md) for detailed guidelines
 
 <br>
 

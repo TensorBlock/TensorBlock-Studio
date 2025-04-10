@@ -8,6 +8,8 @@ This documentation provides a comprehensive overview of the TensorBlock Studio a
 - [Components](components.md) - UI components documentation
 - [Services](services.md) - Core services documentation
 - [Types](types.md) - Data types and interfaces
+- [Code Style Guide](CODE_STYLE_GUIDE.md) - Coding standards and best practices
+- [Contributing Guide](CONTRIBUTING.md) - Guidelines for contributing to the project
 
 ## Project Overview
 
