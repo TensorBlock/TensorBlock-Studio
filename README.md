@@ -3,7 +3,7 @@
 > A lightweight, open, and extensible multi-LLM interaction studio.  
 > Part of the [TensorBlock](https://tensorblock.co) ecosystem — built to empower anyone to build with AI from anywhere, not just use it.
 
-![TensorBlock Studio Banner](./docs/imgs/TensorBlock%20Studio%20Banner.png.png)
+![TensorBlock Studio Banner](https://github.com/TensorBlock/TensorBlock-Studio/blob/dev-production-milestone%231/docs/imgs/TensorBlock%20Studio%20Banner.png?raw=true)
 
 ---
 
@@ -19,11 +19,14 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 - Web search compatible
 - Multi-language UI and prompt support
 - Beginner-friendly experience
-- Light/dark mode toggle
 - Framer Motion UI transitions
 - Local-first data storage for speed and privacy
 
-[pic1,2,3]
+![TensorBlock Studio Screenshot 01](https://github.com/TensorBlock/TensorBlock-Studio/blob/dev-production-milestone%231/docs/imgs/TensorBlock%20Studio%20Screenshot01.png?raw=true)
+
+![TensorBlock Studio Screenshot 01](https://github.com/TensorBlock/TensorBlock-Studio/blob/dev-production-milestone%231/docs/imgs/TensorBlock%20Studio%20Screenshot02.png?raw=true)
+
+![TensorBlock Studio Screenshot 01](https://github.com/TensorBlock/TensorBlock-Studio/blob/dev-production-milestone%231/docs/imgs/TensorBlock%20Studio%20Screenshot03.png?raw=true)
 
 ---
 
