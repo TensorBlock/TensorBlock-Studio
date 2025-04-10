@@ -99,6 +99,13 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     onSendMessage(inputValue);
     
     setInput('');
+
+    const textarea = inputRef.current;
+    if(!textarea) return;
+    // Calculate new height based on scrollHeight, with min and max constraints
+    const minHeight = 36; // Approx height for 1 row
+
+    textarea.style.height = `${minHeight}px`;
   };
 
   const handleStopStreaming = () => {
@@ -238,6 +245,20 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     if(!model) return modelID;
 
     return model.modelName;
+  }
+
+  const handleInputChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    // Adjust height based on content
+    const textarea = e.target;
+    textarea.style.height = 'auto'; // Reset height
+    
+    // Calculate new height based on scrollHeight, with min and max constraints
+    const minHeight = 36; // Approx height for 1 row
+    const maxHeight = 36 * 3; // Approx height for 3 rows
+    
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+    textarea.style.height = `${newHeight}px`;
   }
 
   // If no active conversation is selected
@@ -422,25 +443,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
         onFocus={() => {
           inputRef.current?.focus();
         }}
-        className="flex flex-col gap-2 px-4 pt-3 pb-2 m-2 mb-4 transition-all duration-200 rounded-lg form-textarea-border cursor-text"
+        className={`relative flex ${isWebSearchPreviewEnabled ? 'flex-col' : 'flex-row justify-stretch items-center'} gap-2 px-4 pt-3 pb-2 m-2 mb-4 transition-all duration-200 rounded-lg form-textarea-border cursor-text`}
       >
-        <div className="flex space-x-2">
-          <textarea
+        <textarea
             ref={inputRef}
             value={inputValue}
-            onChange={(e) => {
-              setInput(e.target.value);
-              // Adjust height based on content
-              const textarea = e.target;
-              textarea.style.height = 'auto'; // Reset height
-              
-              // Calculate new height based on scrollHeight, with min and max constraints
-              const minHeight = 38; // Approx height for 1 row
-              const maxHeight = 38 * 3; // Approx height for 3 rows
-              
-              const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-              textarea.style.height = `${newHeight}px`;
-            }}
+            onChange={(e) => {handleInputChanged(e);}}
             onKeyDown={(e) => {
               if(e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -448,15 +456,14 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               }
             }}
             placeholder="Type your message..."
-            className="flex-1 px-2 pt-1 pb-2 resize-none focus:outline-none"
+            className="flex-1 w-[100%] px-2 pt-1 pb-2 resize-none focus:outline-none"
             disabled={isLoading}
             inputMode='text'
             rows={1}
-            style={{ minHeight: '38px', maxHeight: '114px', height: '38px', overflow: 'auto' }}
+            style={{ minHeight: '36px', maxHeight: '108px', height: '36px', overflow: 'auto' }}
           ></textarea>
-        </div>
 
-        <div className="flex flex-row items-center justify-between px-1">
+        <div className="flex flex-row items-end justify-between h-full px-1">
           {
             isWebSearchPreviewEnabled ? (
               ableToWebSearch ? (
@@ -510,7 +517,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               aria-label={isLoading || !inputValue.trim() ? 'Cannot send message' : 'Send message'}
               title={isLoading || !inputValue.trim() ? 'Cannot send message' : 'Send message'}
             >
-              <Send size={20} />
+              <Send className="translate-x-[0px] translate-y-[1px]" size={20} />
             </button>
           )}
         </div>

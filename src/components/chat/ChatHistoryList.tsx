@@ -121,8 +121,6 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       // Check if mouse is within the sensitivity area
       const isNearToggle = Math.abs(e.clientX - sidebarRight) < sensitivityArea
         && Math.abs(e.clientY - sidebarYCenter) < sensitivityArea;
-
-      console.log('isNearToggle', isNearToggle);
       
       // Only update if the value is different to avoid unnecessary re-renders
       if (isNearToggle !== isButtonVisible) {

@@ -428,7 +428,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
-                  Your API key is stored locally and never sent to our servers.
+                  Your API key is stored locally only.
                 </p>
               </div>
               
