@@ -32,6 +32,11 @@
     "stopResponse": "停止响应",
     "pressShiftEnterToChangeLines": "按 Shift+Enter 换行"
   },
+  "selectModel": {
+    "selectModel_title": "选择模型",
+    "selectModel_close": "关闭",
+    "selectModel_search_placeholder": "搜索模型..."
+  },
   "settings": {
     "language": "语言",
     "apiKey": "API Key",

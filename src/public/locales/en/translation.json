@@ -32,6 +32,11 @@
     "stopResponse": "Stop Response",
     "pressShiftEnterToChangeLines": "Press Shift+Enter to change lines"
   },
+  "selectModel": {
+    "selectModel_title": "Select Model",
+    "selectModel_close": "Close",
+    "selectModel_search_placeholder": "Search models..."
+  },
   "settings": {
     "language": "Language",
     "apiKey": "API Key",

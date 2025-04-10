@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Check, ChevronDown, ChevronUp, X, Loader2 } from 'lucide-react';
 import { AIService, ModelOption } from '../../services/ai-service';
 import { SettingsService } from '../../services/settings-service';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface SelectModelDialogProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
   currentModelId,
   currentProviderId
 }) => {
+  const { t } = useTranslation();
   const [models, setModels] = useState<ModelOption[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -119,7 +121,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-2 border-b frame-separator-border-color">
-          <h2 className="p-2 text-xl font-semibold">Select Model</h2>
+          <h2 className="p-2 text-xl font-semibold">{t('selectModel.selectModel_title')}</h2>
           <button 
             onClick={onClose}
             className="p-2 rounded-full select-model-dialog-close-button"
@@ -133,7 +135,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
           <div className="relative flex-1 w-full">
             <input
               type="text"
-              placeholder="Search models..."
+              placeholder={t('selectModel.selectModel_search_placeholder')}
               value={searchQuery}
               onChange={handleSearch}
               className="w-full p-2 pl-10 rounded-md input-box"
