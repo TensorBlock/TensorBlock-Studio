@@ -39,24 +39,24 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col w-full h-screen bg-white">
       {/* <TitleBar /> */}
       <TopBar 
         onSelectModel={handleSelectModel}
         onOpenSettingsDialog={handleOpenSettingsDialog}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 w-full overflow-hidden">
         <Sidebar 
           activePage={activePage}
           onChangePage={handlePageChange}
         />
 
-        <div className="flex flex-col flex-1 bg-main-background-color">
+        <div className="flex flex-col flex-1 w-[calc(100%-68px)] bg-main-background-color">
           {/* Main content */}
 
-          <div className='relative flex flex-col flex-1 overflow-hidden major-area-border major-area-bg-color'>
-            <div className="flex-1 overflow-auto">
+          <div className='relative flex flex-col flex-1 w-full overflow-hidden major-area-border major-area-bg-color'>
+            <div className="flex-1 w-full overflow-auto">
               {children}
             </div>
             

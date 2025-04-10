@@ -87,13 +87,13 @@ export class DatabaseService {
     }
 
     // Conversation Methods
-    async createConversation(title: string): Promise<Conversation> {
+    async createConversation(title: string, folderId?: string): Promise<Conversation> {
         return new Promise((resolve, reject) => {
             if (!this.db) throw new Error('Database not initialized');
 
             const conversation: Conversation = {
                 conversationId: uuidv4(),
-                folderId: '',
+                folderId: folderId || '',
                 title,
                 createdAt: new Date(),
                 updatedAt: new Date(),

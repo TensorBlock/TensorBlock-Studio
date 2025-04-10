@@ -107,13 +107,13 @@ export class ChatService {
   /**
    * Create a new conversation
    */
-  public async createConversation(title: string): Promise<Conversation> {
+  public async createConversation(title: string, folderId?: string): Promise<Conversation> {
     if (!this.dbService) {
       throw new Error('Database service not initialized');
     }
     
     try {
-      const newConversation = await this.dbService.createConversation(title);
+      const newConversation = await this.dbService.createConversation(title, folderId);
       
       // Add to local list
       this.conversations = [newConversation, ...this.conversations];

@@ -16,18 +16,19 @@
 }
 
 ::-webkit-scrollbar-track {
-  background-color: transparent; /* 设置轨道背景为透明 */
+  background-color: transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 10px; /* 增大滚动条宽度 */
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #00000033; /* 滑块的背景颜色 */
+  background: #00000033;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
   -webkit-transition: 0.3s;
-  background: #00000066; /* 滑块的背景颜色 */
+  background: #00000066;
 }

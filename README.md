@@ -5,13 +5,9 @@
 
 ![TensorBlock Studio Banner](https://github.com/TensorBlock/TensorBlock-Studio/blob/dev-production-milestone%231/docs/imgs/TensorBlock%20Studio%20Banner.png?raw=true)
 
----
-
 ## What Makes TensorBlock Studio Different?
 
 Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace — one that's lightweight, developer-friendly, and yet welcoming to beginners. It's designed around control, clarity, and creation.
-
----
 
 ## Features
 
@@ -30,7 +26,7 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 
 ---
 
-## Short-Term Roadmap
+# Short-Term Roadmap
 
 - Sharing and exports
 - Collection of knowledge pieces
@@ -38,11 +34,7 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 - Plugin system for extensions and custom logic
 - More themes
 
----
-
-[TODO: 完善以下所有内容]
-
-## Tech Stack
+# Tech Stack
 
 - Framework: Next.js 14
 - UI: Tailwind CSS + ShadCN + Framer Motion
@@ -53,33 +45,55 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 
 ---
 
-## Getting Started
+# Getting Started
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/TensorBlock/TensorBlock-Studio.git
+   cd tensorblock-studio
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Development
+
+Run the application in development mode:
 
 ```bash
-git clone https://github.com/your-org/tensorblock-studio.git
-cd tensorblock-studio
-pnpm install
-pnpm dev
+npm run dev
+```
+
+### Building for Production
+
+Package the application for your current platform:
+
+```bash
+npm run electron:build:current_platform
+```
 
 ---
 
-## Contributing
+# 📄 Documentation
 
-We’re a tiny team (1 designer, 1 frontend, 1 PM) building the tools we wish existed.  
+Comprehensive documentation is available in the `docs` directory:
+
+- [Documentation Index](docs/docs_index.md) - Main documentation entry point with links to all sections
+- [Overview](docs/overview.md) - System architecture and high-level application design
+
+---
+
+# Contributing
+
+We're a tiny team (1 designer, 1 frontend, 1 PM) building the tools we wish existed.  
 Pull requests, bug reports, and feedback are always welcome!
 
 ---
 
-## Links
-
-- Website: 
-- Product Hunt: 
-- 小红书
-- Reddit
-- X
-
----
-
-## License
+# License
 
 MIT

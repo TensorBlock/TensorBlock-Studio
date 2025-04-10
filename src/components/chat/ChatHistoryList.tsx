@@ -9,7 +9,7 @@ interface ChatHistoryListProps {
   folders: ConversationFolder[];
   activeConversationId: string | null;
   onSelectConversation: (conversationId: string) => void;
-  onCreateNewChat: () => void;
+  onCreateNewChat: (folderId?: string) => void;
   onCreateNewFolder: () => void;
   onRenameConversation: (conversationId: string, newTitle: string) => void;
   onDeleteConversation: (conversationId: string) => void;
@@ -144,6 +144,11 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       setOpenMenuId(id);
       setEditingType(type);
     }
+  };
+
+  const handleNewChatClick = (e: React.MouseEvent, folderId: string) => {
+    e.stopPropagation();
+    onCreateNewChat(folderId);
   };
 
   const handleRenameClick = (e: React.MouseEvent, item: Conversation | ConversationFolder, type: 'conversation' | 'folder') => {
@@ -344,6 +349,13 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
   // Create context menu items for a folder
   const getFolderContextMenuItems = (folder: ConversationFolder): ContextMenuItem[] => [
     {
+      id: 'new chat',
+      icon: PlusCircle,
+      label: 'New Chat',
+      onClick: (e) => handleNewChatClick(e, folder.folderId),
+      color: 'text-gray-700'
+    },
+    {
       id: 'rename',
       icon: Edit,
       label: 'Rename',
@@ -437,7 +449,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
         </button>
         
         <button
-          onClick={onCreateNewChat}
+          onClick={() => onCreateNewChat()}
           className="flex items-center justify-center flex-1 h-full gap-2 pr-2 text-sm font-medium transition-all duration-100 primary-btn-border primary-btn-bg-color primary-btn-text-color"
         >
           <PlusCircle size={16}/>
@@ -485,6 +497,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                         onDragOver={(e) => handleDragOver(e, (item as ConversationFolder).folderId, 'folder')}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, (item as ConversationFolder).folderId, 'folder')}
+                        onContextMenu={(e) => handleMenuClick(e, (item as ConversationFolder).folderId, 'folder')}
                       >
                         {isCollapsed ? (
                           <Folder fill={(item as ConversationFolder).colorFlag} size={16} className="mx-auto text-gray-600" />
@@ -503,7 +516,9 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                               <Folder fill={(item as ConversationFolder).colorFlag} size={16} className="flex-shrink-0 mr-1 text-gray-600" />
                               <span className="font-semibold truncate select-none">{(item as ConversationFolder).folderName}</span>
                             </div>
-                            <div onClick={(e) => handleMenuClick(e, (item as ConversationFolder).folderId, 'folder')}>
+                            <div 
+                              onClick={(e) => handleMenuClick(e, (item as ConversationFolder).folderId, 'folder')}
+                            >
                               <MoreVertical size={16} className="flex-shrink-0" />
                             </div>
                           </>
@@ -546,6 +561,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                                 onDragOver={(e) => handleDragOver(e, (item as ConversationFolder).folderId, 'folder')}
                                 onDrop={(e) => handleDrop(e, (item as ConversationFolder).folderId, 'folder')}
                                 onClick={() => onSelectConversation(conversation.conversationId)}
+                                onContextMenu={(e) => handleMenuClick(e, conversation.conversationId, 'conversation')}
                                 className={`flex items-center justify-between w-full px-3 py-2 text-left conversation-item-border transition-all duration-100 cursor-pointer ${
                                   activeConversationId === conversation.conversationId
                                     ? 'conversation-selected-item-bg-color conversation-selected-item-text-color'
@@ -561,7 +577,9 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                                   <MessageSquare size={16} className="flex-shrink-0 mr-1" />
                                   <span className="truncate">{conversation.title}</span>
                                 </div>
-                                <div onClick={(e) => handleMenuClick(e, conversation.conversationId, 'conversation')}>
+                                <div 
+                                  onClick={(e) => handleMenuClick(e, conversation.conversationId, 'conversation')}
+                                >
                                   <MoreVertical size={16} className="flex-shrink-0" />
                                 </div>
                               </div>
@@ -602,6 +620,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                         onDragStart={(e) => handleDragStart(e, { id: (item as Conversation).conversationId, type: 'conversation' })}
                         onDragEnd={handleDragEnd}
                         onClick={() => onSelectConversation((item as Conversation).conversationId)}
+                        onContextMenu={(e) => handleMenuClick(e, (item as Conversation).conversationId, 'conversation')}
                         className={`flex flex-1 items-center justify-between mx-2 conversation-item-border px-3 py-2 text-left transition-all duration-100 cursor-pointer ${
                           activeConversationId === (item as Conversation).conversationId
                             ? 'conversation-selected-item-bg-color conversation-selected-item-text-color'
@@ -617,7 +636,9 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                               <MessageSquare size={16} className="flex-shrink-0 mr-2" />
                               <span className="truncate">{(item as Conversation).title}</span>
                             </div>
-                            <div onClick={(e) => handleMenuClick(e, (item as Conversation).conversationId, 'conversation')}>
+                            <div 
+                              onClick={(e) => handleMenuClick(e, (item as Conversation).conversationId, 'conversation')}
+                            >
                               <MoreVertical size={16} className="flex-shrink-0" />
                             </div>
                           </>

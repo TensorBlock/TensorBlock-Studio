@@ -274,10 +274,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const hasStreamingMessage = Array.from(activeConversation.messages.values()).some(m => m.messageId.startsWith('streaming-'));
   
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col w-full h-full max-w-full">
       {/* Messages area */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {getMessagesList().map((message) => {
+          if(message.role === 'system') return null;
+
           const isUserMessage = message.role === 'user';
           const isEditing = editingMessageId === message.messageId;
           
@@ -318,8 +320,6 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 }
               ];
              
-          if(message.role === 'system') return null;
-          
           return (
             <div 
               key={message.messageId}
@@ -379,14 +379,14 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   }
 
                   <div 
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[80%] h-fit rounded-lg p-3 text-wrap break-words ${
                       isUserMessage 
                         ? 'message-user rounded-tr-none' 
                         : 'message-assistant rounded-tl-none'
                     }`}
                   >
                     {isUserMessage ? (
-                      <p className="whitespace-pre-wrap">{MessageHelper.MessageContentToText(message.content)}</p>
+                      <MarkdownContent content={message.content} />
                     ) : (
                       (message.content.length === 0 || MessageHelper.MessageContentToText(message.content).length === 0) ? (
                         <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"></div>

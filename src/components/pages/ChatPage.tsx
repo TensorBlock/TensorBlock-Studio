@@ -111,7 +111,7 @@ export const ChatPage = () => {
     : null;
 
   // Create a new conversation
-  const createNewChat = useCallback(async () => {
+  const createNewChat = useCallback(async (folderId?: string) => {
     if (!isServiceInitialized || !chatServiceRef.current) return;
     
     try {
@@ -119,6 +119,7 @@ export const ChatPage = () => {
       
       const newConversation = await chatService.createConversation(
         'New Conversation',
+        folderId
       );
       
       // Update the state with the new list of conversations
@@ -345,10 +346,10 @@ export const ChatPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col w-full h-full bg-white">
 
       {/* Main content with chat history and messages */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 w-full overflow-hidden">
         <ChatHistoryList 
           conversations={conversations}
           folders={folders}
@@ -363,7 +364,7 @@ export const ChatPage = () => {
           onMoveConversation={handleMoveConversation}
         />
         
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="flex flex-col flex-1 w-full min-w-0 overflow-hidden">
           {isApiKeyMissing && (
             <div className="p-2 text-sm text-center text-yellow-800 bg-yellow-100">
               Please set your API key for the selected provider in the settings.

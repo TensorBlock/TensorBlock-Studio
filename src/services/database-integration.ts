@@ -109,12 +109,12 @@ export class DatabaseIntegrationService {
     /**
      * Create a new conversation
      */
-    public async createConversation(title: string): Promise<Conversation> {
+    public async createConversation(title: string, folderId?: string): Promise<Conversation> {
         try {
             const firstMessageId = uuidv4();
 
             // Create in database
-            const dbConversation = await this.dbService.createConversation(title);
+            const dbConversation = await this.dbService.createConversation(title, folderId);
 
             // Create system message
             const systemMessage: Message = {
