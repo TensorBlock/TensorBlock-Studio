@@ -1,4 +1,5 @@
-![TensorBlock Logo Banner](https://img.kookapp.cn/assets/2025-04/11/VWFJZWKDAe1uo0c0.png)
+![TensorBlock Logo Header](https://github.com/user-attachments/assets/05d37936-3cd3-4b26-af27-07f0d1d06f22)
+
 # TensorBlock Studio
 
 ![TensorBlock Studio stars](https://img.shields.io/github/stars/TensorBlock/TensorBlock-Studio)
@@ -9,7 +10,7 @@
 
 <br>
 
-![TensorBlock Studio Banner](https://img.kookapp.cn/assets/2025-04/11/vUWcjF1fvQ1uo0rr.png)
+![TensorBlock Studio Banner](https://github.com/user-attachments/assets/07742418-21e4-41b2-bb61-21ffc158b202)
 
 <br>
 
@@ -30,11 +31,12 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 
 <br>
 
-![TensorBlock Studio Screenshot 01](https://img.kookapp.cn/assets/2025-04/11/JDdzXkmU7b1uo11f.png)
+![TensorBlock Studio Screenshot 01](https://github.com/user-attachments/assets/e947cbb9-6d7d-4714-a8db-5a5e42d7d031)
 
-![TensorBlock Studio Screenshot 01](https://img.kookapp.cn/assets/2025-04/11/DcK9HjWQx71uo11f.png)
+![TensorBlock Studio Screenshot 02](https://github.com/user-attachments/assets/94d1841f-2242-4045-ae13-d1be3351d54b)
 
-![TensorBlock Studio Screenshot 01](https://img.kookapp.cn/assets/2025-04/11/o8hDNKQybP1uo11f.png)
+![TensorBlock Studio Screenshot 03](https://github.com/user-attachments/assets/fe98d5f9-595f-47bc-83e7-20779eba1bfa)
+
 
 <br>
 
@@ -58,7 +60,8 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 
 <br>
 
-![Getting Started](https://img.kookapp.cn/assets/2025-04/11/BfsbY3Pszp1uo0c0.png)
+![Getting Started Header](https://github.com/user-attachments/assets/4976e502-9e89-45c4-bb9c-fa9453a76bb0)
+
 # ⭐Getting Started
 
 ### Installation
