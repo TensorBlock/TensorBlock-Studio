@@ -77,10 +77,8 @@
     "models_modelCapabilities_toolUsage": "Tool Usage",
     "models_modelCapabilities_embedding": "Embedding",
     "models_modelCapabilities_chat": "Chat",
-    "models_modelCapabilities_completion": "Completion",
     
     
-    "models_deleteModel": "Delete Model",
     "webSearch_title": "Web Search (Preview)",
     "webSearch_toggle_label": "Enable Web Search Function",
     "webSearch_description": "When enabled, the AI can search the web to provide more up-to-date information. Please note that web search is currently only supported with OpenAI and Gemini models. Also, when web search is enabled, streaming responses (where text appears incrementally) will not be available."
