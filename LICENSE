@@ -13,7 +13,7 @@ The standard open-source license granted under Apache 2.0 does not apply to the 
    Use of TensorBlock Studio within a commercial organization or in services provided to third-party enterprise clients.
 
 3. Public Cloud-Based Services  
-Operation of public cloud services built upon TensorBlock Studio (e.g., SaaS platforms, hosted APIs, multi-tenant web services) accessible to general users.
+   Operation of public cloud services built upon TensorBlock Studio (e.g., SaaS platforms, hosted APIs, multi-tenant web services) accessible to general users.
 
 4. Bundled Distribution with Hardware  
    Distribution of TensorBlock Studio bundled, integrated, or pre-installed on hardware products intended for commercial sale.
