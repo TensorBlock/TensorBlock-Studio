@@ -1,5 +1,12 @@
 import React from "react";
 import { AIProvider } from "../../types/ai-providers";
+import openaiLogo from '/provider-icons/openai.svg';
+import anthropicLogo from '/provider-icons/anthropic.svg';
+import geminiLogo from '/provider-icons/gemini.svg';
+import fireworksLogo from '/provider-icons/fireworks.svg';
+import togetherLogo from '/provider-icons/together.svg';
+import openrouterLogo from '/provider-icons/openrouter.svg';
+import tensorBlockLogo from '/provider-icons/tensorblock.svg';
 
 interface ProviderIconProps {
   providerName: string;
@@ -27,19 +34,19 @@ const ProviderIcon: React.FC<ProviderIconProps> = ({
   const getIconFilename = (name: string): string => {
     switch (name) {
       case "TensorBlock":
-        return "tensorblock";
+        return tensorBlockLogo;
       case "OpenAI":
-        return "openai";
+        return openaiLogo;
       case "Anthropic":
-        return "anthropic";
+        return anthropicLogo;
       case "Gemini":
-        return "gemini";
+        return geminiLogo;
       case "Fireworks":
-        return "fireworks";
+        return fireworksLogo;
       case "Together":
-        return "together";
+        return togetherLogo;
       case "OpenRouter":
-        return "openrouter";
+        return openrouterLogo;
       default:
         return name.toLowerCase();
     }
@@ -51,7 +58,7 @@ const ProviderIcon: React.FC<ProviderIconProps> = ({
 
     return (
       <img
-        src={`/provider-icons/${iconFilename}.svg`}
+        src={iconFilename}
         alt={alt || providerName}
         className={className}
       />

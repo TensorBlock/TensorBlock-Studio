@@ -18,7 +18,7 @@
     "dist/**/*"
   ],
   "win": {
-    "icon": "app/dist/logos/icons",
+    "icon": "app/dist/logos/",
     "target": [
       "portable"
     ]
