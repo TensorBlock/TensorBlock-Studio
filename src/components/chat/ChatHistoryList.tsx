@@ -455,7 +455,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
           className="flex items-center justify-center flex-1 h-full gap-2 pr-2 text-sm font-medium transition-all duration-100 primary-btn-border primary-btn-bg-color primary-btn-text-color"
         >
           <PlusCircle size={16}/>
-          <span className="text-sm">New Chat</span>
+          <span className="text-sm">{t('chat.newChat')}</span>
         </button>
         
       </div>
