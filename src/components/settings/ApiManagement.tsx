@@ -4,6 +4,7 @@ import { ProviderSettings, ModelSettings } from '../../types/settings';
 import { AIServiceCapability } from '../../types/capabilities';
 import { v4 as uuidv4 } from 'uuid';
 import ProviderIcon from '../ui/ProviderIcon';
+import { useTranslation } from 'react-i18next';
 
 interface ApiManagementProps {
   selectedProvider: string;
@@ -22,7 +23,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   onAddCustomProvider,
   onDeleteCustomProvider
 }) => {
-  
+  const { t } = useTranslation();
   const [showApiKey, setShowApiKey] = useState(false);
   const [currentProviderSettings, setCurrentProviderSettings] = useState<ProviderSettings>({ apiKey: '', providerName: '', customProvider: true, providerId: '' });
   const [showModelSearch, setShowModelSearch] = useState(false);
@@ -220,7 +221,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
       <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50">
         <div className="w-full max-w-lg max-h-full p-6 overflow-y-auto bg-white rounded-lg shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">{currentEditModel.modelId ? 'Edit Model' : 'Add New Model'}</h3>
+            <h3 className="text-lg font-medium">{currentEditModel.modelId ? t('settings.models_editModel') : t('settings.models_newModel')}</h3>
             <button 
               onClick={() => {
                 setIsEditModelDialogOpen(false);
@@ -235,39 +236,39 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
           <div className="space-y-4">
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
-                Model ID
+                {t('settings.models_modelId')}
               </label>
               <input
                 type="text"
                 value={currentEditModel.modelId}
                 onChange={(e) => setCurrentEditModel({...currentEditModel, modelId: e.target.value})}
-                placeholder="model-id"
+                placeholder={t('settings.models_modelId_placeholder')}
                 className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
               />
             </div>
             
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
-                Model Name
+                {t('settings.models_modelName')}
               </label>
               <input
                 type="text"
                 value={currentEditModel.modelName}
                 onChange={(e) => setCurrentEditModel({...currentEditModel, modelName: e.target.value})}
-                placeholder="Model Name"
+                placeholder={t('settings.models_modelName_placeholder')}
                 className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
               />
             </div>
             
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
-                Model Category
+                {t('settings.models_modelCategory')}
               </label>
               <input
                 type="text"
                 value={currentEditModel.modelCategory}
                 onChange={(e) => setCurrentEditModel({...currentEditModel, modelCategory: e.target.value})}
-                placeholder="Category"
+                placeholder={t('settings.models_modelCategory_placeholder')}
                 className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
               />
             </div>
@@ -325,14 +326,14 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               }}
               className="px-4 py-2 cancel-btn"
             >
-              Cancel
+              {t('settings.models_cancelEditModel')}
             </button>
             <button
               onClick={() => handleSaveModel(currentEditModel)}
               className="px-4 py-2 confirm-btn"
               disabled={!currentEditModel.modelId || !currentEditModel.modelName}
             >
-              Save
+              {t('settings.models_saveEditModel')}
             </button>
           </div>
         </div>
@@ -348,9 +349,11 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
         {/* Provider Selection */}
         <div className="relative flex flex-col justify-between w-1/3 max-h-full p-6 frame-right-border">
           <div className="relative flex flex-col flex-1 h-full max-h-full">
-            <h3 className="mb-4 text-xl font-semibold">API Management</h3>
+            <h3 className="mb-4 text-xl font-semibold">
+              {t('settings.apiManagement')}
+            </h3>
             <p className="mb-4 text-sm text-gray-600">
-              Select an AI service provider to configure its API settings.
+              {t('settings.apiManagement_description')}
             </p>
             
             <div className="relative flex-1 h-full max-h-full mb-2 space-y-2 overflow-y-auto">
@@ -376,7 +379,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
             <div className="sticky bottom-0 w-full">
               <button onClick={() => onAddCustomProvider()} className="flex items-center justify-center w-full px-4 py-2 settings-add-custom-provider-btn">
                 <Plus size={16} className="mr-2 text-base" />
-                <span>Add Custom Provider</span>
+                {t('settings.apiManagement_addProvider')}
               </button>
             </div>
           </div>
@@ -386,20 +389,20 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
         {(selectedProvider.trim() === '' || !currentProviderSettings) ? (
           <div className="w-2/3 pl-6 overflow-y-auto">
             <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">Please select a provider</p>
+              <p className="text-gray-500">{t('settings.apiManagement_selectProvider')}</p>
             </div>
           </div>
         ) : (
           <div className="w-2/3 px-6 py-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">{currentProviderSettings.providerName} Settings</h3>
+              <h3 className="text-lg font-medium">{currentProviderSettings.providerName} {t('settings.settings')}</h3>
               {currentProviderSettings.customProvider && (
                 <button 
                   onClick={onDeleteCustomProvider}
                   className="flex items-center px-3 py-2 text-sm transition-all duration-200 settings-delete-provider-btn"
                 >
                   <Trash2 size={16} className="mr-1" />
-                  <span>Delete Provider</span>
+                  <span>{t('settings.apiManagement_deleteProvider')}</span>
                 </button>
               )}
             </div>
@@ -408,7 +411,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               {/* API Key - Common for all providers */}
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
-                  API Key
+                  {t('settings.apiKey')}
                 </label>
                 <div className="relative">
                   <input
@@ -416,7 +419,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                     value={currentProviderSettings.apiKey || ''}
                     onChange={(e) => handleApiKeyChange(e.target.value)}
                     onBlur={handleOnEndEditing}
-                    placeholder={selectedProvider === 'OpenAI' ? 'sk-...' : 'Enter API key'}
+                    placeholder={t('settings.apiKey_placeholder')}
                     className="w-[calc(100%-0.5rem)] p-3 pr-10 mx-1 input-box"
                   />
                   <button
@@ -428,7 +431,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
-                  Your API key is stored locally only.
+                  {t('settings.apiKey_description')}
                 </p>
               </div>
               
@@ -455,36 +458,36 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                 <>
                   <div>
                     <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Provider Name
+                      {t('settings.apiManagement_providerName')}
                     </label>
                     <input
                       type="text"
                       value={currentProviderSettings.providerName || ''}
                       onChange={(e) => handleProviderNameChange(e.target.value)}
                       onBlur={handleOnEndEditing}
-                      placeholder="Custom Provider Name"
+                      placeholder={t('settings.apiManagement_providerName_placeholder')}
                       className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
                     />
                     <p className="mt-2 text-xs text-gray-500">
-                      The name of your custom provider
+                      {t('settings.apiManagement_providerName_description')}
                     </p>
                   </div>
                   
                   <div>
                     <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Base URL
+                      {t('settings.apiManagement_baseUrl')}
                     </label>
                     <input
                       type="text"
                       value={currentProviderSettings.baseUrl || ''}
                       onChange={(e) => handleBaseUrlChange(e.target.value)}
                       onBlur={handleOnEndEditing}
-                      placeholder="https://your-custom-api.com/"
+                      placeholder={t('settings.apiManagement_baseUrl_placeholder')}
                       className="w-[calc(100%-0.5rem)] mx-1 p-3 input-box"
                     />
                     <div className="flex flex-row items-center justify-between">
                       <p className="mt-2 text-xs text-gray-500">
-                        The base URL for your custom OpenAI-compatible API
+                        {t('settings.apiManagement_baseUrl_description')}
                       </p>
                       <p className="mt-2 overflow-hidden text-xs text-gray-500">
                         {currentProviderSettings.baseUrl}/v1/chat/completions
@@ -531,7 +534,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               {/* Model management section */}
               <div className="pt-6 mt-6 border-t border-gray-200">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-md">Models</h4>
+                      <h4 className="font-medium text-md">{t('settings.models')}</h4>
                       <div className="flex items-center space-x-2">
                         {showModelSearch ? (
                           <div className="relative">
@@ -568,7 +571,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                           className="flex items-center px-2 py-1 text-xs settings-add-model-btn"
                         >
                           <Plus size={14} className="mr-1" />
-                          Add Model
+                          {t('settings.models_addModel')}
                         </button>
                       </div>
                     </div>
@@ -590,14 +593,14 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                                 <button
                                   onClick={() => handleEditModel(model)}
                                   className="p-2 settings-model-edit-button"
-                                  title="Edit model"
+                                  title={t('settings.models_editModel')}
                                 >
                                   <Edit2 size={16} />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteModel(model.modelId)}
                                   className="p-2 settings-model-delete-button"
-                                  title="Delete model"
+                                  title={t('settings.models_deleteModel')}
                                 >
                                   <Trash2 size={16} />
                                 </button>

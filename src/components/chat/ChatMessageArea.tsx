@@ -9,6 +9,7 @@ import { SETTINGS_CHANGE_EVENT, SettingsService } from '../../services/settings-
 import { ChatService } from '../../services/chat-service';
 import { AIServiceCapability } from '../../types/capabilities';
 import ProviderIcon from '../ui/ProviderIcon';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -35,6 +36,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   selectedProvider,
   selectedModel,
 }) => {
+  const { t } = useTranslation();
   const [inputValue, setInput] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -289,13 +291,13 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 {
                   id: 'edit',
                   icon: Pencil,
-                  label: 'Edit',
+                  label: t('chat.edit'),
                   onClick: () => handleEditMessage(message.messageId, MessageHelper.MessageContentToText(message.content)),
                 },
                 {
                   id: 'copy',
                   icon: Copy,
-                  label: 'Copy',
+                  label: t('chat.copy'),
                   onClick: () => handleCopyMessage(MessageHelper.MessageContentToText(message.content)),
                 }
               ]
@@ -303,7 +305,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 {
                   id: 'copy',
                   icon: Copy,
-                  label: 'Copy',
+                  label: t('chat.copy'),
                   onClick: () => handleCopyMessage(MessageHelper.MessageContentToText(message.content)),
                 },
                 // {
@@ -315,7 +317,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 {
                   id: 'regenerate',
                   icon: RefreshCw,
-                  label: 'Regenerate',
+                  label: t('chat.regenerate'),
                   onClick: () => handleRegenerateResponse(message.messageId),
                 }
               ];
@@ -455,7 +457,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 handleSubmit(e);
               }
             }}
-            placeholder="Type your message..."
+            placeholder={t('chat.typeMessage')}
             className="flex-1 w-[100%] px-2 pt-1 pb-2 resize-none focus:outline-none"
             disabled={isLoading}
             inputMode='text'
@@ -496,7 +498,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           }
 
           <span className={`flex-1 hidden text-xs text-center pt-4 text-gray-300 md:block truncate ${isWebSearchPreviewEnabled ? 'pr-6 lg:pr-12' : ''}`}>
-            {isWebSearchPreviewEnabled ? 'Press Shift+Enter to change lines' : ''}
+            {isWebSearchPreviewEnabled ? t('chat.pressShiftEnterToChangeLines') : ''}
           </span>
 
           {isCurrentlyStreaming || hasStreamingMessage ? (
@@ -504,8 +506,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               type="button"
               onClick={handleStopStreaming}
               className="flex items-center justify-center w-10 h-10 transition-all duration-200 rounded-full conversation-stop-button focus:outline-none"
-              aria-label="Stop response"
-              title="Stop response"
+              aria-label={t('chat.stopResponse')}
+              title={t('chat.stopResponse')}
             >
               <Square size={20} fill="currentColor" />
             </button>
@@ -514,8 +516,8 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
               type="submit"
               disabled={isLoading || !inputValue.trim()}
               className="flex items-center justify-center w-10 h-10 transition-all duration-200 rounded-full conversation-send-button focus:outline-none disabled:cursor-not-allowed"
-              aria-label={isLoading || !inputValue.trim() ? 'Cannot send message' : 'Send message'}
-              title={isLoading || !inputValue.trim() ? 'Cannot send message' : 'Send message'}
+              aria-label={isLoading || !inputValue.trim() ? t('chat.cannotSendMessage') : t('chat.sendMessage')}
+              title={isLoading || !inputValue.trim() ? t('chat.cannotSendMessage') : t('chat.sendMessage')}
             >
               <Send className="translate-x-[0px] translate-y-[1px]" size={20} />
             </button>

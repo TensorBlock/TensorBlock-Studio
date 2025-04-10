@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Server, MessageSquare } from 'lucide-react';
+import { Server, MessageSquare, Languages } from 'lucide-react';
 import { SettingsService } from '../../services/settings-service';
 import { ProviderSettings } from '../../types/settings';
-import { ApiManagement, ModelManagement, ChatSettings } from '../settings';
+import { ApiManagement, ModelManagement, ChatSettings, LanguageSettings } from '../settings';
 import { DatabaseIntegrationService } from '../../services/database-integration';
 import { AIService } from '../../services/ai-service';
 import { v4 as uuidv4 } from 'uuid';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { useTranslation } from 'react-i18next';
 
 interface SettingsPageProps {
   isOpen: boolean;
 }
 
-type SettingsTab = 'api' | 'models' | 'chat';
+type SettingsTab = 'api' | 'models' | 'chat' | 'language';
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   isOpen,
@@ -28,6 +29,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   
   const settingsService = SettingsService.getInstance();
   const aiService = AIService.getInstance();
+  const { t } = useTranslation();
   
   const lastOpenedSettings = useRef(false);
 
@@ -217,7 +219,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         {/* Sidebar */}
         <div className="flex flex-col w-64 h-full frame-right-border">
           <div className="p-4">
-            <h2 className="text-xl font-semibold">Settings</h2>
+            <h2 className="text-xl font-semibold">{t('common.settings')}</h2>
           </div>
           
           <div className="flex-1 px-2 overflow-y-auto">
@@ -228,7 +230,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               onClick={() => setActiveTab('api')}
             >
               <Server size={18} className="mr-2" />
-              API Management
+              {t('settings.apiManagement')}
             </button>
             
             <button
@@ -238,7 +240,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               onClick={() => setActiveTab('chat')}
             >
               <MessageSquare size={18} className="mr-2" />
-              Chat Settings
+              {t('chat.sendMessage')}
+            </button>
+
+            <button
+              className={`flex items-center w-full px-4 py-3 text-left transition-all duration-200 ${
+                activeTab === 'language' ? 'settings-category-selected-item settings-category-selected-item-text font-medium' : 'settings-category-item settings-category-item-text'
+              }`}
+              onClick={() => setActiveTab('language')}
+            >
+              <Languages size={18} className="mr-2" />
+              {t('settings.language')}
             </button>
             
             {/*<button
@@ -289,6 +301,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               />
             )}
             
+            {/* Language Settings Tab */}
+            {activeTab === 'language' && (
+              <div className="p-6">
+                <h1 className="mb-6 text-2xl font-semibold">{t('settings.language')}</h1>
+                <LanguageSettings />
+              </div>
+            )}
+            
             {/* Model Management Tab */}
             {activeTab === 'models' && (
               <ModelManagement
@@ -302,10 +322,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
-        title="Delete Custom Provider"
-        message={`Are you sure you want to delete "${providerSettings[selectedProvider]?.providerName}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('settings.apiManagement_deleteProvider_title')}
+        message={`${t('settings.apiManagement_deleteProvider_confirm_message', { providerName: providerSettings[selectedProvider]?.providerName })}`}
+        confirmText={t('settings.apiManagement_deleteProvider_delete')}
+        cancelText={t('settings.apiManagement_deleteProvider_cancel')}
         confirmColor="red"
         onConfirm={confirmDeleteProvider}
         onCancel={cancelDeleteProvider}

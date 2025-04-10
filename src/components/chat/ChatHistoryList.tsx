@@ -3,6 +3,7 @@ import { Conversation, ConversationFolder } from '../../types/chat';
 import { MessageSquare, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, FolderPlus, Folder, ChevronDown, PlusCircle } from 'lucide-react';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ChatHistoryListProps {
   conversations: Conversation[];
@@ -36,6 +37,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
   onDeleteFolder,
   onMoveConversation,
 }) => {
+  const { t } = useTranslation();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingType, setEditingType] = useState<'conversation' | 'folder'>('conversation');
@@ -164,12 +166,12 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     // Show confirmation dialog
     setConfirmDialog({
       isOpen: true,
-      title: `Delete ${type === 'conversation' ? 'Conversation' : 'Folder'}`,
-      message: `Are you sure you want to delete this ${type}? ${type === 'folder' ? 'All conversations will be moved to the root.' : 'This action cannot be undone.'}`,
+      title: `${type === 'conversation' ? t('chat.deleteChat') : t('chat.deleteFolder')}`,
+      message: `${type === 'conversation' ? t('chat.deleteChat_confirm_message') : t('chat.deleteFolder_confirm_message')}`,
       itemId: id,
       itemType: type,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
+      confirmText: `${type === 'conversation' ? t('chat.deleteChat_delete') : t('chat.deleteFolder_delete')}`,
+      cancelText: `${type === 'conversation' ? t('chat.deleteChat_cancel') : t('chat.deleteFolder_cancel')}`,
       confirmColor: 'red'
     });
   };
@@ -333,14 +335,14 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     {
       id: 'rename',
       icon: Edit,
-      label: 'Rename',
+      label: t('chat.renameChat'),
       onClick: (e) => handleRenameClick(e, conversation, 'conversation'),
       color: 'text-gray-700'
     },
     {
       id: 'delete',
       icon: Trash2,
-      label: 'Delete',
+      label: t('chat.deleteChat'),
       onClick: (e) => handleDeleteClick(e, conversation.conversationId, 'conversation'),
       color: 'text-red-600'
     }
@@ -351,21 +353,21 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     {
       id: 'new chat',
       icon: PlusCircle,
-      label: 'New Chat',
+      label: t('chat.newChat'),
       onClick: (e) => handleNewChatClick(e, folder.folderId),
       color: 'text-gray-700'
     },
     {
       id: 'rename',
       icon: Edit,
-      label: 'Rename',
+      label: t('chat.renameFolder'),
       onClick: (e) => handleRenameClick(e, folder, 'folder'),
       color: 'text-gray-700'
     },
     {
       id: 'delete',
       icon: Trash2,
-      label: 'Delete',
+      label: t('chat.deleteFolder'),
       onClick: (e) => handleDeleteClick(e, folder.folderId, 'folder'),
       color: 'text-red-600'
     }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ChatSettingsProps {
   useWebSearch: boolean;
@@ -11,13 +12,14 @@ export const ChatSettings: React.FC<ChatSettingsProps> = ({
   onWebSearchChange,
   onSaveSettings
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col h-full p-4">
       {/* Title area removed - settings are auto-saved */}
 
       <div className="flex-1">
         <div className="p-4 mb-4 bg-white border border-gray-200 rounded-lg">
-          <h3 className="mb-4 text-lg font-medium">Web Search (Preview)</h3>
+          <h3 className="mb-4 text-lg font-medium">{t('settings.webSearch_title')}</h3>
           
           <div className="space-y-4">
             <div className="flex items-center">
@@ -30,14 +32,11 @@ export const ChatSettings: React.FC<ChatSettingsProps> = ({
                 className="w-4 h-4 checkbox-input"
               />
               <label htmlFor="use-web-search" className="ml-2 text-sm font-medium text-gray-700">
-                Enable Web Search Function
+                {t('settings.webSearch_toggle_label')}
               </label>
             </div>
             <p className="text-xs text-gray-500">
-              When enabled, the AI can search the web to provide more up-to-date information.
-              Please note that web search is currently only supported with OpenAI and Gemini models.
-              Also, when web search is enabled, streaming responses (where text appears incrementally)
-              will not be available.
+              {t('settings.webSearch_description')}
             </p>
           </div>
         </div>
