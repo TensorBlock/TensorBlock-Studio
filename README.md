@@ -127,4 +127,4 @@ We welcome contributions from the community!
 
 # 📄License
 
-MIT
+Please check [License](LICENSE)
