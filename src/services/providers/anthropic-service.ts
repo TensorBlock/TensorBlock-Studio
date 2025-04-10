@@ -167,7 +167,7 @@ export class AnthropicService implements AiServiceProvider {
         tokens: 0,
         fatherMessageId: null,
         childrenMessageIds: [],
-        preferIndex: 0
+        preferIndex: -1
       };
     }
 
@@ -218,7 +218,7 @@ export class AnthropicService implements AiServiceProvider {
           tokens: 0,
           fatherMessageId: null,
           childrenMessageIds: [],
-          preferIndex: 0
+          preferIndex: -1
         };
 
         resolve(aiResponse);
@@ -234,7 +234,7 @@ export class AnthropicService implements AiServiceProvider {
           tokens: 0,
           fatherMessageId: null,
           childrenMessageIds: [],
-          preferIndex: 0
+          preferIndex: -1
         };
 
         resolve(aiResponse);

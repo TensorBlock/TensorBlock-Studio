@@ -5,8 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 export class MessageHelper {
   
     public static async addUserMessageToConversation(content: string, conversation: Conversation): Promise<{conversation: Conversation, message: Message}> {
-
-        const latestMessage = MessageHelper.getLastMessage(conversation);
+        let latestMessage = MessageHelper.getLastMessage(conversation);
 
         const dbService = DatabaseIntegrationService.getInstance();
 
@@ -20,12 +19,14 @@ export class MessageHelper {
             0,
             latestMessage ? latestMessage.messageId : null,
             [],
-            0
+            -1
         );
 
         if (latestMessage) {
-            latestMessage.childrenMessageIds.push(userMessage.messageId);
-            latestMessage.preferIndex = latestMessage.childrenMessageIds.length - 1;
+            latestMessage = MessageHelper.insertMessageIdToFathterMessage(latestMessage, userMessage.messageId);
+
+            console.log('Updated latest message:', latestMessage);
+
             await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.conversationId);
         }
         
@@ -35,9 +36,11 @@ export class MessageHelper {
             ? content.substring(0, 30) + (content.length > 30 ? '...' : '') 
             : conversation.title;
 
-
         const messages = new Map(conversation.messages);
         messages.set(userMessage.messageId, userMessage);
+        if(latestMessage) {
+            messages.set(latestMessage.messageId, latestMessage);
+        }
 
         const updatedConversation = {
             ...conversation,
@@ -68,7 +71,7 @@ export class MessageHelper {
             0,
             fatherMessage.messageId,
             [],
-            0
+            -1
         );
 
         fatherMessage.childrenMessageIds.push(userMessage.messageId);
@@ -103,8 +106,11 @@ export class MessageHelper {
             fatherMessageId: fatherMessage.messageId,
         }
 
-        fatherMessage.childrenMessageIds.push(updatedAiResponse.messageId);
-        fatherMessage.preferIndex = fatherMessage.childrenMessageIds.length - 1;
+        const fathterPreferIndex = fatherMessage.preferIndex;
+
+        fatherMessage.childrenMessageIds.splice(fathterPreferIndex + 1, 0, updatedAiResponse.messageId);
+        fatherMessage.preferIndex = fathterPreferIndex + 1;
+
         await dbService.updateChatMessage(fatherMessage.messageId, fatherMessage, conversation.conversationId);
 
         await dbService.saveChatMessage(
@@ -122,6 +128,8 @@ export class MessageHelper {
 
         const messages = new Map(updatedConversation.messages);
         messages.set(updatedAiResponse.messageId, updatedAiResponse);
+        messages.delete(fatherMessage.messageId);
+        messages.set(fatherMessage.messageId, fatherMessage);
 
         const finalConversation: Conversation = {
             ...updatedConversation,
@@ -140,7 +148,9 @@ export class MessageHelper {
         
         for(const message of filteredMessages) {
             message.childrenMessageIds = message.childrenMessageIds.filter(id => !id.startsWith('streaming-'));
-            message.preferIndex = message.childrenMessageIds.length - 1;
+            if(message.preferIndex >= message.childrenMessageIds.length) {
+                message.preferIndex = message.childrenMessageIds.length - 1;
+            }
         }
         
         return {
@@ -161,7 +171,7 @@ export class MessageHelper {
             tokens: 0,
             fatherMessageId: null,
             childrenMessageIds: [],
-            preferIndex: 0
+            preferIndex: -1
         };
     }
 
@@ -212,8 +222,8 @@ export class MessageHelper {
         if(conversation.messages.size === 0) return null;
 
         const mapedMessages = MessageHelper.mapMessagesTreeToList(conversation, false, null);
-        console.log('Maped messages:', mapedMessages);
-        return mapedMessages[mapedMessages.length - 1];
+        const lastMessage = mapedMessages[mapedMessages.length - 1];
+        return lastMessage;
     }
 
     public static pureTextMessage(contentText: string): MessageContent[] {
@@ -233,5 +243,22 @@ export class MessageHelper {
             }
             return '';
         }).join('');
+    }
+
+    public static insertMessageIdToFathterMessage(fatherMessage: Message, messageId: string): Message {
+        if(fatherMessage.childrenMessageIds.length === 0) {
+            fatherMessage.childrenMessageIds.push(messageId);
+            fatherMessage.preferIndex = 0;
+        }
+        else if(fatherMessage.preferIndex >= 0 && fatherMessage.preferIndex < fatherMessage.childrenMessageIds.length) {
+            fatherMessage.childrenMessageIds.splice(fatherMessage.preferIndex + 1, 0, messageId);
+            fatherMessage.preferIndex = fatherMessage.preferIndex + 1;
+        }
+        else {
+            fatherMessage.childrenMessageIds.push(messageId);
+            fatherMessage.preferIndex = fatherMessage.childrenMessageIds.length - 1;
+        }
+
+        return fatherMessage;
     }
 }

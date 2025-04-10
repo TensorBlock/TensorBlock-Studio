@@ -213,7 +213,7 @@ export class CommonProviderHelper implements AiServiceProvider {
         tokens: 0,
         fatherMessageId: null,
         childrenMessageIds: [],
-        preferIndex: 0
+        preferIndex: -1
       };
 
     } catch (error) {

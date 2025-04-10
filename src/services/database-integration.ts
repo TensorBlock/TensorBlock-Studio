@@ -128,7 +128,7 @@ export class DatabaseIntegrationService {
                 tokens: 0,
                 fatherMessageId: null,
                 childrenMessageIds: [],
-                preferIndex: 0
+                preferIndex: -1
             };
             
             // Save system message
@@ -264,6 +264,8 @@ export class DatabaseIntegrationService {
                 messageId: messageId,
                 conversationId: conversationId,
             };
+            
+            console.log('db integration updateChatMessage', dbMessage);
             
             await this.dbService.updateChatMessage(dbMessage);
         } catch (error) {
