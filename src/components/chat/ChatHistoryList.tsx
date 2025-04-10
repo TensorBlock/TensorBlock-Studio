@@ -74,6 +74,7 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
   
   const inputRef = useRef<HTMLInputElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
   // Focus input when editing
   useEffect(() => {
@@ -109,14 +110,19 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       if (!sidebarRef.current || isButtonHovered) return;
       
       // Get sidebar element dimensions and position
-      const rect = sidebarRef.current.getBoundingClientRect();
+      const rect = toggleButtonRef.current?.getBoundingClientRect();
+      if (!rect) return;
       const sidebarRight = rect.right;
+      const sidebarYCenter = rect.top + rect.height / 2;
       
       // Define the sensitivity area (how close the mouse needs to be to show the button)
-      const sensitivityArea = 40; // pixels
+      const sensitivityArea = 70; // pixels
       
       // Check if mouse is within the sensitivity area
-      const isNearToggle = Math.abs(e.clientX - sidebarRight) < sensitivityArea;
+      const isNearToggle = Math.abs(e.clientX - sidebarRight) < sensitivityArea
+        && Math.abs(e.clientY - sidebarYCenter) < sensitivityArea;
+
+      console.log('isNearToggle', isNearToggle);
       
       // Only update if the value is different to avoid unnecessary re-renders
       if (isNearToggle !== isButtonVisible) {
@@ -219,7 +225,8 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     if (!sidebarRef.current) return;
     
     const rect = sidebarRef.current.getBoundingClientRect();
-    const isNearToggle = Math.abs(mousePosition.x - rect.right) < 40;
+    const isNearToggle = Math.abs(mousePosition.x - rect.right) < 40
+      && Math.abs(mousePosition.y - rect.top) < 40;
     
     if (!isNearToggle && !isSidebarHovered) {
       setIsButtonVisible(false);
@@ -238,7 +245,9 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
     if (!isButtonHovered) {
       const rect = sidebarRef.current?.getBoundingClientRect();
       if (rect) {
-        const isNearToggle = Math.abs(mousePosition.x - rect.right) < 40;
+        const isNearToggle = Math.abs(mousePosition.x - rect.right) < 40
+          && Math.abs(mousePosition.y - rect.top) < 40;
+          
         if (!isNearToggle) {
           setIsButtonVisible(false);
         }
@@ -408,12 +417,13 @@ export const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       
       {/* Collapse toggle button */}
       <button 
+        ref={toggleButtonRef}
         onClick={toggleSidebar}
         onMouseEnter={handleButtonMouseEnter}
         onMouseLeave={handleButtonMouseLeave}
         onFocus={() => setIsButtonVisible(true)}
         onBlur={() => !isSidebarHovered && setIsButtonVisible(false)}
-        className={`absolute z-10 flex items-center justify-center w-6 h-20 transform -translate-y-1/2 bg-gray-200 -right-6 top-1/2 hover:bg-gray-300 rounded-r-md transition-opacity duration-300 ${isButtonVisible || isButtonHovered ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute chat-history-list-collapse-button z-10 flex items-center justify-center w-6 h-20 transform -translate-y-1/2 -right-6 top-1/2 rounded-r-md transition-opacity duration-300 ${isButtonVisible || isButtonHovered ? 'opacity-100' : 'opacity-0'}`}
         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >

@@ -374,7 +374,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
             </div>
 
             <div className="sticky bottom-0 w-full">
-              <button onClick={() => onAddCustomProvider()} className="flex items-center w-full px-4 py-2 settings-add-custom-provider-btn">
+              <button onClick={() => onAddCustomProvider()} className="flex items-center justify-center w-full px-4 py-2 settings-add-custom-provider-btn">
                 <Plus size={16} className="mr-2 text-base" />
                 <span>Add Custom Provider</span>
               </button>

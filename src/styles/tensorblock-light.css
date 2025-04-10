@@ -23,7 +23,6 @@
     --green-200: #C7F4D7;
     --green-500: #46C173;
     --green-600: #3AA461;
-
 }
 
 @layer base {
@@ -542,6 +541,18 @@
     .checkbox-input:active {
         background-color: var(--primary-200);
         color: var(--primary-700);
+    }
+
+    .chat-history-list-collapse-button {
+        background-color: var(--primary-100);
+    }
+
+    .chat-history-list-collapse-button:hover {
+        background-color: var(--primary-200);
+    }
+
+    .chat-history-list-collapse-button:active {
+        background-color: var(--primary-300);
     }
     
 }

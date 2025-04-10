@@ -115,7 +115,7 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
       onClick={onClose}
     >
       <div 
-        className="flex flex-col w-3/4 p-4 h-4/5 select-model-dialog move-in"
+        className="flex flex-col w-1/2 p-4 min-h-[500px] min-w-[560px] overflow-hidden h-3/5 select-model-dialog move-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-2 border-b frame-separator-border-color">
@@ -129,8 +129,8 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
           </button>
         </div>
         
-        <div className="flex items-center justify-between p-4 border-b frame-separator-border-color">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex items-center justify-between w-full px-8 py-4 border-b frame-separator-border-color">
+          <div className="relative flex-1 w-full">
             <input
               type="text"
               placeholder="Search models..."
@@ -156,18 +156,18 @@ export const SelectModelDialog: React.FC<SelectModelDialogProps> = ({
           </button> */}
         </div>
         
-        <div className="flex-1 p-4 overflow-y-auto">
+        <div className="relative flex-1 p-4 max-h-[70%] overflow-y-auto">
           {isLoading && models.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64">
+            <div className="flex flex-col items-center justify-center h-full">
               <Loader2 className="mb-4 text-4xl text-blue-500 animate-spin" size={40} />
               <p className="text-gray-400">Loading available models...</p>
             </div>
           ) : filteredModels.length === 0 ? (
-            <div className="py-8 text-center text-gray-400">
+            <div className="flex items-center justify-center h-full text-gray-400">
               {searchQuery ? 'No models match your search' : 'No models available'}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="flex flex-col h-full">
               {Object.entries(groupedModels).map(([providerId, providerModels]) => (
                 <div key={providerId} className="mb-6">
                   
