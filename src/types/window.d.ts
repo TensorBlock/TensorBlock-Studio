@@ -5,6 +5,7 @@ interface Window {
     minimize: () => Promise<boolean>;
     isMaximized: () => Promise<boolean>;
     closeApp: () => Promise<void>;
+    getPlatform: () => Promise<string>;
     getDeviceInfo: () => Promise<{
       totalMemory: number;
       freeMemory: number;

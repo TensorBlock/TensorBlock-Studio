@@ -16,6 +16,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
   const [selectedModelName, setSelectedModelName] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
   const [isMaximized, setIsMaximized] = useState(false);
+  const [platform, setPlatform] = useState('');
 
   // Check if window is maximized on mount
   useEffect(() => {
@@ -31,6 +32,11 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
     window.electron.onWindowMaximizedChange((_event, maximized) => {
       setIsMaximized(maximized);
     });
+
+    window.electron.getPlatform().then((platform) => {
+      setPlatform(platform);
+    });
+
   }, []);
 
   // Window control handlers
@@ -86,19 +92,26 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
   return (
     <div className="flex items-center justify-between h-16 bg-main-background-color app-region-drag">
       {/* Logo area */}
-      <div className="w-[68px] aspect-square flex items-center justify-center h-16">
-        <div className="flex items-center justify-center w-10 h-10">
-          <img 
-            src={tensorBlockLogo} 
-            alt="TensorBlock Logo" 
-            className="w-8 h-8"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 16h.01" /><path d="M8 16h.01" /><path d="M12 8v8" /></svg>';
-            }}
-          />
+      {
+        platform === 'darwin' ? 
+        <div className='w-[68px] aspect-square flex items-center justify-center h-16'>
         </div>
-      </div>
+        : 
+        <div className="w-[68px] aspect-square flex items-center justify-center h-16">
+          <div className="flex items-center justify-center w-10 h-10">
+            <img 
+              src={tensorBlockLogo} 
+              alt="TensorBlock Logo" 
+              className="w-8 h-8"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 16h.01" /><path d="M8 16h.01" /><path d="M12 8v8" /></svg>';
+              }}
+            />
+          </div>
+        </div>
+      }
+      
 
       <div className='flex items-center justify-center w-full gap-2'>
         <div className="flex items-center w-3/5 gap-2 md:w-2/5">
@@ -140,34 +153,41 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
         />
       </div>
 
-      <div className='flex items-start justify-center h-full gap-1'>
-        <button 
-          className='btn hover:bg-gray-200 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 flex justify-center items-center app-region-no-drag'
-          onClick={handleMinimize}
-        >
-          <Minus className='w-5 h-5' />
-        </button>
+      {platform === 'darwin' ? 
+        <div className='flex items-start justify-center h-full gap-1'>
+        </div>
+        :
+        <div className='flex items-start justify-center h-full gap-1'>
+          <button 
+            className='btn hover:bg-gray-200 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 flex justify-center items-center app-region-no-drag'
+            onClick={handleMinimize}
+          >
+            <Minus className='w-5 h-5' />
+          </button>
 
-        <button
-          className='btn hover:bg-gray-200 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 flex justify-center items-center app-region-no-drag'
-          onClick={handleMaximize}
-        >
-          {isMaximized ? 
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className='w-5 h-5 py-0.5'>
-              <path d="M2 16.5V6.5C2 5.67157 2.67157 5 3.5 5H13.5C14.3284 5 15 5.67157 15 6.5V16.5C15 17.3284 14.3284 18 13.5 18H3.5C2.67157 18 2 17.3284 2 16.5Z" stroke="#111" stroke-width="1.67"/>
-              <path d="M6 5V3.5C6 2.67157 6.67157 2 7.5 2H16.5C17.3284 2 18 2.67157 18 3.5V12.5C18 13.3284 17.3284 14 16.5 14H15" stroke="#111" stroke-width="1.67" stroke-linecap="round"/>
-            </svg>
-          : 
-            <Square className='w-5 h-5 p-0.5' />}
-        </button>
+          <button
+            className='btn hover:bg-gray-200 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 flex justify-center items-center app-region-no-drag'
+            onClick={handleMaximize}
+          >
+            {isMaximized ? 
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className='w-5 h-5 py-0.5'>
+                <path d="M2 16.5V6.5C2 5.67157 2.67157 5 3.5 5H13.5C14.3284 5 15 5.67157 15 6.5V16.5C15 17.3284 14.3284 18 13.5 18H3.5C2.67157 18 2 17.3284 2 16.5Z" stroke="#111" stroke-width="1.67"/>
+                <path d="M6 5V3.5C6 2.67157 6.67157 2 7.5 2H16.5C17.3284 2 18 2.67157 18 3.5V12.5C18 13.3284 17.3284 14 16.5 14H15" stroke="#111" stroke-width="1.67" stroke-linecap="round"/>
+              </svg>
+            : 
+              <Square className='w-5 h-5 p-0.5' />}
+          </button>
 
-        <button
-          className='btn hover:bg-red-500 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-white flex justify-center items-center app-region-no-drag'
-          onClick={handleClose}
-        >
-          <X className='w-5 h-5' />
-        </button>
-      </div>
+          <button
+            className='btn hover:bg-red-500 bg-transparent border-0 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-white flex justify-center items-center app-region-no-drag'
+            onClick={handleClose}
+          >
+            <X className='w-5 h-5' />
+          </button>
+        </div>
+      }
+
+      
     </div>
   );
 };
