@@ -7,7 +7,11 @@ export const LanguageSettings = () => {
   
   const languages = [
     { code: 'en', name: 'English' },
-    { code: 'zh', name: '中文' }
+    { code: 'zh_CN', name: '简体中文' },
+    { code: 'zh_TW', name: '繁體中文' },
+    { code: 'ja', name: '日本語' },
+    { code: 'ko', name: '한국어' },
+    { code: 'es', name: 'Español' }
   ];
   
   const handleLanguageChange = (langCode: string) => {

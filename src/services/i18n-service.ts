@@ -3,8 +3,12 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 // Import translations directly
-import enTranslation from '../public/locales/en/translation.json';
-import zhTranslation from '../public/locales/zh/translation.json';
+import enTranslation from '../locales/en/translation.json';
+import zhCNTranslation from '../locales/zh-CN/translation.json';
+import zhTWTranslation from '../locales/zh-TW/translation.json';
+import jaTranslation from '../locales/ja/translation.json';
+import koTranslation from '../locales/ko/translation.json';
+import esTranslation from '../locales/es/translation.json';
 
 // Initialize i18n
 const initI18n = () => {
@@ -21,8 +25,20 @@ const initI18n = () => {
         en: {
           translation: enTranslation
         },
-        zh: {
-          translation: zhTranslation
+        zh_CN: {
+          translation: zhCNTranslation
+        },
+        zh_TW: {
+          translation: zhTWTranslation
+        },
+        ja: {
+          translation: jaTranslation
+        },
+        ko: {
+          translation: koTranslation
+        },
+        es: {
+          translation: esTranslation
         }
       }
     });
