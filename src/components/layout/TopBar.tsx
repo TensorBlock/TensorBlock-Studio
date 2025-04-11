@@ -88,6 +88,12 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
     onSelectModel(model.id, provider);
     setIsModelDialogOpen(false);
   };
+
+  const getProviderName = (provider: string) => {
+    const settingsService = SettingsService.getInstance();
+    const providerSettings = settingsService.getProviderSettings(provider);
+    return providerSettings.providerName;
+  };
   
   return (
     <div className="flex items-center justify-between h-16 bg-main-background-color app-region-drag">
@@ -127,7 +133,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectModel, onOpenSettingsDialog }) 
             {selectedModelName !== '' ? 
               <div className='flex items-center gap-2'>
                 <span className='text-center truncate max-w-[200px]'>{selectedModelName}</span>
-                <span className='text-center text-xs truncate max-w-[100px] font-medium message-provider-tag px-3 py-0.5'>{selectedProvider}</span>
+                <span className='text-center text-xs truncate max-w-[100px] font-medium message-provider-tag px-3 py-0.5'>{getProviderName(selectedProvider)}</span>
               </div>
             : 
             <div className='flex items-center gap-2'>
