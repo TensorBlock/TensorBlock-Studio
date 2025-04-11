@@ -4,8 +4,8 @@
 
 [![Twitter](https://img.shields.io/twitter/follow/tensorblock_aoi?style=social)](https://twitter.com/tensorblock_aoi)
 [![Telegram](https://img.shields.io/badge/Telegram-Group-blue?logo=telegram)](https://t.me/TensorBlock)
-![TensorBlock Studio stars](https://img.shields.io/github/stars/TensorBlock/TensorBlock-Studio)
-![TensorBlock Studio forks](https://img.shields.io/github/forks/TensorBlock/TensorBlock-Studio)
+[![GitHub Repo stars](https://img.shields.io/github/stars/TensorBlock/TensorBlock-Studio)]
+[![GitHub forks](https://img.shields.io/github/forks/TensorBlock/TensorBlock-Studio)]
 
 > A lightweight, open, and extensible multi-LLM interaction studio.  
 > Part of the [TensorBlock](https://tensorblock.co) ecosystem — built to empower anyone to build with AI from anywhere, not just use it.
