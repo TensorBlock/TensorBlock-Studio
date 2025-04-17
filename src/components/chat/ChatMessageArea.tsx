@@ -10,12 +10,15 @@ import { ChatService } from '../../services/chat-service';
 import { AIServiceCapability } from '../../types/capabilities';
 import ProviderIcon from '../ui/ProviderIcon';
 import { useTranslation } from '../../hooks/useTranslation';
+import FileUploadButton from './FileUploadButton';
+import FileAttachmentDisplay from './FileAttachmentDisplay';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
   isLoading: boolean;
   error: string | null;
   onSendMessage: (content: string) => void;
+  onSendMessageWithFiles?: (content: string, files: File[]) => void;
   onStopStreaming?: () => void;
   onRegenerateResponse?: (messageId: string) => void;
   onEditMessage?: (messageId: string, newContent: string) => void;
@@ -29,6 +32,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   isLoading,
   error,
   onSendMessage,
+  onSendMessageWithFiles,
   onStopStreaming,
   onRegenerateResponse,
   onEditMessage,
@@ -48,6 +52,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const [ableToWebSearch, setAbleToWebSearch] = useState(false);
   const [webSearchActive, setWebSearchActive] = useState(false);
   const [isWebSearchPreviewEnabled, setIsWebSearchPreviewEnabled] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -93,28 +98,31 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     }
   }, [isCurrentlyStreaming]);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    
-    if (!inputValue.trim() || isLoading || isCurrentlyStreaming) return;
-    
-    onSendMessage(inputValue);
-    
-    setInput('');
-
-    const textarea = inputRef.current;
-    if(!textarea) return;
-    // Calculate new height based on scrollHeight, with min and max constraints
-    const minHeight = 36; // Approx height for 1 row
-
-    textarea.style.height = `${minHeight}px`;
+  // Handle file selection
+  const handleFilesSelected = (files: File[]) => {
+    setSelectedFiles([...selectedFiles, ...files]);
   };
 
-  const handleStopStreaming = () => {
-    if (onStopStreaming) {
-      onStopStreaming();
-      isCurrentlyStreaming = false;
+  // Remove a selected file
+  const handleRemoveFile = (index: number) => {
+    const newFiles = [...selectedFiles];
+    newFiles.splice(index, 1);
+    setSelectedFiles(newFiles);
+  };
+
+  // Handle form submission with files
+  const handleFormSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (isLoading || isCurrentlyStreaming || !inputValue.trim()) return;
+
+    if (selectedFiles.length > 0 && onSendMessageWithFiles) {
+      onSendMessageWithFiles(inputValue, selectedFiles);
+      setSelectedFiles([]);
+    } else {
+      onSendMessage(inputValue);
     }
+
+    setInput('');
   };
 
   // Handle regenerate response
@@ -159,6 +167,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       .catch(() => {
         console.error('Failed to copy message');
       });
+  };
+
+  const handleStopStreaming = () => {
+    if (onStopStreaming) {
+      onStopStreaming();
+    }
   };
 
   // Placeholder error handler for other actions
@@ -275,6 +289,35 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   // Check if there's a streaming message
   const hasStreamingMessage = Array.from(activeConversation.messages.values()).some(m => m.messageId.startsWith('streaming-'));
   
+  const webSearchElement = isWebSearchPreviewEnabled ? (
+    ableToWebSearch ? (
+      <button
+        type="button"
+        onClick={handleToggleWebSearch}
+        className={`flex items-center justify-center w-fit h-8 p-2 transition-all duration-200 rounded-full outline outline-2 hover:outline
+          ${webSearchActive ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
+        aria-label="Toggle Web Search"
+        title="Toggle Web Search"
+      >
+        <Globe className={`mr-1 ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
+        <span className={`text-sm font-light ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>Web Search</span>
+      </button>
+    )
+    :
+    (
+      <button
+        type="button"
+        className={`flex items-center justify-center bg-gray-100 w-fit h-8 p-2 ml-2 transition-all duration-200 rounded-full cursor-not-allowed`}
+        aria-label="Toggle Web Search"
+        title="Toggle Web Search"
+      >
+        <Globe className={`mr-1 text-gray-400 transition-all duration-200`} size={20} />
+        <span className={`text-sm font-light text-gray-400 transition-all duration-200`}>Web Search (Not available)</span>
+      </button>
+    )
+  )
+  :<></>;
+
   return (
     <div className="flex flex-col w-full h-full max-w-full">
       {/* Messages area */}
@@ -325,7 +368,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           return (
             <div 
               key={message.messageId}
-              className={`flex flex-col ${isUserMessage ? 'items-end' : 'items-start'}`}
+              className={`flex flex-col h-fit ${isUserMessage ? 'items-end' : 'items-start'}`}
               onMouseEnter={() => setHoveredMessageId(message.messageId)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
@@ -388,12 +431,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     }`}
                   >
                     {isUserMessage ? (
-                      <MarkdownContent content={message.content} />
+                      <MarkdownContent content={message.content} isUserMessage={true} />
                     ) : (
                       (message.content.length === 0 || MessageHelper.MessageContentToText(message.content).length === 0) ? (
                         <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"></div>
                       ) : (
-                        <MarkdownContent content={message.content} />
+                        <MarkdownContent content={message.content} isUserMessage={false} />
                       )
                     )}
                   </div>
@@ -438,15 +481,30 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       </div>
       
       {/* Input form */}
-      <form onSubmit={handleSubmit}
+      <form onSubmit={handleFormSubmit}
         onClick={() => {
           inputRef.current?.focus();
         }}
         onFocus={() => {
           inputRef.current?.focus();
         }}
-        className={`relative flex ${isWebSearchPreviewEnabled ? 'flex-col' : 'flex-row justify-stretch items-center'} gap-2 px-4 pt-3 pb-2 m-2 mb-4 transition-all duration-200 rounded-lg form-textarea-border cursor-text`}
+        className={`relative flex flex-col gap-2 h-fit px-4 pt-3 pb-2 m-2 mb-4 transition-all duration-200 rounded-lg form-textarea-border cursor-text`}
       >
+        {/* Selected Files Display */}
+        {selectedFiles.length > 0 && (
+          <div className="flex flex-row w-full gap-1 mb-2">
+            {selectedFiles.map((file, index) => (
+              <FileAttachmentDisplay 
+                key={`${file.name}-${index}`}
+                file={file}
+                isUser={true}
+                showRemoveButton={true}
+                onRemove={() => handleRemoveFile(index)}
+              />
+            ))}
+          </div>
+        )}
+
         <textarea
             ref={inputRef}
             value={inputValue}
@@ -454,51 +512,35 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             onKeyDown={(e) => {
               if(e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handleSubmit(e);
+                handleFormSubmit(e);
               }
             }}
             placeholder={t('chat.typeMessage')}
-            className="flex-1 w-[100%] px-2 pt-1 pb-2 resize-none focus:outline-none"
+            className="w-[100%] resize-none focus:outline-none"
             disabled={isLoading}
             inputMode='text'
             rows={1}
             style={{ minHeight: '36px', maxHeight: '108px', height: '36px', overflow: 'auto' }}
           ></textarea>
 
-        <div className="flex flex-row items-end justify-between h-full px-1">
+        <div className="flex flex-row items-center justify-between flex-1 h-full gap-2 px-1">
+          <div className='flex flex-row items-center h-full gap-2'>
+            {/* File upload button */}
+            {onSendMessageWithFiles && (
+                  <FileUploadButton 
+                    onFilesSelected={handleFilesSelected}
+                    disabled={isLoading || isCurrentlyStreaming}
+                  />
+                )}
+          </div>
+
+          {/* Web search element */}
           {
-            isWebSearchPreviewEnabled ? (
-              ableToWebSearch ? (
-                <button
-                  type="button"
-                  onClick={handleToggleWebSearch}
-                  className={`flex items-center justify-center w-fit h-8 p-2 transition-all duration-200 rounded-full outline outline-2 hover:outline
-                    ${webSearchActive ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
-                  aria-label="Toggle Web Search"
-                  title="Toggle Web Search"
-                >
-                  <Globe className={`mr-1 ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
-                  <span className={`text-sm font-light ${webSearchActive ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>Web Search</span>
-                </button>
-              )
-              :
-              (
-                <button
-                  type="button"
-                  className={`flex items-center justify-center bg-gray-100 w-fit h-8 p-2 ml-2 transition-all duration-200 rounded-full cursor-not-allowed`}
-                  aria-label="Toggle Web Search"
-                  title="Toggle Web Search"
-                >
-                  <Globe className={`mr-1 text-gray-400 transition-all duration-200`} size={20} />
-                  <span className={`text-sm font-light text-gray-400 transition-all duration-200`}>Web Search (Not available)</span>
-                </button>
-              )
-            )
-            :<></>
+            webSearchElement
           }
 
-          <span className={`flex-1 hidden text-xs text-center pt-4 text-gray-300 md:block truncate ${isWebSearchPreviewEnabled ? 'pr-6 lg:pr-12' : ''}`}>
-            {isWebSearchPreviewEnabled ? t('chat.pressShiftEnterToChangeLines') : ''}
+          <span className={`flex-1 hidden text-xs text-center pt-4 text-gray-300 md:block truncate pr-6 lg:pr-12`}>
+            {t('chat.pressShiftEnterToChangeLines')}
           </span>
 
           {isCurrentlyStreaming || hasStreamingMessage ? (

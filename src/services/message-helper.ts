@@ -1,6 +1,19 @@
-import { Conversation, Message, MessageContent, MessageContentType } from "../types/chat";
+import { Conversation, FileJsonData, Message, MessageContent, MessageContentType } from "../types/chat";
 import { DatabaseIntegrationService } from "./database-integration";
 import { v4 as uuidv4 } from 'uuid';
+import { FileUploadService } from "./file-upload-service";
+
+type OpenAIMessage_Text = {
+    type: string;
+    text: string;
+}
+
+type OpenAIMessage_File = {
+    type: string;
+    data: ArrayBuffer;
+    mimeType: string;
+    fileName: string;
+}
 
 export class MessageHelper {
   
@@ -226,6 +239,69 @@ export class MessageHelper {
         return lastMessage;
     }
 
+    public static async addUserMessageWithFilesToConversation(
+        textContent: string, 
+        fileContents: MessageContent[],
+        conversation: Conversation
+    ): Promise<{conversation: Conversation, message: Message}> {
+        let latestMessage = MessageHelper.getLastMessage(conversation);
+
+        const dbService = DatabaseIntegrationService.getInstance();
+
+        // Combine text and file contents
+        const combinedContent: MessageContent[] = [
+            ...MessageHelper.pureTextMessage(textContent),
+            ...fileContents
+        ];
+
+        const userMessage = await dbService.saveChatMessage(
+            uuidv4(),
+            conversation.conversationId,
+            'user',
+            combinedContent,
+            'provider: user',
+            'model: user',
+            0,
+            latestMessage ? latestMessage.messageId : null,
+            [],
+            -1
+        );
+
+        if (latestMessage) {
+            latestMessage = MessageHelper.insertMessageIdToFathterMessage(latestMessage, userMessage.messageId);
+
+            console.log('Updated latest message:', latestMessage);
+
+            await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.conversationId);
+        }
+        
+        const shouldUpdateTitle = conversation.messages.size === 1 && Array.from(conversation.messages.values())[0].role === 'system';
+
+        const title = shouldUpdateTitle 
+            ? textContent.substring(0, 30) + (textContent.length > 30 ? '...' : '') 
+            : conversation.title;
+
+        const messages = new Map(conversation.messages);
+        messages.set(userMessage.messageId, userMessage);
+        if(latestMessage) {
+            messages.set(latestMessage.messageId, latestMessage);
+        }
+
+        const updatedConversation = {
+            ...conversation,
+            title,
+            messages,
+            updatedAt: new Date()
+        };
+
+        await dbService.updateConversation(updatedConversation);
+
+        return {
+            conversation: updatedConversation,
+            message: userMessage
+        };
+    }
+
     public static pureTextMessage(contentText: string): MessageContent[] {
         return [
             {
@@ -236,13 +312,54 @@ export class MessageHelper {
         ]
     }
 
+    /**
+     * Convert a message content array to a text string (Only text content)
+     * @param messageContent - The message content array to convert
+     * @returns The text string
+     */
     public static MessageContentToText(messageContent: MessageContent[]): string {
+        if (!messageContent || messageContent.length === 0) {
+            return '';
+        }
+        
         return messageContent.map(content => { 
             if(content.type === MessageContentType.Text) {
                 return content.content;
             }
             return '';
         }).join('');
+    }
+
+    public static async MessageContentToOpenAIFormat(messageContent: MessageContent[]): Promise<(OpenAIMessage_Text | OpenAIMessage_File | null)[]> {
+        if (!messageContent || messageContent.length === 0) {
+            return [];
+        }
+        
+        const results = await Promise.all(messageContent.map(async (content) => {
+            if(content.type === MessageContentType.Text) {
+                const textContent: OpenAIMessage_Text = {
+                    type: 'text',
+                    text: content.content
+                };
+                return textContent;
+            }
+            else if(content.type === MessageContentType.File) {
+                const dataJson: FileJsonData = JSON.parse(content.dataJson) as FileJsonData;
+
+                const fileBuffer = await FileUploadService.getInstance().readFile(dataJson.name);
+
+                const fileContent: OpenAIMessage_File = {
+                    type: 'file',
+                    data: fileBuffer,
+                    mimeType: dataJson.type,
+                    fileName: dataJson.name
+                };
+                return fileContent;
+            }
+            return null;
+        }));
+
+        return results;
     }
 
     public static insertMessageIdToFathterMessage(fatherMessage: Message, messageId: string): Message {
