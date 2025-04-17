@@ -345,6 +345,29 @@ export const ChatPage = () => {
     }
   };
 
+  // Handle sending a message with files
+  const handleSendMessageWithFiles = async (content: string, files: File[]) => {
+    if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
+    
+    try {
+      const chatService = chatServiceRef.current;
+
+      // Send user message with files
+      await chatService.sendMessageWithFiles(
+        content, 
+        files,
+        activeConversationId,
+        true,
+        (updatedConversation) => {
+          setConversations(updatedConversation);
+        }
+      );
+      
+    } catch (err) {
+      console.error('Error sending message with files:', err);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-white">
 
@@ -376,6 +399,7 @@ export const ChatPage = () => {
             isLoading={isLoading}
             error={error ? error.message : null}
             onSendMessage={handleSendMessage}
+            onSendMessageWithFiles={handleSendMessageWithFiles}
             onStopStreaming={handleStopStreaming}
             onRegenerateResponse={handleRegenerateResponse}
             onEditMessage={handleEditMessage}

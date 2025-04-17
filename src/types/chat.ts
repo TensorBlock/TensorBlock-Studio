@@ -9,6 +9,12 @@ export enum MessageContentType {
   SystemMessage = 'systemMessage',
 }
 
+export interface FileJsonData{
+  name: string;
+  type: string;
+  size: number;
+}
+
 export interface MessageContent {
   type: MessageContentType;
   content: string;

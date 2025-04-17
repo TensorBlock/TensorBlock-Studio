@@ -8,11 +8,13 @@ import 'katex/dist/katex.min.css';
 import 'prism-themes/themes/prism-vsc-dark-plus.css';
 import type { Components } from 'react-markdown'
 import type { HTMLProps } from 'react';
-import { MessageContent } from '../../types/chat';
+import { MessageContent, MessageContentType } from '../../types/chat';
 import { MessageHelper } from '../../services/message-helper';
+import FileAttachmentDisplay from './FileAttachmentDisplay';
 
 interface MarkdownContentProps {
   content: MessageContent[];
+  isUserMessage?: boolean;
 }
 
 type CodeProps = React.ClassAttributes<HTMLElement> & 
@@ -20,13 +22,29 @@ type CodeProps = React.ClassAttributes<HTMLElement> &
     inline?: boolean;
   };
 
-export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => {
+export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, isUserMessage = false }) => {
   const [processedContent, setProcessedContent] = useState('');
   const [thinkContent, setThinkContent] = useState<string | null>(null);
   const [isThinkExpanded, setIsThinkExpanded] = useState(true);
+  const [fileContents, setFileContents] = useState<MessageContent[]>([]);
   
-  // Process content and check for thinking blocks
+  // Process content and check for thinking blocks and files
   useEffect(() => {
+    // Extract text and file contents
+    const textContents: MessageContent[] = [];
+    const files: MessageContent[] = [];
+    
+    content.forEach(item => {
+      if (item.type === MessageContentType.Text) {
+        textContents.push(item);
+      } else if (item.type === MessageContentType.File) {
+        files.push(item);
+      }
+    });
+    
+    // Save file contents for rendering
+    setFileContents(files);
+    
     // Create a function for a safer replacement
     function safeReplace(str: string, search: string, replace: string): string {
       // Split the string by the search term
@@ -35,7 +53,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => 
       return parts.join(replace);
     }
     
-    let processed = MessageHelper.MessageContentToText(content);
+    let processed = MessageHelper.MessageContentToText(textContents);
     
     // Check if content contains thinking block
     const thinkMatch = processed.match(/<think>([\s\S]*?)<\/think>([\s\S]*)/);
@@ -103,6 +121,19 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => 
 
   return (
     <div className="prose-sm prose max-w-none dark:prose-invert">
+      {/* File attachments */}
+      {fileContents.length > 0 && (
+        <div className="mb-3">
+          {fileContents.map((file, index) => (
+            <FileAttachmentDisplay 
+              key={index} 
+              content={file} 
+              isUser={isUserMessage} 
+            />
+          ))}
+        </div>
+      )}
+      
       {thinkContent && (
         <div className="mb-4">
           <div 
@@ -146,24 +177,26 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content }) => 
         </div>
       )}
 
-      <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[
-          [rehypePrism, { 
-            showLineNumbers: true,
-            ignoreMissing: true 
-          }],
-          [rehypeKatex, { 
-            throwOnError: false,
-            strict: false,
-            output: 'html', 
-            trust: true
-          }]
-        ]}
-        components={components}
-      >
-        {processedContent}
-      </ReactMarkdown>
+      {processedContent && (
+        <ReactMarkdown
+          remarkPlugins={[remarkMath, remarkGfm]}
+          rehypePlugins={[
+            [rehypePrism, { 
+              showLineNumbers: true,
+              ignoreMissing: true 
+            }],
+            [rehypeKatex, { 
+              throwOnError: false,
+              strict: false,
+              output: 'html', 
+              trust: true
+            }]
+          ]}
+          components={components}
+        >
+          {processedContent}
+        </ReactMarkdown>
+      )}
     </div>
   );
 };

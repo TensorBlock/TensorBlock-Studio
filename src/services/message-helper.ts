@@ -1,6 +1,7 @@
-import { Conversation, Message, MessageContent, MessageContentType } from "../types/chat";
+import { Conversation, FileJsonData, Message, MessageContent, MessageContentType } from "../types/chat";
 import { DatabaseIntegrationService } from "./database-integration";
 import { v4 as uuidv4 } from 'uuid';
+import { FilePart, CoreMessage, TextPart, CoreUserMessage, CoreAssistantMessage, CoreSystemMessage } from "ai";
 
 export class MessageHelper {
   
@@ -226,6 +227,69 @@ export class MessageHelper {
         return lastMessage;
     }
 
+    public static async addUserMessageWithFilesToConversation(
+        textContent: string, 
+        fileContents: MessageContent[],
+        conversation: Conversation
+    ): Promise<{conversation: Conversation, message: Message}> {
+        let latestMessage = MessageHelper.getLastMessage(conversation);
+
+        const dbService = DatabaseIntegrationService.getInstance();
+
+        // Combine text and file contents
+        const combinedContent: MessageContent[] = [
+            ...MessageHelper.pureTextMessage(textContent),
+            ...fileContents
+        ];
+
+        const userMessage = await dbService.saveChatMessage(
+            uuidv4(),
+            conversation.conversationId,
+            'user',
+            combinedContent,
+            'provider: user',
+            'model: user',
+            0,
+            latestMessage ? latestMessage.messageId : null,
+            [],
+            -1
+        );
+
+        if (latestMessage) {
+            latestMessage = MessageHelper.insertMessageIdToFathterMessage(latestMessage, userMessage.messageId);
+
+            console.log('Updated latest message:', latestMessage);
+
+            await dbService.updateChatMessage(latestMessage.messageId, latestMessage, conversation.conversationId);
+        }
+        
+        const shouldUpdateTitle = conversation.messages.size === 1 && Array.from(conversation.messages.values())[0].role === 'system';
+
+        const title = shouldUpdateTitle 
+            ? textContent.substring(0, 30) + (textContent.length > 30 ? '...' : '') 
+            : conversation.title;
+
+        const messages = new Map(conversation.messages);
+        messages.set(userMessage.messageId, userMessage);
+        if(latestMessage) {
+            messages.set(latestMessage.messageId, latestMessage);
+        }
+
+        const updatedConversation = {
+            ...conversation,
+            title,
+            messages,
+            updatedAt: new Date()
+        };
+
+        await dbService.updateConversation(updatedConversation);
+
+        return {
+            conversation: updatedConversation,
+            message: userMessage
+        };
+    }
+
     public static pureTextMessage(contentText: string): MessageContent[] {
         return [
             {
@@ -236,13 +300,104 @@ export class MessageHelper {
         ]
     }
 
+    /**
+     * Convert a message content array to a text string (Only text content)
+     * @param messageContent - The message content array to convert
+     * @returns The text string
+     */
     public static MessageContentToText(messageContent: MessageContent[]): string {
+        if (!messageContent || messageContent.length === 0) {
+            return '';
+        }
+        
         return messageContent.map(content => { 
             if(content.type === MessageContentType.Text) {
                 return content.content;
             }
             return '';
         }).join('');
+    }
+
+    public static MessagesContentToOpenAIFormat(msgs: Message[]): CoreMessage[] {
+        if (!msgs || msgs.length === 0) {
+            return [];
+        }
+
+        console.log('before msgs: ', msgs);
+        
+        const results = msgs.map((msg) => {
+            
+            if(msg.role === 'user') {
+                const userMsg: CoreUserMessage = {
+                    role: 'user',
+                    content: msg.content.map((content) => {
+                        if(content.type === MessageContentType.Text) {
+                            const textContent: TextPart = {
+                                type: 'text',
+                                text: content.content
+                            };
+                            return textContent;
+                        }
+                        else if(content.type === MessageContentType.File) {
+                            const dataJson: FileJsonData = JSON.parse(content.dataJson) as FileJsonData;
+
+                            console.log('Processing file: ', dataJson.name);
+
+                            const fileContent: FilePart = {
+                                type: 'file',
+                                data: content.content,
+                                mimeType: 'application/pdf',
+                                filename: dataJson.name
+                            }
+                            return fileContent;
+                        }
+                        
+                        const emptyText: TextPart = {
+                            type: 'text',
+                            text: ''
+                        };
+                        return emptyText;
+                    })
+                }
+
+                return userMsg;
+            }
+            else if(msg.role === 'assistant') {
+                let stringContent: string = '';
+
+                for(const content of msg.content) {
+                    if(content.type === MessageContentType.Text) {
+                        stringContent += content.content;
+                    }
+                }
+
+                const assistantMsg: CoreAssistantMessage = {
+                    role: 'assistant',
+                    content: stringContent
+                }
+
+                return assistantMsg;
+            }
+            else if(msg.role === 'system') {
+                let stringContent: string = '';
+
+                for(const content of msg.content) {
+                    if(content.type === MessageContentType.Text) {
+                        stringContent += content.content;
+                    }
+                }
+
+                const systemMsg: CoreSystemMessage = {
+                    role: 'system',
+                    content: stringContent
+                }
+
+                return systemMsg;
+            }
+            
+        });
+
+        return results.filter((result) => result !== undefined) as CoreMessage[];
     }
 
     public static insertMessageIdToFathterMessage(fatherMessage: Message, messageId: string): Message {
