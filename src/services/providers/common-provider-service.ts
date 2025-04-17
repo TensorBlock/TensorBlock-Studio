@@ -146,10 +146,9 @@ export class CommonProviderHelper implements AiServiceProvider {
     toolChoice: ToolChoice<ToolSet> | undefined = undefined
   ): Promise<Message> {
     try {
-      const formattedMessages = messages.map(msg => ({
-        role: msg.role,
-        content: MessageHelper.MessageContentToText(msg.content)
-      }));
+      const formattedMessages = MessageHelper.MessagesContentToOpenAIFormat(messages);
+
+      console.log('formattedMessages: ', formattedMessages);
 
       let fullText = '';
 

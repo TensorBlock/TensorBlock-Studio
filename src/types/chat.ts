@@ -11,7 +11,6 @@ export enum MessageContentType {
 
 export interface FileJsonData{
   name: string;
-  path: string;
   type: string;
   size: number;
 }

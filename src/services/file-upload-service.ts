@@ -114,11 +114,11 @@ export class FileUploadService {
         throw new Error(`File ${file.name} exceeds size limit or is not supported by ${provider}`);
       }
       
-      const filePath = file.webkitRelativePath || file.name;
+      const arrayBuffer = await this.readFile(file);
+      const base64 = FileUploadService.bufferToBase64(arrayBuffer);
 
       const fileData: FileJsonData = {
         name: file.name,
-        path: filePath,
         type: file.type,
         size: file.size
       };
@@ -126,7 +126,7 @@ export class FileUploadService {
       // Create a message content object for this file
       const fileContent: MessageContent = {
         type: MessageContentType.File,
-        content: filePath, // Store the file path
+        content: base64, // Store the file path
         dataJson: JSON.stringify(fileData)
       };
       
@@ -135,4 +135,24 @@ export class FileUploadService {
     
     return results;
   }
-} 
+
+  public static bufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  public static base64ToBuffer(base64: string): ArrayBuffer {
+    const binary = atob(base64);
+    const buffer = new ArrayBuffer(binary.length);
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return buffer;
+  }
+  
+}

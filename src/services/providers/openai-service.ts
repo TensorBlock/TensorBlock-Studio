@@ -1,5 +1,5 @@
 import { createOpenAI, openai, OpenAIProvider } from '@ai-sdk/openai';
-import { Message, MessageContentType } from '../../types/chat';
+import { Message } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
 import { StreamControlHandler } from '../streaming-control';
 import { CommonProviderHelper } from './common-provider-service';
@@ -109,68 +109,14 @@ export class OpenAIService implements AiServiceProvider {
     options: CompletionOptions,
     streamController: StreamControlHandler
   ): Promise<Message> {
-    const isWebSearchActive = SettingsService.getInstance().getWebSearchActive();
 
-    // Check for file content in messages
-    const messagesWithFiles = await this.processMessagesWithFiles(messages);
+    const isWebSearchActive = SettingsService.getInstance().getWebSearchActive();
     
     if (isWebSearchActive) {
-      return this.getChatCompletionWithWebSearch(messagesWithFiles, options, streamController);
+      return this.getChatCompletionWithWebSearch(messages, options, streamController);
     }
 
-    return this.commonProviderHelper.getChatCompletion(messagesWithFiles, options, streamController);
-  }
-
-  /**
-   * Process messages to handle file content for OpenAI
-   * This converts file paths in messages to OpenAI file objects
-   */
-  private async processMessagesWithFiles(messages: Message[]): Promise<Message[]> {
-    const processedMessages: Message[] = [];
-    
-    for (const message of messages) {
-      let hasFileContent = false;
-      const fileContents: { type: string; file_path: string; }[] = [];
-      const textParts: string[] = [];
-      
-      // Extract file content and text content
-      for (const content of message.content) {
-        if (content.type === MessageContentType.Text) {
-          textParts.push(content.content);
-        } else if (content.type === MessageContentType.File) {
-          hasFileContent = true;
-          // For OpenAI, we use the file_path format
-          fileContents.push({
-            type: 'file_path',
-            file_path: content.content
-          });
-        }
-      }
-      
-      if (hasFileContent) {
-        // Create a processed message with OpenAI format for files
-        const processedMessage: Message = {
-          ...message,
-          content: [{
-            type: MessageContentType.Text,
-            content: JSON.stringify({
-              type: 'text',
-              text: textParts.join(' ')
-            }),
-            dataJson: JSON.stringify({
-              type: 'file_content',
-              file_contents: fileContents
-            })
-          }]
-        };
-        processedMessages.push(processedMessage);
-      } else {
-        // No file content, keep original message
-        processedMessages.push(message);
-      }
-    }
-    
-    return processedMessages;
+    return this.commonProviderHelper.getChatCompletion(messages, options, streamController);
   }
 
   public async getChatCompletionWithWebSearch(

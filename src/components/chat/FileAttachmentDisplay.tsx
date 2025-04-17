@@ -19,12 +19,9 @@ const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
 }) => {
   let fileData: FileJsonData = {
     name: 'File',
-    path: '',
     type: '',
     size: 0
   };
-
-  const filePath = content?.content;
 
   // Handle MessageContent objects
   if (content && content.type === MessageContentType.File) {
@@ -40,7 +37,6 @@ const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
   else if (file) {
     fileData = {
       name: file.name,
-      path: file.webkitRelativePath || file.name,
       type: file.type,
       size: file.size
     };
@@ -51,7 +47,7 @@ const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
   }
 
   const fileSize = fileData.size ? formatFileSize(fileData.size) : '';
-  const fileName = filePath ||fileData.name || 'File';
+  const fileName = fileData.name || 'File';
   
   // Detect file type to show appropriate icon
   const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';

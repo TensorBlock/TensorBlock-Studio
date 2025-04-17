@@ -305,11 +305,8 @@ export class ChatService {
       conversationUpdate(this.conversations);
       //#endregion
 
-      //#region Map messages to messages array
-      console.log('Updated conversation:', updatedConversation);
+      // Map messages to messages array
       const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false);
-      console.log('Messages:', messages);
-      //#endregion
 
       //#region Streaming Special Message Handling
       // Create a placeholder for the streaming message
@@ -369,6 +366,8 @@ export class ChatService {
       );
 
       this.streamControllerMap.set(conversationId, streamController);
+
+      console.log('Messages:', messages);
 
       // Send Chat Message to AI with streaming
       await this.aiService.getChatCompletion(

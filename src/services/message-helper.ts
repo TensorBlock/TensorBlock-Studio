@@ -1,19 +1,7 @@
 import { Conversation, FileJsonData, Message, MessageContent, MessageContentType } from "../types/chat";
 import { DatabaseIntegrationService } from "./database-integration";
 import { v4 as uuidv4 } from 'uuid';
-import { FileUploadService } from "./file-upload-service";
-
-type OpenAIMessage_Text = {
-    type: string;
-    text: string;
-}
-
-type OpenAIMessage_File = {
-    type: string;
-    data: ArrayBuffer;
-    mimeType: string;
-    fileName: string;
-}
+import { FilePart, CoreMessage, TextPart, CoreUserMessage, CoreAssistantMessage, CoreSystemMessage } from "ai";
 
 export class MessageHelper {
   
@@ -330,36 +318,86 @@ export class MessageHelper {
         }).join('');
     }
 
-    public static async MessageContentToOpenAIFormat(messageContent: MessageContent[]): Promise<(OpenAIMessage_Text | OpenAIMessage_File | null)[]> {
-        if (!messageContent || messageContent.length === 0) {
+    public static MessagesContentToOpenAIFormat(msgs: Message[]): CoreMessage[] {
+        if (!msgs || msgs.length === 0) {
             return [];
         }
+
+        console.log('before msgs: ', msgs);
         
-        const results = await Promise.all(messageContent.map(async (content) => {
-            if(content.type === MessageContentType.Text) {
-                const textContent: OpenAIMessage_Text = {
-                    type: 'text',
-                    text: content.content
-                };
-                return textContent;
+        const results = msgs.map((msg) => {
+            
+            if(msg.role === 'user') {
+                const userMsg: CoreUserMessage = {
+                    role: 'user',
+                    content: msg.content.map((content) => {
+                        if(content.type === MessageContentType.Text) {
+                            const textContent: TextPart = {
+                                type: 'text',
+                                text: content.content
+                            };
+                            return textContent;
+                        }
+                        else if(content.type === MessageContentType.File) {
+                            const dataJson: FileJsonData = JSON.parse(content.dataJson) as FileJsonData;
+
+                            console.log('Processing file: ', dataJson.name);
+
+                            const fileContent: FilePart = {
+                                type: 'file',
+                                data: content.content,
+                                mimeType: 'application/pdf',
+                                filename: dataJson.name
+                            }
+                            return fileContent;
+                        }
+                        
+                        const emptyText: TextPart = {
+                            type: 'text',
+                            text: ''
+                        };
+                        return emptyText;
+                    })
+                }
+
+                return userMsg;
             }
-            else if(content.type === MessageContentType.File) {
-                const dataJson: FileJsonData = JSON.parse(content.dataJson) as FileJsonData;
+            else if(msg.role === 'assistant') {
+                let stringContent: string = '';
 
-                const fileBuffer = await FileUploadService.getInstance().readFile(dataJson.name);
+                for(const content of msg.content) {
+                    if(content.type === MessageContentType.Text) {
+                        stringContent += content.content;
+                    }
+                }
 
-                const fileContent: OpenAIMessage_File = {
-                    type: 'file',
-                    data: fileBuffer,
-                    mimeType: dataJson.type,
-                    fileName: dataJson.name
-                };
-                return fileContent;
+                const assistantMsg: CoreAssistantMessage = {
+                    role: 'assistant',
+                    content: stringContent
+                }
+
+                return assistantMsg;
             }
-            return null;
-        }));
+            else if(msg.role === 'system') {
+                let stringContent: string = '';
 
-        return results;
+                for(const content of msg.content) {
+                    if(content.type === MessageContentType.Text) {
+                        stringContent += content.content;
+                    }
+                }
+
+                const systemMsg: CoreSystemMessage = {
+                    role: 'system',
+                    content: stringContent
+                }
+
+                return systemMsg;
+            }
+            
+        });
+
+        return results.filter((result) => result !== undefined) as CoreMessage[];
     }
 
     public static insertMessageIdToFathterMessage(fatherMessage: Message, messageId: string): Message {
