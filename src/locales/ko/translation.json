@@ -37,6 +37,22 @@
     "selectModel_close": "닫기",
     "selectModel_search_placeholder": "모델 검색..."
   },
+  "imageGeneration": {
+    "title": "이미지 생성",
+    "provider": "제공자",
+    "model": "모델",
+    "imageSize": "이미지 크기",
+    "generationCount": "생성 수량",
+    "randomSeed": "랜덤 시드",
+    "generateButton": "생성",
+    "generating": "생성 중...",
+    "prompt": "프롬프트",
+    "promptPlaceholder": "만들고 싶은 이미지를 설명하세요. 예: 석양이 지는 고요한 호수, 배경에는 산맥",
+    "results": "생성 결과",
+    "placeholderText": "프롬프트를 입력하고 생성 버튼을 클릭하여 이미지 생성",
+    "apiKeyMissing": "선택한 제공자의 API 키를 설정에서 설정하세요.",
+    "seedHelp": "재현 가능한 결과를 위한 시드"
+  },
   "settings": {
     "language": "언어",
     "apiKey": "API 키",

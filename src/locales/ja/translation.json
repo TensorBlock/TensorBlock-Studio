@@ -37,6 +37,22 @@
     "selectModel_close": "閉じる",
     "selectModel_search_placeholder": "モデルを検索..."
   },
+  "imageGeneration": {
+    "title": "画像生成",
+    "provider": "プロバイダー",
+    "model": "モデル",
+    "imageSize": "画像サイズ",
+    "generationCount": "生成数",
+    "randomSeed": "ランダムシード",
+    "generateButton": "生成",
+    "generating": "生成中...",
+    "prompt": "プロンプト",
+    "promptPlaceholder": "作成したい画像を説明してください。例：夕日が沈む静かな湖、背景には山々",
+    "results": "生成結果",
+    "placeholderText": "プロンプトを入力して生成ボタンをクリックして画像を作成",
+    "apiKeyMissing": "選択したプロバイダーのAPIキーを設定で設定してください。",
+    "seedHelp": "再現可能な結果のためのシード値"
+  },
   "settings": {
     "language": "言語",
     "apiKey": "APIキー",

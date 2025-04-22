@@ -37,6 +37,22 @@
     "selectModel_close": "Close",
     "selectModel_search_placeholder": "Search models..."
   },
+  "imageGeneration": {
+    "title": "Image Generation",
+    "provider": "Provider",
+    "model": "Model",
+    "imageSize": "Image Size",
+    "generationCount": "Generation Count",
+    "randomSeed": "Random Seed",
+    "generateButton": "Generate",
+    "generating": "Generating...",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe the image you want to create, e.g.: a peaceful lake at sunset with mountains in the background",
+    "results": "Generated Results",
+    "placeholderText": "Enter a prompt and click generate to create images",
+    "apiKeyMissing": "Please set your API key for the selected provider in the settings.",
+    "seedHelp": "Seed for reproducible results"
+  },
   "settings": {
     "language": "Language",
     "apiKey": "API Key",

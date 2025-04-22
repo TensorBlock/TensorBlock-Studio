@@ -555,4 +555,47 @@
         background-color: var(--primary-300);
     }
     
+    /* Image Generation Page */
+    .aspect-ratio-button {
+        transition: all 0.2s;
+        background-color: var(--surface-0);
+    }
+    
+    .aspect-ratio-button.active {
+        background-color: var(--primary-100);
+        border-color: var(--primary-500);
+    }
+    
+    .aspect-ratio-button:hover:not(.active) {
+        background-color: var(--primary-50);
+        border-color: var(--primary-400);
+    }
+    
+    .image-generation-refresh-button {
+        background-color: var(--primary-50);
+        color: var(--primary-600);
+        transition: all 0.2s;
+    }
+    
+    .image-generation-refresh-button:hover {
+        background-color: var(--primary-200);
+        color: var(--primary-700);
+    }
+    
+    .image-generation-result-placeholder {
+        background-color: var(--primary-50);
+        border: 2px dashed var(--primary-200);
+        color: var(--surface-500);
+    }
+    
+    .image-result-area {
+        background-color: var(--surface-0);
+        border-radius: 0.5rem;
+        border: 1px solid var(--primary-100);
+        transition: all 0.2s;
+    }
+    
+    .image-result-area:hover {
+        border-color: var(--primary-300);
+    }
 }

@@ -37,6 +37,22 @@
     "selectModel_close": "关闭",
     "selectModel_search_placeholder": "搜索模型..."
   },
+  "imageGeneration": {
+    "title": "图片生成",
+    "provider": "提供商",
+    "model": "模型",
+    "imageSize": "图片尺寸",
+    "generationCount": "生成数量",
+    "randomSeed": "随机种子",
+    "generateButton": "生成",
+    "generating": "生成中...",
+    "prompt": "提示词",
+    "promptPlaceholder": "描述你想创建的图片，例如：一个宁静的湖泊，夕阳西下，远处是群山",
+    "results": "生成结果",
+    "placeholderText": "输入提示词并点击生成按钮来创建图片",
+    "apiKeyMissing": "请在设置中为所选提供商设置您的 API 密钥。",
+    "seedHelp": "用于可重现结果的种子"
+  },
   "settings": {
     "language": "语言",
     "apiKey": "API 密钥",
