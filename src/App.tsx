@@ -1,9 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ChatPage } from './components/pages/ChatPage';
+import { ImageGenerationPage } from './components/pages/ImageGenerationPage';
 import MainLayout from './components/layout/MainLayout';
 import DatabaseInitializer from './components/core/DatabaseInitializer';
 
 function App() {
+  const [activePage, setActivePage] = useState('chat');
+  const [showSettings, setShowSettings] = useState(false);
 
   // Handle link clicks
   useEffect(() => {
@@ -22,11 +25,15 @@ function App() {
     };
   }, []);
   
+  const handlePageChange = (page: string) => {
+    setActivePage(page);
+  };
   
   return (
     <DatabaseInitializer>
-      <MainLayout>
-        <ChatPage/>
+      <MainLayout activePage={activePage} onChangePage={handlePageChange} showSettings={showSettings} setShowSettings={setShowSettings}>
+        {activePage === 'chat' && <ChatPage />}
+        {activePage === 'image' && <ImageGenerationPage />}
       </MainLayout>
     </DatabaseInitializer>
   );

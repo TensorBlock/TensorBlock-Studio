@@ -157,10 +157,30 @@ export class OpenAIService implements AiServiceProvider {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: {
       size?: `${number}x${number}`;
+      aspectRatio?: `${number}:${number}`;
       style?: string;
       quality?: string;
     } = {}
+    
   ): Promise<string[]> {
-    throw new Error('Not implemented');
+
+    // const imageModel = openai.imageModel('dall-e-3');
+
+    // const result = await imageModel.doGenerate({
+    //   prompt: prompt,
+    //   n: 1,
+    //   size: options.size || '1024x1024',
+    //   aspectRatio: options.aspectRatio || '1:1',
+    //   seed: 42,
+    //   providerOptions: {
+    //     "openai": {
+    //       "style": options.style || 'vivid'
+    //     }
+    //   }
+    // });
+
+    // return result.images;
+
+    return [];
   }
 } 

@@ -319,7 +319,7 @@ export class SettingsService {
   /**
    * Save settings to database
    */
-  private async saveSettings(): Promise<void> {
+  public async saveSettings(): Promise<void> {
     try {
       await this.dbService.saveSettings(this.settings);
       
