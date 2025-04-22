@@ -52,3 +52,16 @@ export interface ConversationFolder{
   updatedAt: Date;
   colorFlag: string;
 }
+
+export interface ImageGenerationResult {
+  id: string;
+  prompt: string;
+  negativePrompt: string;
+  seed: string;
+  number: number;
+  status: string;
+  aspectRatio: string;
+  provider: string;
+  model: string;
+  images: MessageContent[];
+}

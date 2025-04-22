@@ -56,7 +56,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         onOpenSettingsDialog={handleOpenSettingsDialog}
       />
 
-      <div className="flex flex-1 w-full overflow-hidden">
+      <div className="flex w-full h-full overflow-hidden">
         <Sidebar 
           activePage={activePage}
           onChangePage={handlePageChange}
@@ -64,11 +64,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           setShowSettings={setShowSettings}
         />
 
-        <div className="flex flex-col flex-1 w-[calc(100%-68px)] bg-main-background-color">
+        <div className="flex flex-col h-full w-[calc(100%-68px)] bg-main-background-color">
           {/* Main content */}
 
-          <div className='relative flex flex-col flex-1 w-full overflow-hidden major-area-border major-area-bg-color'>
-            <div className="flex-1 w-full overflow-auto">
+          <div className='relative flex flex-col w-full h-full overflow-hidden major-area-border major-area-bg-color'>
+            <div className="w-full h-full overflow-auto">
               {children}
             </div>
             
