@@ -83,12 +83,13 @@ export interface AiServiceProvider {
   /**
    * Generate an image
    */
-  getImageGeneration?(
+  getImageGeneration(
     prompt: string,
-    options?: {
-      size?: string;
+    options: {
+      size?: `${number}x${number}`;
+      aspectRatio?: `${number}:${number}`;
       style?: string;
       quality?: string;
     }
-  ): Promise<string[]>;
+  ): Promise<string[] | Uint8Array<ArrayBufferLike>[]>;
 }

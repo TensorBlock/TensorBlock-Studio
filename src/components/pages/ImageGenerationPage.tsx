@@ -5,6 +5,8 @@ import {
 } from "../../services/settings-service";
 import { ChevronDown, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { AIService } from "../../services/ai-service";
+import { OPENAI_PROVIDER_NAME } from "../../services/providers/openai-service";
 
 export const ImageGenerationPage = () => {
   const { t } = useTranslation();
@@ -12,8 +14,6 @@ export const ImageGenerationPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [imageResult, setImageResult] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [selectedModel, setSelectedModel] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState("");
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(true);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [imageCount, setImageCount] = useState(1);
@@ -24,12 +24,8 @@ export const ImageGenerationPage = () => {
   // Check if API key is available
   useEffect(() => {
     setIsApiKeyMissing(!SettingsService.getInstance().getApiKey());
-    setSelectedProvider(SettingsService.getInstance().getSelectedProvider());
-    setSelectedModel(SettingsService.getInstance().getSelectedModel());
 
     const handleSettingsChange = () => {
-      setSelectedProvider(SettingsService.getInstance().getSelectedProvider());
-      setSelectedModel(SettingsService.getInstance().getSelectedModel());
       setIsApiKeyMissing(!SettingsService.getInstance().getApiKey());
     };
 
@@ -40,7 +36,7 @@ export const ImageGenerationPage = () => {
     };
   }, []);
 
-  // Handle generating an image (mock function)
+  // Handle generating an image using OpenAI's DALL-E 3
   const handleGenerateImage = async () => {
     if (!prompt.trim()) return;
 
@@ -48,16 +44,43 @@ export const ImageGenerationPage = () => {
     setError(null);
 
     try {
-      // In a real implementation, this would call an actual image generation service
-      // For now, just simulate the process with a timeout
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Get the OpenAI service from AIService
+      const openaiService = AIService.getInstance().getProvider(OPENAI_PROVIDER_NAME);
+      
+      if (!openaiService) {
+        throw new Error("OpenAI service not available");
+      }
 
-      // For demo purposes, just show a placeholder result
-      setImageResult(
-        `https://placehold.co/512x512/eee/999?text=${encodeURIComponent(
-          prompt
-        )}`
-      );
+      // Map aspect ratio to size dimensions
+      const sizeMap: Record<string, `${number}x${number}`> = {
+        "1:1": "1024x1024",
+        "1:2": "512x1024",
+        "3:2": "1024x768",
+        "3:4": "768x1024",
+        "16:9": "1792x1024",
+        "9:16": "1024x1792"
+      };
+      
+      // Generate the image
+      const images = await openaiService.getImageGeneration(prompt, {
+        size: sizeMap[aspectRatio] || "1024x1024",
+        aspectRatio: aspectRatio as `${number}:${number}`,
+        style: "vivid"
+      });
+      
+      // Set the result image
+      if (images && images.length > 0) {
+        // Check if the image is already a full data URL
+        const base64Data = images[0] as string;
+        if (base64Data.startsWith('data:image')) {
+          setImageResult(base64Data);
+        } else {
+          // If it's just a base64 string without the data URI prefix, add it
+          setImageResult(`data:image/png;base64,${base64Data}`);
+        }
+      } else {
+        throw new Error("No images generated");
+      }
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -68,27 +91,6 @@ export const ImageGenerationPage = () => {
   // Generate new random seed
   const generateNewSeed = () => {
     setRandomSeed(Math.floor(Math.random() * 1000000).toString());
-  };
-
-  // Get model name
-  const getModelName = (modelID: string, provider: string) => {
-    const providerSettings =
-      SettingsService.getInstance().getProviderSettings(provider);
-    if (!providerSettings.models) return modelID;
-
-    const model = providerSettings.models?.find((m) => m.modelId === modelID);
-    if (!model) return modelID;
-
-    return model.modelName;
-  };
-
-  // Get display provider name
-  const getDisplayProviderName = () => {
-    if (!selectedProvider) return "硅基流动";
-
-    const providerSettings =
-      SettingsService.getInstance().getProviderSettings(selectedProvider);
-    return providerSettings.providerName || selectedProvider;
   };
 
   return (
@@ -119,19 +121,6 @@ export const ImageGenerationPage = () => {
               rows={4}
             />
           </div>
-
-          {/* Negative prompt */}
-          {/* <div className="mb-6">
-            <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
-              反向提示词
-              <div className="flex items-center justify-center w-4 h-4 ml-1 text-xs text-gray-500 bg-gray-200 rounded-full cursor-help" title="Elements to avoid in the image">?</div>
-            </label>
-            <textarea 
-              placeholder="输入不希望在生成的图像中出现的元素"
-              className="w-full p-3 input-box"
-              rows={3}
-            />
-          </div> */}
 
           {/* Generation button */}
           <div className="flex justify-center mb-6">
@@ -208,7 +197,7 @@ export const ImageGenerationPage = () => {
                 className="flex items-center justify-between w-full p-3 text-left input-box"
                 disabled={true}
               >
-                <span>{getDisplayProviderName()}</span>
+                <span>OpenAI</span>
                 <ChevronDown size={18} className="text-gray-500" />
               </button>
             </div>
@@ -224,10 +213,7 @@ export const ImageGenerationPage = () => {
                 className="flex items-center justify-between w-full p-3 text-left input-box"
                 disabled={true}
               >
-                <span>
-                  {getModelName(selectedModel, selectedProvider) ||
-                    "FLUX.1 Schnell"}
-                </span>
+                <span>DALL-E 3</span>
                 <ChevronDown size={18} className="text-gray-500" />
               </button>
             </div>
@@ -326,6 +312,7 @@ export const ImageGenerationPage = () => {
               min="1"
               max="4"
               className="w-full p-3 input-box"
+              disabled={true}
             />
           </div>
 
@@ -346,11 +333,13 @@ export const ImageGenerationPage = () => {
                 value={randomSeed}
                 onChange={(e) => setRandomSeed(e.target.value)}
                 className="flex-grow p-3 mr-2 input-box"
+                disabled={true}
               />
               <button
                 onClick={generateNewSeed}
                 className="p-2 rounded-lg image-generation-refresh-button"
                 title={t("imageGeneration.randomSeed")}
+                disabled={true}
               >
                 <RefreshCw size={20} />
               </button>

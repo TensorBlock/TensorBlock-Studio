@@ -43,6 +43,7 @@ export interface Conversation {
   messages: Map<string, Message>;
   createdAt: Date;
   updatedAt: Date;
+  messageInput: string;
 }
 
 export interface ConversationFolder{
