@@ -32,6 +32,27 @@
     "stopResponse": "応答を停止",
     "pressShiftEnterToChangeLines": "Shift+Enterを押して行を変更"
   },
+  "translation": {
+    "title": "翻訳",
+    "sourceLanguage": "ソース言語",
+    "result": "翻訳結果",
+    "translateButton": "翻訳",
+    "translating": "翻訳中...",
+    "inputPlaceholder": "翻訳するテキストを入力...",
+    "resultPlaceholder": "翻訳結果がここに表示されます",
+    "apiKeyMissing": "選択したプロバイダーのAPIキーを設定で設定してください。",
+    "autoDetect": "自動検出",
+    "english": "英語",
+    "spanish": "スペイン語",
+    "french": "フランス語",
+    "german": "ドイツ語",
+    "italian": "イタリア語",
+    "portuguese": "ポルトガル語",
+    "russian": "ロシア語",
+    "chinese": "中国語",
+    "japanese": "日本語",
+    "korean": "韓国語"
+  },
   "selectModel": {
     "selectModel_title": "モデルを選択",
     "selectModel_close": "閉じる",

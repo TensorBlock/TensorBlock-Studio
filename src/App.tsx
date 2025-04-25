@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChatPage } from './components/pages/ChatPage';
 import { ImageGenerationPage } from './components/pages/ImageGenerationPage';
+import { TranslationPage } from './components/pages/TranslationPage';
 import MainLayout from './components/layout/MainLayout';
 import DatabaseInitializer from './components/core/DatabaseInitializer';
 
@@ -34,6 +35,7 @@ function App() {
       <MainLayout activePage={activePage} onChangePage={handlePageChange} showSettings={showSettings} setShowSettings={setShowSettings}>
         {activePage === 'chat' && <ChatPage />}
         {activePage === 'image' && <ImageGenerationPage />}
+        {activePage === 'translation' && <TranslationPage />}
       </MainLayout>
     </DatabaseInitializer>
   );

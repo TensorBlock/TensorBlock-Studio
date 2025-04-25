@@ -32,6 +32,27 @@
     "stopResponse": "停止回應",
     "pressShiftEnterToChangeLines": "按 Shift+Enter 換行"
   },
+  "translation": {
+    "title": "翻譯",
+    "sourceLanguage": "源語言",
+    "result": "翻譯結果",
+    "translateButton": "翻譯",
+    "translating": "翻譯中...",
+    "inputPlaceholder": "輸入要翻譯的文字...",
+    "resultPlaceholder": "翻譯結果將顯示在這裡",
+    "apiKeyMissing": "請在設定中為所選提供商設置您的 API 金鑰。",
+    "autoDetect": "自動偵測",
+    "english": "英文",
+    "spanish": "西班牙文",
+    "french": "法文",
+    "german": "德文",
+    "italian": "義大利文",
+    "portuguese": "葡萄牙文",
+    "russian": "俄文",
+    "chinese": "中文",
+    "japanese": "日文",
+    "korean": "韓文"
+  },
   "selectModel": {
     "selectModel_title": "選擇模型",
     "selectModel_close": "關閉",

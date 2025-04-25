@@ -32,6 +32,27 @@
     "stopResponse": "Stop Response",
     "pressShiftEnterToChangeLines": "Press Shift+Enter to change lines"
   },
+  "translation": {
+    "title": "Translation",
+    "sourceLanguage": "Source Language",
+    "result": "Translation Result",
+    "translateButton": "Translate",
+    "translating": "Translating...",
+    "inputPlaceholder": "Enter text to translate...",
+    "resultPlaceholder": "Translation will appear here",
+    "apiKeyMissing": "Please set your API key for the selected provider in the settings.",
+    "autoDetect": "Auto-detect",
+    "english": "English",
+    "spanish": "Spanish",
+    "french": "French",
+    "german": "German",
+    "italian": "Italian",
+    "portuguese": "Portuguese",
+    "russian": "Russian",
+    "chinese": "Chinese",
+    "japanese": "Japanese",
+    "korean": "Korean"
+  },
   "selectModel": {
     "selectModel_title": "Select Model",
     "selectModel_close": "Close",

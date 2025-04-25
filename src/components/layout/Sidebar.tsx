@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Settings, Image } from 'lucide-react';
+import { MessageSquare, Settings, Image, Languages } from 'lucide-react';
 
 interface SidebarProps {
   activePage: string;
@@ -24,6 +24,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     else if(activePage === 'image'){
       return 'image';
+    }
+    else if(activePage === 'translation'){
+      return 'translation';
     }
 
     return '';
@@ -58,7 +61,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Image size={22} />
         </button>
         
-        {/* Add more navigation buttons here as needed */}
+        <button 
+          className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
+            getActivePage() === 'translation' 
+              ? 'navigation-item-selected navigation-item-text' 
+              : 'navigation-item navigation-item-text'
+          }`}
+          onClick={() => onChangePage('translation')}
+          aria-label="Translation"
+        >
+          <Languages size={22} />
+        </button>
       </div>
 
       {/* Settings button at bottom */}

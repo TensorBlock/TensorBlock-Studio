@@ -32,6 +32,27 @@
     "stopResponse": "Detener Respuesta",
     "pressShiftEnterToChangeLines": "Presiona Shift+Enter para cambiar de línea"
   },
+  "translation": {
+    "title": "Traducción",
+    "sourceLanguage": "Idioma de Origen",
+    "result": "Resultado de la Traducción",
+    "translateButton": "Traducir",
+    "translating": "Traduciendo...",
+    "inputPlaceholder": "Introduce el texto a traducir...",
+    "resultPlaceholder": "La traducción aparecerá aquí",
+    "apiKeyMissing": "Por favor, configura tu clave API para el proveedor seleccionado en la configuración.",
+    "autoDetect": "Detección automática",
+    "english": "Inglés",
+    "spanish": "Español",
+    "french": "Francés",
+    "german": "Alemán",
+    "italian": "Italiano",
+    "portuguese": "Portugués",
+    "russian": "Ruso",
+    "chinese": "Chino",
+    "japanese": "Japonés",
+    "korean": "Coreano"
+  },
   "selectModel": {
     "selectModel_title": "Seleccionar Modelo",
     "selectModel_close": "Cerrar",

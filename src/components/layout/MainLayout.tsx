@@ -22,20 +22,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   
   // Handle settings dialog
   const handleOpenSettingsDialog = () => {
-    if(activePage === 'settings' && activePage !== 'settings'){
-      // Save settings
-      SettingsService.getInstance().saveSettings();
-    }
-
     setShowSettings(true);
-    onChangePage('settings');
   };
 
   // Handle page changes
   const handlePageChange = (page: string) => {
     if (page === 'settings') {
       setShowSettings(true);
-      onChangePage('settings');
     } else {
       setShowSettings(false);
       onChangePage(page);

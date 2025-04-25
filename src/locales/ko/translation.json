@@ -32,6 +32,27 @@
     "stopResponse": "응답 중지",
     "pressShiftEnterToChangeLines": "줄을 바꾸려면 Shift+Enter를 누르세요"
   },
+  "translation": {
+    "title": "번역",
+    "sourceLanguage": "원본 언어",
+    "result": "번역 결과",
+    "translateButton": "번역",
+    "translating": "번역 중...",
+    "inputPlaceholder": "번역할 텍스트를 입력하세요...",
+    "resultPlaceholder": "번역 결과가 여기에 표시됩니다",
+    "apiKeyMissing": "선택한 제공자의 API 키를 설정에서 설정하세요.",
+    "autoDetect": "자동 감지",
+    "english": "영어",
+    "spanish": "스페인어",
+    "french": "프랑스어",
+    "german": "독일어",
+    "italian": "이탈리아어",
+    "portuguese": "포르투갈어",
+    "russian": "러시아어",
+    "chinese": "중국어",
+    "japanese": "일본어",
+    "korean": "한국어"
+  },
   "selectModel": {
     "selectModel_title": "모델 선택",
     "selectModel_close": "닫기",

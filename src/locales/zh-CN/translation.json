@@ -32,6 +32,27 @@
     "stopResponse": "停止响应",
     "pressShiftEnterToChangeLines": "按 Shift+Enter 换行"
   },
+  "translation": {
+    "title": "翻译",
+    "sourceLanguage": "源语言",
+    "result": "翻译结果",
+    "translateButton": "翻译",
+    "translating": "翻译中...",
+    "inputPlaceholder": "输入要翻译的文本...",
+    "resultPlaceholder": "翻译结果将显示在这里",
+    "apiKeyMissing": "请在设置中为所选提供商设置您的 API 密钥。",
+    "autoDetect": "自动检测",
+    "english": "英语",
+    "spanish": "西班牙语",
+    "french": "法语",
+    "german": "德语",
+    "italian": "意大利语",
+    "portuguese": "葡萄牙语",
+    "russian": "俄语",
+    "chinese": "中文",
+    "japanese": "日语",
+    "korean": "韩语"
+  },
   "selectModel": {
     "selectModel_title": "选择模型",
     "selectModel_close": "关闭",
