@@ -43,6 +43,7 @@ export interface Conversation {
   messages: Map<string, Message>;
   createdAt: Date;
   updatedAt: Date;
+  messageInput: string;
 }
 
 export interface ConversationFolder{
@@ -51,4 +52,17 @@ export interface ConversationFolder{
   createdAt: Date;
   updatedAt: Date;
   colorFlag: string;
+}
+
+export interface ImageGenerationResult {
+  id: string;
+  prompt: string;
+  negativePrompt: string;
+  seed: string;
+  number: number;
+  status: string;
+  aspectRatio: string;
+  provider: string;
+  model: string;
+  images: MessageContent[];
 }

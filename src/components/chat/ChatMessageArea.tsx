@@ -12,6 +12,7 @@ import ProviderIcon from '../ui/ProviderIcon';
 import { useTranslation } from '../../hooks/useTranslation';
 import FileUploadButton from './FileUploadButton';
 import FileAttachmentDisplay from './FileAttachmentDisplay';
+import ImageGenerationButton from './ImageGenerationButton';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -319,7 +320,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   :<></>;
 
   return (
-    <div className="flex flex-col w-full h-full max-w-full">
+    <div className="flex flex-col w-full h-full">
       {/* Messages area */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {getMessagesList().map((message) => {
@@ -527,11 +528,16 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           <div className='flex flex-row items-center h-full gap-2'>
             {/* File upload button */}
             {onSendMessageWithFiles && (
-                  <FileUploadButton 
-                    onFilesSelected={handleFilesSelected}
-                    disabled={isLoading || isCurrentlyStreaming}
-                  />
-                )}
+              <FileUploadButton
+                onFilesSelected={handleFilesSelected}
+                disabled={isLoading || isCurrentlyStreaming}
+              />
+            )}
+            
+            {/* Image generation button */}
+            <ImageGenerationButton 
+              disabled={isLoading || isCurrentlyStreaming}
+            />
           </div>
 
           {/* Web search element */}

@@ -32,10 +32,47 @@
     "stopResponse": "停止回應",
     "pressShiftEnterToChangeLines": "按 Shift+Enter 換行"
   },
+  "translation": {
+    "title": "翻譯",
+    "sourceLanguageWithAutoSelected": "源語言將會自動偵測",
+    "result": "翻譯結果",
+    "translateButton": "翻譯",
+    "translating": "翻譯中...",
+    "inputPlaceholder": "輸入要翻譯的文字...",
+    "resultPlaceholder": "翻譯結果將顯示在這裡",
+    "apiKeyMissing": "請在設定中為所選提供商設置您的 API 金鑰。",
+    "autoDetect": "自動偵測",
+    "english": "英文",
+    "spanish": "西班牙文",
+    "french": "法文",
+    "german": "德文",
+    "italian": "義大利文",
+    "portuguese": "葡萄牙文",
+    "russian": "俄文",
+    "chinese": "中文",
+    "japanese": "日文",
+    "korean": "韓文"
+  },
   "selectModel": {
     "selectModel_title": "選擇模型",
     "selectModel_close": "關閉",
     "selectModel_search_placeholder": "搜尋模型..."
+  },
+  "imageGeneration": {
+    "title": "圖片生成",
+    "provider": "提供商",
+    "model": "模型",
+    "imageSize": "圖片尺寸",
+    "generationCount": "生成數量",
+    "randomSeed": "隨機種子",
+    "generateButton": "生成",
+    "generating": "生成中...",
+    "prompt": "提示詞",
+    "promptPlaceholder": "描述你想創建的圖片，例如：一個寧靜的湖泊，夕陽西下，遠處是群山",
+    "results": "生成結果",
+    "placeholderText": "輸入提示詞並點擊生成按鈕來創建圖片",
+    "apiKeyMissing": "請在設定中為所選提供商設置您的 API 金鑰。",
+    "seedHelp": "用於可重現結果的種子"
   },
   "settings": {
     "language": "語言",

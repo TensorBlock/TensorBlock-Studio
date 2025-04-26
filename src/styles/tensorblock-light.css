@@ -555,4 +555,86 @@
         background-color: var(--primary-300);
     }
     
+    /* Image Generation Page */
+    .aspect-ratio-button {
+        transition: all 0.2s;
+        background-color: var(--surface-0);
+    }
+    
+    .aspect-ratio-button.active {
+        background-color: var(--primary-100);
+        border-color: var(--primary-500);
+    }
+    
+    .aspect-ratio-button:hover:not(.active) {
+        background-color: var(--primary-50);
+        border-color: var(--primary-400);
+    }
+    
+    .image-generation-refresh-button {
+        background-color: var(--primary-50);
+        color: var(--primary-600);
+        transition: all 0.2s;
+    }
+    
+    .image-generation-refresh-button:hover {
+        background-color: var(--primary-200);
+        color: var(--primary-700);
+    }
+    
+    .image-generation-result-placeholder {
+        background-color: var(--primary-50);
+        border: 2px dashed var(--primary-200);
+        color: var(--surface-500);
+    }
+    
+    .image-result-area {
+        background-color: var(--surface-0);
+        border-radius: 0.5rem;
+        border: 1px solid var(--primary-100);
+        transition: all 0.2s;
+    }
+    
+    .image-result-area:hover {
+        border-color: var(--primary-300);
+    }
+
+    .text-light-hint{
+        color: var(--surface-400);
+    }
+
+    .image-generation-button {
+        background-color: transparent;
+        color: var(--primary-500);
+    }
+
+    .image-generation-button:hover {
+        background-color: var(--primary-100);
+        color: var(--primary-600);
+    }
+
+    .image-generation-button:disabled {
+        background-color: transparent;
+        color: var(--surface-400);
+        cursor: not-allowed;
+    }
+
+    .image-generation-popup {
+        background-color: var(--surface-0);
+        border: 1px solid var(--primary-200);
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .image-generation-provider-item {
+        background-color: transparent;
+    }
+
+    .image-generation-provider-item:hover {
+        background-color: var(--primary-100);
+    }
+
+    .image-generation-provider-selected {
+        background-color: var(--primary-200);
+    }
 }

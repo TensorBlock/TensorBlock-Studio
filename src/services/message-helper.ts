@@ -346,7 +346,7 @@ export class MessageHelper {
                             const fileContent: FilePart = {
                                 type: 'file',
                                 data: content.content,
-                                mimeType: 'application/pdf',
+                                mimeType: 'application/pdf', // SDK requires pdf mime type, but it supports all mime types
                                 filename: dataJson.name
                             }
                             return fileContent;
