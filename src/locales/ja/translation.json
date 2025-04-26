@@ -34,7 +34,7 @@
   },
   "translation": {
     "title": "翻訳",
-    "sourceLanguage": "ソース言語",
+    "sourceLanguageWithAutoSelected": "ソース言語は自動で検出されます",
     "result": "翻訳結果",
     "translateButton": "翻訳",
     "translating": "翻訳中...",

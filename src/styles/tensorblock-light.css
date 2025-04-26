@@ -598,4 +598,8 @@
     .image-result-area:hover {
         border-color: var(--primary-300);
     }
+
+    .text-light-hint{
+        color: var(--surface-400);
+    }
 }

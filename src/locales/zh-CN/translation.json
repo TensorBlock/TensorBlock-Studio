@@ -34,7 +34,7 @@
   },
   "translation": {
     "title": "翻译",
-    "sourceLanguage": "源语言",
+    "sourceLanguageWithAutoSelected": "源语言将会自动识别",
     "result": "翻译结果",
     "translateButton": "翻译",
     "translating": "翻译中...",

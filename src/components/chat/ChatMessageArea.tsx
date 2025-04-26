@@ -527,11 +527,11 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           <div className='flex flex-row items-center h-full gap-2'>
             {/* File upload button */}
             {onSendMessageWithFiles && (
-                  <FileUploadButton 
-                    onFilesSelected={handleFilesSelected}
-                    disabled={isLoading || isCurrentlyStreaming}
-                  />
-                )}
+              <FileUploadButton
+                onFilesSelected={handleFilesSelected}
+                disabled={isLoading || isCurrentlyStreaming}
+              />
+            )}
           </div>
 
           {/* Web search element */}

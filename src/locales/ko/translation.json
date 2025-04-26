@@ -34,7 +34,7 @@
   },
   "translation": {
     "title": "번역",
-    "sourceLanguage": "원본 언어",
+    "sourceLanguageWithAutoSelected": "원본 언어는 자동으로 감지됩니다",
     "result": "번역 결과",
     "translateButton": "번역",
     "translating": "번역 중...",

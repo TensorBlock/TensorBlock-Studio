@@ -34,7 +34,7 @@
   },
   "translation": {
     "title": "Translation",
-    "sourceLanguage": "Source Language",
+    "sourceLanguageWithAutoSelected": "Source Language will be auto detected",
     "result": "Translation Result",
     "translateButton": "Translate",
     "translating": "Translating...",

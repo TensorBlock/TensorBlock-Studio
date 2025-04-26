@@ -34,7 +34,7 @@
   },
   "translation": {
     "title": "翻譯",
-    "sourceLanguage": "源語言",
+    "sourceLanguageWithAutoSelected": "源語言將會自動偵測",
     "result": "翻譯結果",
     "translateButton": "翻譯",
     "translating": "翻譯中...",

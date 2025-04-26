@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { SettingsService, SETTINGS_CHANGE_EVENT } from '../../services/settings-service';
 import { Orbit, Languages, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { v4 as uuidv4 } from 'uuid';
+import { Message, MessageRole } from '../../types/chat';
+import { AIService } from '../../services/ai-service';
+import { StreamControlHandler } from '../../services/streaming-control';
+import { MessageHelper } from '../../services/message-helper';
 
 export const TranslationPage: React.FC = () => {
   const { t } = useTranslation();
@@ -36,16 +41,113 @@ export const TranslationPage: React.FC = () => {
     setError(null);
 
     try {
-      // This would be replaced with actual translation logic
-      // using a language model API
-      setTimeout(() => {
-        setTranslatedText(sourceText);
-        setIsTranslating(false);
-      }, 1000);
+      const settingsService = SettingsService.getInstance();
+      const provider = settingsService.getSelectedProvider();
+      const model = settingsService.getSelectedModel();
+      
+      // Create conversation ID (just for streaming handler, won't be stored)
+      const tempConversationId = uuidv4();
+
+      // Create messages for translation
+      const messages = createTranslationMessages(tempConversationId, sourceText, targetLanguage);
+
+      // Create placeholder message for streaming
+      const placeholderMessage = MessageHelper.getPlaceholderMessage(model, provider, tempConversationId);
+      placeholderMessage.fatherMessageId = messages[0].messageId;
+
+      // Create stream controller for handling the response
+      const streamController = new StreamControlHandler(
+        // We create a minimal conversation object just for the StreamControlHandler
+        {
+          conversationId: tempConversationId,
+          folderId: '',
+          title: 'Translation',
+          firstMessageId: messages[0].messageId,
+          messages: new Map([[placeholderMessage.messageId, placeholderMessage]]),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          messageInput: ''
+        },
+        placeholderMessage,
+        // On chunk callback
+        (updatedConversation) => {
+          const updatedMessage = updatedConversation.messages.get(placeholderMessage.messageId);
+          if (updatedMessage) {
+            setTranslatedText(MessageHelper.MessageContentToText(updatedMessage.content));
+          }
+        },
+        // On finish callback
+        (aiResponse) => {
+          setIsTranslating(false);
+          if (aiResponse) {
+            setTranslatedText(MessageHelper.MessageContentToText(aiResponse.content));
+          }
+        }
+      );
+
+      // Send to AI service
+      await AIService.getInstance().getChatCompletion(
+        messages,
+        {
+          model,
+          provider,
+          stream: true
+        },
+        streamController
+      );
     } catch (err) {
       setError(err as Error);
       setIsTranslating(false);
     }
+  };
+
+  // Create messages for translation
+  const createTranslationMessages = (conversationId: string, text: string, targetLang: string): Message[] => {
+    // Create a system message with translation instructions
+    const systemMessage: Message = {
+      messageId: uuidv4(),
+      conversationId,
+      role: 'system' as MessageRole,
+      content: MessageHelper.pureTextMessage(
+        `You are a translation assistant. Detect the source language of the text and translate it to ${getLanguageName(targetLang)}. 
+         Only return the translated text without any explanations, notes, or decorations.
+         Do not include any text that is not in the original input.`
+      ),
+      timestamp: new Date(),
+      provider: SettingsService.getInstance().getSelectedProvider(),
+      model: SettingsService.getInstance().getSelectedModel(),
+      tokens: 0,
+      fatherMessageId: null,
+      childrenMessageIds: [],
+      preferIndex: -1
+    };
+
+    // Create the user message with text to translate
+    const userMessage: Message = {
+      messageId: uuidv4(),
+      conversationId,
+      role: 'user' as MessageRole,
+      content: MessageHelper.pureTextMessage(text),
+      timestamp: new Date(),
+      provider: 'user',
+      model: 'user',
+      tokens: 0,
+      fatherMessageId: systemMessage.messageId,
+      childrenMessageIds: [],
+      preferIndex: -1
+    };
+
+    // Link messages
+    systemMessage.childrenMessageIds.push(userMessage.messageId);
+    systemMessage.preferIndex = 0;
+
+    return [systemMessage, userMessage];
+  };
+
+  // Get language name from code
+  const getLanguageName = (code: string): string => {
+    const language = languages.find(lang => lang.code === code);
+    return language ? language.name : code;
   };
 
   // Languages for dropdown
@@ -83,17 +185,9 @@ export const TranslationPage: React.FC = () => {
                     {t('translation.title')}
                 </h1>
                 
-                <select
-                  value={sourceLanguage}
-                  onChange={(e) => setSourceLanguage(e.target.value)}
-                  className="px-4 py-2 input-box"
-                >
-                  {languages.map((lang) => (
-                    <option key={`source-${lang.code}`} value={lang.code}>
-                      {lang.name}
-                    </option>
-                  ))}
-                </select>
+                <span className="text-sm text-light-hint">
+                  {t('translation.sourceLanguageWithAutoSelected')}
+                </span>
               </div>
 
               <button

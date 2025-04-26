@@ -34,7 +34,7 @@
   },
   "translation": {
     "title": "Traducción",
-    "sourceLanguage": "Idioma de Origen",
+    "sourceLanguageWithAutoSelected": "El idioma de origen se detectará automáticamente",
     "result": "Resultado de la Traducción",
     "translateButton": "Traducir",
     "translating": "Traduciendo...",

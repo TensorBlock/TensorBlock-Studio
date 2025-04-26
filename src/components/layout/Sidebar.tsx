@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="w-[68px] h-full bg-main-background-color flex flex-col">
  
       {/* Navigation buttons */}
-      <div className="flex flex-col items-center flex-1 pt-2">
+      <div className="flex flex-col items-center flex-1 gap-1 pt-2">
         <button 
           className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
             getActivePage() === 'chat' 
