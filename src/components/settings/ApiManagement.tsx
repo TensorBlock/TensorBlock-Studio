@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, Plus, Trash2, Edit2, Search, X, Brain, Eye, Wrench, Type, Database, EyeOff } from 'lucide-react';
+import { ChevronRight, Plus, Trash2, Edit2, Search, X, Brain, Eye, Wrench, Type, Database, EyeOff, Image } from 'lucide-react';
 import { ProviderSettings, ModelSettings } from '../../types/settings';
 import { AIServiceCapability } from '../../types/capabilities';
 import { v4 as uuidv4 } from 'uuid';
@@ -198,6 +198,8 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
         return <Wrench size={16} className="text-orange-500" />;
       case AIServiceCapability.Embedding:
         return <Database size={16} className="text-yellow-500" />;
+      case AIServiceCapability.ImageGeneration:
+        return <Image size={16} className="text-green-600" />;
       default:
         return null;
     }

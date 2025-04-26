@@ -71,6 +71,12 @@ export class OpenAIService implements AiServiceProvider {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getModelCapabilities(model: string): AIServiceCapability[] {
+    // Add image generation capability for DALL-E 3
+    if (model === 'dall-e-3') {
+      return [AIServiceCapability.ImageGeneration];
+    }
+    
+    // Default capabilities for chat models
     return mapModelCapabilities(
       false,
       false,

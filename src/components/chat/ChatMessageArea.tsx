@@ -537,6 +537,13 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             {/* Image generation button */}
             <ImageGenerationButton 
               disabled={isLoading || isCurrentlyStreaming}
+              onImageGenerate={(prompt, provider, model) => {
+                // Set special message for image generation
+                const imageGenPrompt = prompt || `/image Generate an image using ${provider} ${model}`;
+                setInput(imageGenPrompt);
+                // Focus the input
+                inputRef.current?.focus();
+              }}
             />
           </div>
 

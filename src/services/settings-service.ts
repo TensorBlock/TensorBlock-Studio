@@ -65,6 +65,14 @@ const DEFAULT_SETTINGS: UserSettings = {
           modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
           modelRefUUID: uuidv4(),
         },
+        {
+          modelName: 'DALL-E 3',
+          modelId: 'dall-e-3',
+          modelCategory: 'Image Generation',
+          modelDescription: 'DALL-E 3 is OpenAI\'s advanced image generation model.',
+          modelCapabilities: [AIServiceCapability.ImageGeneration],
+          modelRefUUID: uuidv4(),
+        },
       ]
     },
     ['Anthropic']: {
@@ -277,6 +285,8 @@ export class SettingsService {
       
       this.addAllDefaultProviders();
 
+      this.addDefaultModels();
+
       this.isInitialized = true;
     } catch (error) {
       console.error('Error initializing settings service:', error);
@@ -291,6 +301,26 @@ export class SettingsService {
         this.settings.providers[provider] = {
           ...DEFAULT_SETTINGS.providers[provider],
         };
+      }
+    }
+  }
+
+  private addDefaultModels() {
+    for(const provider in this.settings.providers) {
+      if(!this.settings.providers[provider].models) {
+        this.settings.providers[provider].models = DEFAULT_SETTINGS.providers[provider].models;
+      }
+
+      if(provider === 'OpenAI') {
+
+        this.settings.providers[provider].models!.push({
+          modelName: 'DALL-E 3',
+          modelId: 'dall-e-3',
+          modelCategory: 'Image Generation',
+          modelDescription: 'DALL-E 3 is OpenAI\'s advanced image generation model.',
+          modelCapabilities: [AIServiceCapability.ImageGeneration],
+          modelRefUUID: uuidv4(),
+        });
       }
     }
   }
