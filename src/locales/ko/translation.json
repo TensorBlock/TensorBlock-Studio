@@ -40,6 +40,7 @@
     "translating": "번역 중...",
     "inputPlaceholder": "번역할 텍스트를 입력하세요...",
     "resultPlaceholder": "번역 결과가 여기에 표시됩니다",
+    "copy": "복사",
     "apiKeyMissing": "선택한 제공자의 API 키를 설정에서 설정하세요.",
     "autoDetect": "자동 감지",
     "english": "영어",

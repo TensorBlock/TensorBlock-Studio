@@ -40,6 +40,7 @@
     "translating": "翻译中...",
     "inputPlaceholder": "输入要翻译的文本...",
     "resultPlaceholder": "翻译结果将显示在这里",
+    "copy": "复制",
     "apiKeyMissing": "请在设置中为所选提供商设置您的 API 密钥。",
     "autoDetect": "自动检测",
     "english": "英语",

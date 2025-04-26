@@ -40,6 +40,7 @@
     "translating": "翻訳中...",
     "inputPlaceholder": "翻訳するテキストを入力...",
     "resultPlaceholder": "翻訳結果がここに表示されます",
+    "copy": "コピー",
     "apiKeyMissing": "選択したプロバイダーのAPIキーを設定で設定してください。",
     "autoDetect": "自動検出",
     "english": "英語",

@@ -312,15 +312,16 @@ export class SettingsService {
       }
 
       if(provider === 'OpenAI') {
-
-        this.settings.providers[provider].models!.push({
-          modelName: 'DALL-E 3',
-          modelId: 'dall-e-3',
-          modelCategory: 'Image Generation',
-          modelDescription: 'DALL-E 3 is OpenAI\'s advanced image generation model.',
-          modelCapabilities: [AIServiceCapability.ImageGeneration],
-          modelRefUUID: uuidv4(),
-        });
+        if(!this.settings.providers[provider].models!.find(model => model.modelId === 'dall-e-3')) {
+          this.settings.providers[provider].models!.push({
+            modelName: 'DALL-E 3',
+            modelId: 'dall-e-3',
+            modelCategory: 'Image Generation',
+            modelDescription: 'DALL-E 3 is OpenAI\'s advanced image generation model.',
+            modelCapabilities: [AIServiceCapability.ImageGeneration],
+            modelRefUUID: uuidv4(),
+          });
+        }
       }
     }
   }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Server, MessageSquare, Languages } from 'lucide-react';
 import { SettingsService } from '../../services/settings-service';
 import { ProviderSettings } from '../../types/settings';
-import { ApiManagement, ModelManagement, ChatSettings, LanguageSettings } from '../settings';
+import { ApiManagement, ChatSettings, LanguageSettings } from '../settings';
 import { DatabaseIntegrationService } from '../../services/database-integration';
 import { AIService } from '../../services/ai-service';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,7 +21,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [activeTab, setActiveTab] = useState<SettingsTab>('api');
   const [selectedProvider, setSelectedProvider] = useState<string>('TensorBlock');
   const [providerSettings, setProviderSettings] = useState<Record<string, ProviderSettings>>({});
-  const [selectedModel, setSelectedModel] = useState('');
   const [useWebSearch, setUseWebSearch] = useState(true);
   const [isDbInitialized, setIsDbInitialized] = useState(false);
   const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
@@ -55,7 +54,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       const settings = settingsService.getSettings();
       setSelectedProvider(settings.selectedProvider);
       setProviderSettings(settings.providers);
-      setSelectedModel(settings.selectedModel);
       setUseWebSearch(settings.enableWebSearch_Preview);
       setHasApiKeyChanged(false);
       lastOpenedSettings.current = true;
@@ -71,11 +69,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleProviderChange = (provider: string) => {
     console.log('Change to provider: ', provider);
     setSelectedProvider(provider);
-  };
-  
-  // Handle model selection change
-  const handleModelChange = (modelId: string) => {
-    setSelectedModel(modelId);
   };
   
   // Handle web search setting change
@@ -307,14 +300,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <h1 className="mb-6 text-2xl font-semibold">{t('settings.language')}</h1>
                 <LanguageSettings />
               </div>
-            )}
-            
-            {/* Model Management Tab */}
-            {activeTab === 'models' && (
-              <ModelManagement
-                selectedModel={selectedModel}
-                onModelChange={handleModelChange}
-              />
             )}
           </div>
         </div>

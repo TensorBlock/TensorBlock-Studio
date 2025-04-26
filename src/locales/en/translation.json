@@ -40,6 +40,7 @@
     "translating": "Translating...",
     "inputPlaceholder": "Enter text to translate...",
     "resultPlaceholder": "Translation will appear here",
+    "copy": "Copy",
     "apiKeyMissing": "Please set your API key for the selected provider in the settings.",
     "autoDetect": "Auto-detect",
     "english": "English",
