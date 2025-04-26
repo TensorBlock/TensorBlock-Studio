@@ -602,4 +602,39 @@
     .text-light-hint{
         color: var(--surface-400);
     }
+
+    .image-generation-button {
+        background-color: transparent;
+        color: var(--primary-500);
+    }
+
+    .image-generation-button:hover {
+        background-color: var(--primary-100);
+        color: var(--primary-600);
+    }
+
+    .image-generation-button:disabled {
+        background-color: transparent;
+        color: var(--surface-400);
+        cursor: not-allowed;
+    }
+
+    .image-generation-popup {
+        background-color: var(--surface-0);
+        border: 1px solid var(--primary-200);
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .image-generation-provider-item {
+        background-color: transparent;
+    }
+
+    .image-generation-provider-item:hover {
+        background-color: var(--primary-100);
+    }
+
+    .image-generation-provider-selected {
+        background-color: var(--primary-200);
+    }
 }

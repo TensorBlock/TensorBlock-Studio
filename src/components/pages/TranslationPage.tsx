@@ -13,7 +13,6 @@ export const TranslationPage: React.FC = () => {
   const [sourceText, setSourceText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
-  const [sourceLanguage, setSourceLanguage] = useState('auto');
   const [targetLanguage, setTargetLanguage] = useState('en');
   const [error, setError] = useState<Error | null>(null);
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(true);

@@ -372,7 +372,7 @@ export const ChatPage = () => {
     <div className="flex flex-col w-full h-full bg-white">
 
       {/* Main content with chat history and messages */}
-      <div className="flex w-full overflow-hidden">
+      <div className="flex w-full h-full overflow-hidden">
         <ChatHistoryList 
           conversations={conversations}
           folders={folders}
@@ -387,7 +387,7 @@ export const ChatPage = () => {
           onMoveConversation={handleMoveConversation}
         />
         
-        <div className="flex flex-col w-full min-w-0 overflow-hidden">
+        <div className="flex flex-col w-full h-full overflow-hidden">
           {isApiKeyMissing && (
             <div className="p-2 text-sm text-center text-yellow-800 bg-yellow-100">
               Please set your API key for the selected provider in the settings.
