@@ -54,6 +54,27 @@
     "japanese": "Japanese",
     "korean": "Korean"
   },
+  "fileManagement": {
+    "title": "File Management",
+    "noFiles": "No files yet",
+    "noFilesDescription": "Your uploaded files will appear here",
+    "uploadButton": "Upload File",
+    "uploading": "Uploading...",
+    "fileName": "File Name",
+    "fileType": "Type",
+    "fileSize": "Size",
+    "actions": "Actions",
+    "rename": "Rename",
+    "export": "Export",
+    "delete": "Delete",
+    "open": "Open",
+    "search": "Search files...",
+    "confirmDelete": "Delete File",
+    "confirmDeleteMessage": "Are you sure you want to delete this file? This action cannot be undone.",
+    "renameFile": "Rename File",
+    "newFileName": "New file name",
+    "sortBy": "Sort by"
+  },
   "selectModel": {
     "selectModel_title": "Select Model",
     "selectModel_close": "Close",

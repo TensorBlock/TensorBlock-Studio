@@ -1,5 +1,6 @@
 import { SettingsService } from './settings-service';
 import { FileJsonData, MessageContent, MessageContentType } from '../types/chat';
+import { DatabaseIntegrationService } from './database-integration';
 
 // Define provider-specific file size limits
 export interface ProviderFileLimits {
@@ -115,21 +116,24 @@ export class FileUploadService {
       }
       
       const arrayBuffer = await this.readFile(file);
-      const base64 = FileUploadService.bufferToBase64(arrayBuffer);
 
-      const fileData: FileJsonData = {
+      const fileJsonData: FileJsonData = {
         name: file.name,
         type: file.type,
         size: file.size
       };
 
+      // Store the file in the database
+      const dbService = DatabaseIntegrationService.getInstance();
+      const fileId = await dbService.saveFile(fileJsonData, arrayBuffer);
+      
       // Create a message content object for this file
       const fileContent: MessageContent = {
         type: MessageContentType.File,
-        content: base64, // Store the file path
-        dataJson: JSON.stringify(fileData)
+        content: fileId, // Store the file ID
+        dataJson: JSON.stringify(fileJsonData)
       };
-      
+
       results.push(fileContent);
     }
     

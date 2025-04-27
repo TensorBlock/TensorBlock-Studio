@@ -2,12 +2,13 @@ import { ProviderSettings } from '../types/settings';
 import { Conversation, Message, ConversationFolder } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 import { UserSettings } from '../types/settings';
+import { FileData } from '../types/file';
 
 // database.ts
 export class DatabaseService {
     private db: IDBDatabase | null = null;
     private readonly DB_NAME = 'tensorblock_db';
-    private readonly DB_VERSION = 2; // Increase version to trigger upgrade
+    private readonly DB_VERSION = 3; // Increase version to trigger upgrade
     private readonly ENCRYPTION_KEY = 'your-secure-encryption-key'; // In production, use a secure key management system
 
     private isInitialized: boolean = false;
@@ -82,6 +83,13 @@ export class DatabaseService {
                         keyPath: 'id'
                     });
                 }
+
+                // Create files store
+                if (!db.objectStoreNames.contains('files')) {
+                    db.createObjectStore('files', {
+                        keyPath: 'fileId'
+                    });
+                }
             };
         });
     }
@@ -98,7 +106,8 @@ export class DatabaseService {
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 messages: new Map(),
-                firstMessageId: null
+                firstMessageId: null,
+                messageInput: ''
             };
 
             const transaction = this.db.transaction('conversations', 'readwrite');
@@ -514,6 +523,95 @@ export class DatabaseService {
                 
                 resolve(decryptedSettings);
             };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Save a file to the database
+     * @param file - The file to save
+     * @returns The file ID
+     */
+    public async saveFile(file: FileData): Promise<string> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('files', 'readwrite');
+            const store = transaction.objectStore('files');
+            const request = store.add(file);
+
+            console.log('saveFile', file);
+
+            request.onsuccess = () => resolve(request.result as string);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Get all files from the database
+     * @returns List of files
+     */
+    public async getFiles(): Promise<FileData[]> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('files', 'readonly');
+            const store = transaction.objectStore('files');
+            const request = store.getAll();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Get a file from the database by ID
+     * @param fileId - The file ID
+     * @returns The file data
+     */
+    public async getFile(fileId: string): Promise<FileData | null> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('files', 'readonly');
+            const store = transaction.objectStore('files');
+            const request = store.get(fileId);
+
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Update a file in the database
+     * @param file - The file to update
+     */
+    public async updateFile(file: FileData): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('files', 'readwrite');
+            const store = transaction.objectStore('files');
+            const request = store.put(file);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Delete a file from the database
+     * @param fileId - The file ID to delete
+     */
+    public async deleteFile(fileId: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('files', 'readwrite');
+            const store = transaction.objectStore('files');
+            const request = store.delete(fileId);
+
+            request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
     }

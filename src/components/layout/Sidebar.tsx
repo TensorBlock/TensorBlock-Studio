@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Settings, Image, Languages } from 'lucide-react';
+import { MessageSquare, Settings, Image, Languages, FileText } from 'lucide-react';
 
 interface SidebarProps {
   activePage: string;
@@ -27,6 +27,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     else if(activePage === 'translation'){
       return 'translation';
+    }
+    else if(activePage === 'files'){
+      return 'files';
     }
 
     return '';
@@ -71,6 +74,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-label="Translation"
         >
           <Languages size={22} />
+        </button>
+
+        <button 
+          className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
+            getActivePage() === 'files' 
+              ? 'navigation-item-selected navigation-item-text' 
+              : 'navigation-item navigation-item-text'
+          }`}
+          onClick={() => onChangePage('files')}
+          aria-label="File Management"
+        >
+          <FileText size={22} />
         </button>
       </div>
 

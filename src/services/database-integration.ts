@@ -1,7 +1,8 @@
 import { DatabaseService } from './database';
 import { SettingsService } from './settings-service';
-import { Conversation, Message, ConversationFolder, MessageContent, MessageContentType } from '../types/chat';
+import { Conversation, Message, ConversationFolder, MessageContent, MessageContentType, FileJsonData } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
+import { FileData } from '../types/file';
 
 const SYSTEM_MESSAGE_CONTENT: MessageContent[] = [
     {
@@ -204,7 +205,8 @@ export class DatabaseIntegrationService {
                 firstMessageId: conversation.firstMessageId,
                 createdAt: conversation.createdAt,
                 updatedAt: new Date(),
-                messages: conversation.messages
+                messages: conversation.messages,
+                messageInput: conversation.messageInput
             };
             
             // Update in database
@@ -346,5 +348,78 @@ export class DatabaseIntegrationService {
         return {
             ...dbMessage,
         };
+    }
+
+    public async saveFile(fileData: FileJsonData, arrayBuffer: ArrayBuffer): Promise<string> {
+        const fileId = uuidv4();
+        const file: FileData = {
+            fileId: fileId,
+            name: fileData.name,
+            type: fileData.type,
+            size: arrayBuffer.byteLength,
+            data: arrayBuffer
+        };
+
+        await this.dbService.saveFile(file);
+
+        return fileId;
+    }
+
+    /**
+     * Get all files from the database
+     */
+    public async getFiles(): Promise<FileData[]> {
+        try {
+            return await this.dbService.getFiles();
+        } catch (error) {
+            console.error('Error getting files:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get a file from the database by ID
+     */
+    public async getFile(fileId: string): Promise<FileData | null> {
+        try {
+            return await this.dbService.getFile(fileId);
+        } catch (error) {
+            console.error(`Error getting file ${fileId}:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Update a file name in the database
+     */
+    public async updateFileName(fileId: string, newName: string): Promise<void> {
+        try {
+            const file = await this.dbService.getFile(fileId);
+            if (!file) {
+                throw new Error(`File with ID ${fileId} not found`);
+            }
+            
+            const updatedFile: FileData = {
+                ...file,
+                name: newName
+            };
+            
+            await this.dbService.updateFile(updatedFile);
+        } catch (error) {
+            console.error('Error updating file name:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a file from the database
+     */
+    public async deleteFile(fileId: string): Promise<void> {
+        try {
+            await this.dbService.deleteFile(fileId);
+        } catch (error) {
+            console.error('Error deleting file:', error);
+            throw error;
+        }
     }
 } 
