@@ -40,6 +40,7 @@
     "translating": "翻訳中...",
     "inputPlaceholder": "翻訳するテキストを入力...",
     "resultPlaceholder": "翻訳結果がここに表示されます",
+    "copy": "コピー",
     "apiKeyMissing": "選択したプロバイダーのAPIキーを設定で設定してください。",
     "autoDetect": "自動検出",
     "english": "英語",
@@ -52,6 +53,35 @@
     "chinese": "中国語",
     "japanese": "日本語",
     "korean": "韓国語"
+  },
+  "fileManagement": {
+    "title": "ファイル管理",
+    "noFiles": "ファイルはまだありません",
+    "noFilesDescription": "アップロードしたファイルがここに表示されます",
+    "uploadButton": "ファイルをインポート",
+    "uploading": "アップロード中...",
+    "fileName": "ファイル名",
+    "fileType": "タイプ",
+    "fileSize": "サイズ",
+    "updatedAt": "最終更新日",
+    "actions": "操作",
+    "rename": "名前の変更",
+    "export": "エクスポート",
+    "delete": "削除",
+    "open": "開く",
+    "search": "ファイルを検索...",
+    "confirmDelete": "ファイルの削除",
+    "confirmDeleteMessage": "このファイルを削除してもよろしいですか？この操作は元に戻せません。",
+    "renameFile": "ファイル名の変更",
+    "newFileName": "新しいファイル名",
+    "sortBy": "並び替え",
+    "categories": {
+      "all": "すべてのファイル",
+      "document": "ドキュメント",
+      "image": "画像",
+      "audio": "音声",
+      "other": "その他"
+    }
   },
   "selectModel": {
     "selectModel_title": "モデルを選択",

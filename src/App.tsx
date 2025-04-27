@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ChatPage } from './components/pages/ChatPage';
 import { ImageGenerationPage } from './components/pages/ImageGenerationPage';
 import { TranslationPage } from './components/pages/TranslationPage';
+import { FileManagementPage } from './components/pages/FileManagementPage';
 import MainLayout from './components/layout/MainLayout';
 import DatabaseInitializer from './components/core/DatabaseInitializer';
 
@@ -36,6 +37,7 @@ function App() {
         {activePage === 'chat' && <ChatPage />}
         {activePage === 'image' && <ImageGenerationPage />}
         {activePage === 'translation' && <TranslationPage />}
+        {activePage === 'files' && <FileManagementPage />}
       </MainLayout>
     </DatabaseInitializer>
   );

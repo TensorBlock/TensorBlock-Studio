@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Image } from 'lucide-react';
-import { SettingsService } from '../../services/settings-service';
+import { SettingsService, SETTINGS_CHANGE_EVENT } from '../../services/settings-service';
 import { AIServiceCapability } from '../../types/capabilities';
 import ProviderIcon from '../ui/ProviderIcon';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -17,6 +17,7 @@ interface ProviderModel {
 }
 
 const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({ 
+  onImageGenerate,
   disabled = false 
 }) => {
   const { t } = useTranslation();
@@ -42,8 +43,7 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
         const providerSettings = settingsService.getProviderSettings(providerId);
         
         if (providerSettings.models) {
-          // For now, just assume all models have image generation capability
-          // This would need to be updated once proper capability detection is implemented
+          // Find models with image generation capability
           for (const model of providerSettings.models) {
             // Check if model has image generation capability
             if (model.modelCapabilities?.includes(AIServiceCapability.ImageGeneration)) {
@@ -67,6 +67,13 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
     };
 
     loadProviders();
+    
+    // Listen for settings changes to update available providers
+    window.addEventListener(SETTINGS_CHANGE_EVENT, loadProviders);
+    
+    return () => {
+      window.removeEventListener(SETTINGS_CHANGE_EVENT, loadProviders);
+    };
   }, []);
 
   // Handle click outside to close popup
@@ -96,6 +103,12 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
     setSelectedProvider(providerName);
     setSelectedModel(modelId);
     setIsPopupOpen(false);
+    
+    // If onImageGenerate is provided, call it with an empty prompt
+    // The actual prompt will be filled in by the chat message
+    if (onImageGenerate) {
+      onImageGenerate("", providerName, modelId);
+    }
   };
 
   const isButtonEnabled = !disabled && providers.length > 0;

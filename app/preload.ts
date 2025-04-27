@@ -26,4 +26,7 @@ contextBridge.exposeInMainWorld('electron', {
   // File and URL operations
   openUrl: (url: string) => ipcRenderer.send('open-url', url),
   openFolderByFile: (path: string) => ipcRenderer.send('open-folder-by-file', path),
+  saveFile: (fileBuffer: ArrayBuffer | string, fileName: string, fileType: string) => 
+    ipcRenderer.invoke('save-file', { fileBuffer, fileName, fileType }),
+  openFile: (filePath: string) => ipcRenderer.invoke('open-file', filePath),
 }); 

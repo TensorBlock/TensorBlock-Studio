@@ -40,6 +40,7 @@
     "translating": "翻译中...",
     "inputPlaceholder": "输入要翻译的文本...",
     "resultPlaceholder": "翻译结果将显示在这里",
+    "copy": "复制",
     "apiKeyMissing": "请在设置中为所选提供商设置您的 API 密钥。",
     "autoDetect": "自动检测",
     "english": "英语",
@@ -52,6 +53,35 @@
     "chinese": "中文",
     "japanese": "日语",
     "korean": "韩语"
+  },
+  "fileManagement": {
+    "title": "文件管理",
+    "noFiles": "暂无文件",
+    "noFilesDescription": "您上传的文件将会显示在这里",
+    "uploadButton": "导入文件",
+    "uploading": "上传中...",
+    "fileName": "文件名称",
+    "fileType": "类型",
+    "fileSize": "大小",
+    "updatedAt": "最后更新",
+    "actions": "操作",
+    "rename": "重命名",
+    "export": "导出",
+    "delete": "删除",
+    "open": "打开",
+    "search": "搜索文件...",
+    "confirmDelete": "删除文件",
+    "confirmDeleteMessage": "确定要删除此文件吗？此操作无法撤销。",
+    "renameFile": "重命名文件",
+    "newFileName": "新文件名",
+    "sortBy": "排序方式",
+    "categories": {
+      "all": "所有文件",
+      "document": "文档",
+      "image": "图片",
+      "audio": "音频",
+      "other": "其他"
+    }
   },
   "selectModel": {
     "selectModel_title": "选择模型",

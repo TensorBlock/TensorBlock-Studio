@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SettingsService, SETTINGS_CHANGE_EVENT } from '../../services/settings-service';
-import { Orbit, Languages, ArrowRight } from 'lucide-react';
+import { Orbit, Languages, ArrowRight, Copy, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import { Message, MessageRole } from '../../types/chat';
@@ -16,6 +16,7 @@ export const TranslationPage: React.FC = () => {
   const [targetLanguage, setTargetLanguage] = useState('en');
   const [error, setError] = useState<Error | null>(null);
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(true);
+  const [isCopied, setIsCopied] = useState(false);
 
   // Check if API key is available
   useEffect(() => {
@@ -31,6 +32,20 @@ export const TranslationPage: React.FC = () => {
       window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
     };
   }, []);
+
+  // Handle copy to clipboard
+  const handleCopy = () => {
+    if (!translatedText) return;
+    
+    navigator.clipboard.writeText(translatedText)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+  };
 
   // Handle translation
   const handleTranslate = async () => {
@@ -216,27 +231,6 @@ export const TranslationPage: React.FC = () => {
               className="flex-1 w-full p-3 mb-4 form-textarea-border input-box"
               style={{ minHeight: '200px', resize: 'none' }}
             />
-
-            {/* Translation button */}
-            {/* <div className="flex justify-center">
-              <button
-                onClick={handleTranslate}
-                disabled={isTranslating || !sourceText.trim() || isApiKeyMissing}
-                className="px-8 py-2.5 text-white confirm-btn flex items-center"
-              >
-                {isTranslating ? (
-                  <>
-                    <Orbit size={18} className="mr-2 animate-spin" />
-                    {t('translation.translating')}
-                  </>
-                ) : (
-                  <>
-                    <Languages size={18} className="mr-2" />
-                    {t('translation.translateButton')}
-                  </>
-                )}
-              </button>
-            </div> */}
           </div>
         </div>
 
@@ -272,7 +266,7 @@ export const TranslationPage: React.FC = () => {
             )}
 
             {/* Translation result */}
-            <div className="flex-1 p-3 overflow-auto form-textarea-border major-area-bg-color">
+            <div className="relative flex-1 p-3 overflow-auto form-textarea-border major-area-bg-color">
               {isTranslating ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="w-8 h-8 border-4 rounded-full border-primary-300 border-t-primary-600 animate-spin"></div>
@@ -280,7 +274,21 @@ export const TranslationPage: React.FC = () => {
               ) : (
                 <div className="h-full">
                   {translatedText ? (
-                    <p className="text-primary-800">{translatedText}</p>
+                    <>
+                      <p className="pr-10 text-primary-800">{translatedText}</p>
+                      <button 
+                        onClick={handleCopy}
+                        disabled={!translatedText}
+                        className="absolute p-2 transition-colors rounded-md top-3 right-3 hover:bg-surface-100"
+                        title={t('translation.copy')}
+                      >
+                        {isCopied ? (
+                          <Check size={18} className="text-green-600" />
+                        ) : (
+                          <Copy size={18} className="text-surface-600" />
+                        )}
+                      </button>
+                    </>
                   ) : (
                     <div className="flex items-center justify-center h-full">
                       <p className="text-surface-400">{t('translation.resultPlaceholder')}</p>

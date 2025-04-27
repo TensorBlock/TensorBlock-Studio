@@ -40,6 +40,7 @@
     "translating": "Traduciendo...",
     "inputPlaceholder": "Introduce el texto a traducir...",
     "resultPlaceholder": "La traducción aparecerá aquí",
+    "copy": "Copiar",
     "apiKeyMissing": "Por favor, configura tu clave API para el proveedor seleccionado en la configuración.",
     "autoDetect": "Detección automática",
     "english": "Inglés",
@@ -52,6 +53,35 @@
     "chinese": "Chino",
     "japanese": "Japonés",
     "korean": "Coreano"
+  },
+  "fileManagement": {
+    "title": "Gestión de Archivos",
+    "noFiles": "No hay archivos todavía",
+    "noFilesDescription": "Los archivos cargados aparecerán aquí",
+    "uploadButton": "Importar Archivo",
+    "uploading": "Cargando...",
+    "fileName": "Nombre del Archivo",
+    "fileType": "Tipo",
+    "fileSize": "Tamaño",
+    "updatedAt": "Última Actualización",
+    "actions": "Acciones",
+    "rename": "Renombrar",
+    "export": "Exportar",
+    "delete": "Eliminar",
+    "open": "Abrir",
+    "search": "Buscar archivos...",
+    "confirmDelete": "Eliminar Archivo",
+    "confirmDeleteMessage": "¿Estás seguro de que deseas eliminar este archivo? Esta acción no se puede deshacer.",
+    "renameFile": "Renombrar Archivo",
+    "newFileName": "Nuevo nombre de archivo",
+    "sortBy": "Ordenar por",
+    "categories": {
+      "all": "Todos los Archivos",
+      "document": "Documentos",
+      "image": "Imágenes",
+      "audio": "Audio",
+      "other": "Otros"
+    }
   },
   "selectModel": {
     "selectModel_title": "Seleccionar Modelo",

@@ -637,4 +637,70 @@
     .image-generation-provider-selected {
         background-color: var(--primary-200);
     }
+
+    /* File Management Page */
+    .file-filter-item {
+        border-radius: 0.5rem;
+        background-color: transparent;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .file-filter-item:hover {
+        background-color: var(--primary-50);
+    }
+
+    .file-filter-item-active {
+        background-color: var(--primary-100);
+        color: var(--primary-700);
+    }
+
+    .file-filter-item-active:hover {
+        background-color: var(--primary-200);
+    }
+
+    .file-filter-count {
+        background-color: var(--primary-200);
+        color: var(--primary-600);
+        border-radius: 9999px;
+        padding: 0.125rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .file-type-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 0.375rem;
+        margin-right: 0.75rem;
+    }
+
+    .file-type-all {
+        background-color: var(--primary-100);
+        color: var(--primary-600);
+    }
+
+    .file-type-document {
+        background-color: #D1E7DD;
+        color: #0F5132;
+    }
+
+    .file-type-image {
+        background-color: #CFE2FF;
+        color: #084298;
+    }
+
+    .file-type-audio {
+        background-color: #F8D7DA;
+        color: #842029;
+    }
+
+    .file-type-other {
+        background-color: #E2E3E5;
+        color: #41464B;
+    }
 }
