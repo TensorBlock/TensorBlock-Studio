@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  Upload, 
+import {
+  Upload,
   Trash2, 
   Edit2, 
   Download, 
@@ -12,22 +12,38 @@ import {
   FileText,
   Archive,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  FolderOpen,
+  Music,
+  HardDrive,
+  AlertTriangle
 } from "lucide-react";
 import { DatabaseIntegrationService } from "../../services/database-integration";
 import { FileData } from "../../types/file";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
+
+// Define the file type categories
+type FileCategory = 'all' | 'document' | 'image' | 'audio' | 'other';
 
 export const FileManagementPage = () => {
   const { t } = useTranslation();
   const [files, setFiles] = useState<FileData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
   const [newFileName, setNewFileName] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "size" | "type">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [activeCategory, setActiveCategory] = useState<FileCategory>('all');
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    cancelText: '',
+    confirmColor: 'red' as 'red' | 'blue' | 'green' | 'gray'
+  });
 
   // Load files on mount
   useEffect(() => {
@@ -48,10 +64,96 @@ export const FileManagementPage = () => {
     }
   };
 
-  // Filter files by search term
-  const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // MIME type helpers to categorize files
+  const isDocumentType = (type: string): boolean => {
+    const documentMimeTypes = [
+      // Text documents
+      'text/plain', 'text/html', 'text/css', 'text/javascript', 'text/markdown',
+      // Microsoft Office
+      'application/msword', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      // PDF
+      'application/pdf',
+      // OpenDocument
+      'application/vnd.oasis.opendocument.text',
+      'application/vnd.oasis.opendocument.spreadsheet',
+      'application/vnd.oasis.opendocument.presentation',
+      // Code files
+      'application/json', 'application/xml', 'application/javascript',
+      // Other documents
+      'application/rtf', 'text/csv', 'text/tab-separated-values'
+    ];
+    
+    // Also check file extensions for common document types
+    const extension = getFileExtension(type);
+    const documentExtensions = ['txt', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'md', 'rtf',
+      'json', 'xml', 'html', 'htm', 'css', 'js', 'ts', 'tsx', 'jsx', 'csv', 'odt', 'ods', 'odp', 'c', 'cpp', 'h',
+      'py', 'java', 'rb', 'php', 'go', 'cs', 'swift', 'kt', 'rust'];
+    
+    return documentMimeTypes.some(mime => type.includes(mime)) || 
+           documentExtensions.includes(extension);
+  };
+
+  const isImageType = (type: string): boolean => {
+    const imageMimeTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/tiff', 
+      'image/bmp', 'image/svg+xml', 'image/x-icon'
+    ];
+    
+    // Also check file extensions
+    const extension = getFileExtension(type);
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tiff', 'tif', 'bmp', 'svg', 'ico'];
+    
+    return imageMimeTypes.some(mime => type.includes(mime)) || 
+           imageExtensions.includes(extension);
+  };
+
+  const isAudioType = (type: string): boolean => {
+    const audioMimeTypes = [
+      'audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/ogg', 'audio/webm',
+      'audio/aac', 'audio/flac', 'audio/x-m4a', 'audio/mp3'
+    ];
+    
+    // Also check file extensions
+    const extension = getFileExtension(type);
+    const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus'];
+    
+    return audioMimeTypes.some(mime => type.includes(mime)) || 
+           audioExtensions.includes(extension);
+  };
+
+  const getFileExtension = (filename: string): string => {
+    return filename.split('.').pop()?.toLowerCase() || '';
+  };
+
+  const getFileCategory = (file: FileData): FileCategory => {
+    if (isDocumentType(file.type) || isDocumentType(file.name)) {
+      return 'document';
+    } else if (isImageType(file.type) || isImageType(file.name)) {
+      return 'image';
+    } else if (isAudioType(file.type) || isAudioType(file.name)) {
+      return 'audio';
+    } else {
+      return 'other';
+    }
+  };
+
+  // Filter files by category and search term
+  const filteredFiles = files.filter((file) => {
+    const matchesCategory = activeCategory === 'all' || getFileCategory(file) === activeCategory;
+    const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Get counts for each category
+  const getCategoryCount = (category: FileCategory): number => {
+    if (category === 'all') {
+      return files.length;
+    }
+    return files.filter(file => getFileCategory(file) === category).length;
+  };
 
   // Sort files
   const sortedFiles = [...filteredFiles].sort((a, b) => {
@@ -115,12 +217,17 @@ export const FileManagementPage = () => {
     try {
       const dbService = DatabaseIntegrationService.getInstance();
       await dbService.deleteFile(selectedFile.fileId);
-      setShowDeleteModal(false);
+      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
       setSelectedFile(null);
       await loadFiles();
     } catch (error) {
       console.error("Error deleting file:", error);
     }
+  };
+
+  const handleCancelDelete = () => {
+    // Just close the dialog
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
   };
 
   // Rename file
@@ -182,19 +289,43 @@ export const FileManagementPage = () => {
 
   // Get file icon based on type
   const getFileIcon = (file: FileData) => {
+    const category = getFileCategory(file);
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
     
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
     const documentExtensions = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'md', 'ppt', 'pptx', 'xls', 'xlsx'];
     const codeExtensions = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'py', 'java', 'c', 'cpp', 'cs', 'php', 'rb', 'go', 'json'];
     const archiveExtensions = ['zip', 'rar', 'tar', 'gz', '7z'];
+    const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'];
     
-    if (imageExtensions.includes(extension)) return <ImageIcon size={18} className="text-blue-500" />;
-    if (documentExtensions.includes(extension)) return <FileText size={18} className="text-green-500" />;
-    if (codeExtensions.includes(extension)) return <Code size={18} className="text-purple-500" />;
-    if (archiveExtensions.includes(extension)) return <Archive size={18} className="text-amber-500" />;
+    if (imageExtensions.includes(extension) || category === 'image') 
+      return <ImageIcon size={18} className="text-blue-500" />;
+    if (documentExtensions.includes(extension)) 
+      return <FileText size={18} className="text-green-500" />;
+    if (codeExtensions.includes(extension)) 
+      return <Code size={18} className="text-purple-500" />;
+    if (archiveExtensions.includes(extension)) 
+      return <Archive size={18} className="text-amber-500" />;
+    if (audioExtensions.includes(extension) || category === 'audio') 
+      return <Music size={18} className="text-red-500" />;
     
     return <FileIcon size={18} className="text-gray-500" />;
+  };
+
+  // Get category icon
+  const getCategoryIcon = (category: FileCategory) => {
+    switch (category) {
+      case 'all':
+        return <HardDrive size={18} />;
+      case 'document':
+        return <FileText size={18} />;
+      case 'image':
+        return <ImageIcon size={18} />;
+      case 'audio':
+        return <Music size={18} />;
+      case 'other':
+        return <FolderOpen size={18} />;
+    }
   };
 
   // Toggle sort direction 
@@ -209,16 +340,109 @@ export const FileManagementPage = () => {
     }
   };
 
+  const handleDeleteClick = (file: FileData) => {
+    // Show confirmation dialog
+    setSelectedFile(file);
+    setConfirmDialog({
+      isOpen: true,
+      title: t("fileManagement.confirmDelete"),
+      message: t("fileManagement.confirmDeleteMessage"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
+      confirmColor: 'red'
+    });
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-white">
       <div className="flex flex-row h-full">
+        {/* Left sidebar - Categories */}
+        <div className="w-[240px] p-4 overflow-y-auto frame-right-border bg-main-background-color">
+          <h2 className="mb-4 text-xl font-medium">{t("fileManagement.title")}</h2>
+          
+          {/* Category filters */}
+          <div className="space-y-1">
+            {/* All files */}
+            <div 
+              className={`flex items-center justify-between file-filter-item ${activeCategory === 'all' ? 'file-filter-item-active' : ''}`}
+              onClick={() => setActiveCategory('all')}
+            >
+              <div className="flex items-center">
+                <div className="file-type-icon file-type-all">
+                  {getCategoryIcon('all')}
+                </div>
+                <span>{t("fileManagement.categories.all")}</span>
+              </div>
+              <span className="file-filter-count">{getCategoryCount('all')}</span>
+            </div>
+            
+            {/* Documents */}
+            <div 
+              className={`flex items-center justify-between file-filter-item ${activeCategory === 'document' ? 'file-filter-item-active' : ''}`}
+              onClick={() => setActiveCategory('document')}
+            >
+              <div className="flex items-center">
+                <div className="file-type-icon file-type-document">
+                  {getCategoryIcon('document')}
+                </div>
+                <span>{t("fileManagement.categories.document")}</span>
+              </div>
+              <span className="file-filter-count">{getCategoryCount('document')}</span>
+            </div>
+            
+            {/* Images */}
+            <div 
+              className={`flex items-center justify-between file-filter-item ${activeCategory === 'image' ? 'file-filter-item-active' : ''}`}
+              onClick={() => setActiveCategory('image')}
+            >
+              <div className="flex items-center">
+                <div className="file-type-icon file-type-image">
+                  {getCategoryIcon('image')}
+                </div>
+                <span>{t("fileManagement.categories.image")}</span>
+              </div>
+              <span className="file-filter-count">{getCategoryCount('image')}</span>
+            </div>
+            
+            {/* Audio */}
+            <div 
+              className={`flex items-center justify-between file-filter-item ${activeCategory === 'audio' ? 'file-filter-item-active' : ''}`}
+              onClick={() => setActiveCategory('audio')}
+            >
+              <div className="flex items-center">
+                <div className="file-type-icon file-type-audio">
+                  {getCategoryIcon('audio')}
+                </div>
+                <span>{t("fileManagement.categories.audio")}</span>
+              </div>
+              <span className="file-filter-count">{getCategoryCount('audio')}</span>
+            </div>
+            
+            {/* Others */}
+            <div 
+              className={`flex items-center justify-between file-filter-item ${activeCategory === 'other' ? 'file-filter-item-active' : ''}`}
+              onClick={() => setActiveCategory('other')}
+            >
+              <div className="flex items-center">
+                <div className="file-type-icon file-type-other">
+                  {getCategoryIcon('other')}
+                </div>
+                <span>{t("fileManagement.categories.other")}</span>
+              </div>
+              <span className="file-filter-count">{getCategoryCount('other')}</span>
+            </div>
+          </div>
+        </div>
+
         {/* Main content */}
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-semibold">
-                {t("fileManagement.title")}
+                {activeCategory === 'all' 
+                  ? t("fileManagement.title") 
+                  : t(`fileManagement.categories.${activeCategory}`)}
               </h1>
 
               {/* Upload button */}
@@ -345,10 +569,7 @@ export const FileManagementPage = () => {
                               <ExternalLink size={16} />
                             </button>
                             <button
-                              onClick={() => {
-                                setSelectedFile(file);
-                                setShowDeleteModal(true);
-                              }}
+                              onClick={() => handleDeleteClick(file)}
                               className="p-2 text-red-500 rounded-md message-icon-btn"
                               title={t("fileManagement.delete")}
                             >
@@ -376,33 +597,18 @@ export const FileManagementPage = () => {
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md p-6 bg-white rounded-lg">
-            <h2 className="mb-4 text-xl font-bold">
-              {t("fileManagement.confirmDelete")}
-            </h2>
-            <p className="mb-6 text-gray-600">
-              {t("fileManagement.confirmDeleteMessage")}
-            </p>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 cancel-btn"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={handleDeleteFile}
-                className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600"
-              >
-                {t("common.delete")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+        confirmColor={confirmDialog.confirmColor}
+        icon={<AlertTriangle className="text-red-600" size={24} />}
+        onConfirm={handleDeleteFile}
+        onCancel={handleCancelDelete}
+      />
 
       {/* Rename modal */}
       {showRenameModal && (

@@ -54,6 +54,34 @@
     "japanese": "일본어",
     "korean": "한국어"
   },
+  "fileManagement": {
+    "title": "파일 관리",
+    "noFiles": "파일 없음",
+    "noFilesDescription": "업로드한 파일이 여기에 표시됩니다",
+    "uploadButton": "파일 업로드",
+    "uploading": "업로드 중...",
+    "fileName": "파일 이름",
+    "fileType": "유형",
+    "fileSize": "크기",
+    "actions": "동작",
+    "rename": "이름 변경",
+    "export": "내보내기",
+    "delete": "삭제",
+    "open": "열기",
+    "search": "파일 검색...",
+    "confirmDelete": "파일 삭제",
+    "confirmDeleteMessage": "이 파일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "renameFile": "파일 이름 변경",
+    "newFileName": "새 파일 이름",
+    "sortBy": "정렬 기준",
+    "categories": {
+      "all": "모든 파일",
+      "document": "문서",
+      "image": "이미지",
+      "audio": "오디오",
+      "other": "기타"
+    }
+  },
   "selectModel": {
     "selectModel_title": "모델 선택",
     "selectModel_close": "닫기",

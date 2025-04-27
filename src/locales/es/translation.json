@@ -54,6 +54,34 @@
     "japanese": "Japonés",
     "korean": "Coreano"
   },
+  "fileManagement": {
+    "title": "Gestión de Archivos",
+    "noFiles": "Aún no hay archivos",
+    "noFilesDescription": "Tus archivos subidos aparecerán aquí",
+    "uploadButton": "Subir Archivo",
+    "uploading": "Subiendo...",
+    "fileName": "Nombre del Archivo",
+    "fileType": "Tipo",
+    "fileSize": "Tamaño",
+    "actions": "Acciones",
+    "rename": "Renombrar",
+    "export": "Exportar",
+    "delete": "Eliminar",
+    "open": "Abrir",
+    "search": "Buscar archivos...",
+    "confirmDelete": "Eliminar Archivo",
+    "confirmDeleteMessage": "¿Estás seguro de que deseas eliminar este archivo? Esta acción no se puede deshacer.",
+    "renameFile": "Renombrar Archivo",
+    "newFileName": "Nuevo nombre de archivo",
+    "sortBy": "Ordenar por",
+    "categories": {
+      "all": "Todos los Archivos",
+      "document": "Documentos",
+      "image": "Imágenes",
+      "audio": "Audio",
+      "other": "Otros"
+    }
+  },
   "selectModel": {
     "selectModel_title": "Seleccionar Modelo",
     "selectModel_close": "Cerrar",
