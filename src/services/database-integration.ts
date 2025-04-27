@@ -354,6 +354,7 @@ export class DatabaseIntegrationService {
         const fileId = uuidv4();
         const file: FileData = {
             fileId: fileId,
+            updatedAt: new Date(),
             name: fileData.name,
             type: fileData.type,
             size: arrayBuffer.byteLength,

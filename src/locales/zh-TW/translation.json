@@ -63,6 +63,7 @@
     "fileName": "檔案名稱",
     "fileType": "類型",
     "fileSize": "大小",
+    "updatedAt": "最後更新",
     "actions": "操作",
     "rename": "重新命名",
     "export": "匯出",

@@ -63,6 +63,7 @@
     "fileName": "File Name",
     "fileType": "Type",
     "fileSize": "Size",
+    "updatedAt": "Last Updated",
     "actions": "Actions",
     "rename": "Rename",
     "export": "Export",

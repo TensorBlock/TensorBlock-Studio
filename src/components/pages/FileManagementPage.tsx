@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Upload,
@@ -33,9 +33,10 @@ export const FileManagementPage = () => {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
   const [newFileName, setNewFileName] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "size" | "type">("name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortBy, setSortBy] = useState<"name" | "size" | "type" | "updatedAt">("updatedAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [activeCategory, setActiveCategory] = useState<FileCategory>('all');
+  const [isSortOptionsOpen, setIsSortOptionsOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
     title: '',
@@ -44,6 +45,10 @@ export const FileManagementPage = () => {
     cancelText: '',
     confirmColor: 'red' as 'red' | 'blue' | 'green' | 'gray'
   });
+  
+  // Add refs for sort dropdown and button
+  const sortOptionsRef = useRef<HTMLDivElement>(null);
+  const sortButtonRef = useRef<HTMLButtonElement>(null);
 
   // Load files on mount
   useEffect(() => {
@@ -164,6 +169,9 @@ export const FileManagementPage = () => {
       comparison = a.size - b.size;
     } else if (sortBy === "type") {
       comparison = a.type.localeCompare(b.type);
+    } else if (sortBy === "updatedAt") {
+      // Sort by date - newest first by default
+      comparison = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     }
     return sortDirection === "asc" ? comparison : -comparison;
   });
@@ -192,7 +200,8 @@ export const FileManagementPage = () => {
         const fileData = {
           name: file.name,
           type: file.type,
-          size: file.size
+          size: file.size,
+          updatedAt: new Date()
         };
         
         // Save to database
@@ -287,6 +296,11 @@ export const FileManagementPage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  // Format date for display
+  const formatDate = (date: Date): string => {
+    return new Date(date).toLocaleString();
+  };
+
   // Get file icon based on type
   const getFileIcon = (file: FileData) => {
     const category = getFileCategory(file);
@@ -328,8 +342,30 @@ export const FileManagementPage = () => {
     }
   };
 
-  // Toggle sort direction 
-  const handleSortChange = (sortKey: "name" | "size" | "type") => {
+  // Handle click outside to close sort options dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        sortOptionsRef.current && 
+        !sortOptionsRef.current.contains(event.target as Node) &&
+        sortButtonRef.current && 
+        !sortButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsSortOptionsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const toggleSortOptions = () => {
+    setIsSortOptionsOpen(!isSortOptionsOpen);
+  };
+
+  const handleSortChange = (sortKey: "name" | "size" | "type" | "updatedAt") => {
     if (sortBy === sortKey) {
       // Toggle direction if same key
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -338,6 +374,7 @@ export const FileManagementPage = () => {
       setSortBy(sortKey);
       setSortDirection("asc");
     }
+    setIsSortOptionsOpen(false);
   };
 
   const handleDeleteClick = (file: FileData) => {
@@ -475,19 +512,26 @@ export const FileManagementPage = () => {
               {/* Sort dropdown */}
               <div className="relative ml-4">
                 <button 
+                  ref={sortButtonRef}
                   className="flex items-center px-3 py-2 rounded-md input-box"
-                  onClick={() => {
-                    const options = document.getElementById('sortOptions');
-                    options?.classList.toggle('hidden');
-                  }}
+                  onClick={toggleSortOptions}
                 >
                   <span className="mr-2">
                     {t("fileManagement.sortBy")}
                   </span>
                   <ChevronDown size={16} />
                 </button>
-                <div id="sortOptions" className="absolute right-0 z-10 hidden mt-1 bg-white border rounded-md shadow-lg image-generation-popup">
+                <div 
+                  ref={sortOptionsRef}
+                  className={`absolute right-0 z-10 mt-1 bg-white border rounded-md shadow-lg image-generation-popup ${!isSortOptionsOpen ? 'hidden' : ''}`}
+                >
                   <div className="py-1">
+                    <button 
+                      className={`flex items-center w-full px-4 py-2 ${sortBy === 'updatedAt' ? 'image-generation-provider-selected' : 'image-generation-provider-item'}`}
+                      onClick={() => handleSortChange('updatedAt')}
+                    >
+                      {t("fileManagement.updatedAt")} {sortBy === 'updatedAt' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </button>
                     <button 
                       className={`flex items-center w-full px-4 py-2 ${sortBy === 'name' ? 'image-generation-provider-selected' : 'image-generation-provider-item'}`}
                       onClick={() => handleSortChange('name')}
@@ -524,6 +568,7 @@ export const FileManagementPage = () => {
                       <th className="px-4 py-3 text-left">{t("fileManagement.fileName")}</th>
                       <th className="px-4 py-3 text-left">{t("fileManagement.fileType")}</th>
                       <th className="px-4 py-3 text-left">{t("fileManagement.fileSize")}</th>
+                      <th className="px-4 py-3 text-left">{t("fileManagement.updatedAt")}</th>
                       <th className="px-4 py-3 text-center">{t("fileManagement.actions")}</th>
                     </tr>
                   </thead>
@@ -541,6 +586,7 @@ export const FileManagementPage = () => {
                         </td>
                         <td className="px-4 py-3">{file.type.split("/").pop() || "Unknown"}</td>
                         <td className="px-4 py-3">{formatFileSize(file.size)}</td>
+                        <td className="px-4 py-3">{formatDate(file.updatedAt)}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center space-x-2">
                             <button

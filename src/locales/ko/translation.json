@@ -63,6 +63,7 @@
     "fileName": "파일 이름",
     "fileType": "유형",
     "fileSize": "크기",
+    "updatedAt": "최종 수정일",
     "actions": "동작",
     "rename": "이름 변경",
     "export": "내보내기",
