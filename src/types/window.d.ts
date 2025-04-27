@@ -14,5 +14,15 @@ interface Window {
     }>;
     openUrl: (url: string) => Promise<void>;
     onWindowMaximizedChange: (callback: (event: IpcRendererEvent, maximized: boolean) => void) => void;
+    saveFile: (fileBuffer: ArrayBuffer | string, fileName: string, fileType: string) => Promise<{
+      success: boolean;
+      filePath?: string;
+      canceled?: boolean;
+      error?: string;
+    }>;
+    openFile: (filePath: string) => Promise<{
+      success: boolean;
+      error?: string;
+    }>;
   };
 } 

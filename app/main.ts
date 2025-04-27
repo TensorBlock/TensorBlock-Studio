@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import {app, BrowserWindow, ipcMain, shell} from 'electron';
+import {app, BrowserWindow, ipcMain, shell, dialog} from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -70,6 +70,62 @@ function createWindow(): BrowserWindow {
         console.error('Error opening folder:', result);
       }
     });
+  });
+  
+  // Save file handler
+  ipcMain.handle('save-file', async (event, args) => {
+    try {
+      if (!win) return { success: false, error: 'Window not available' };
+      
+      const { fileBuffer, fileName, fileType } = args;
+      
+      // Show save dialog
+      const result = await dialog.showSaveDialog(win, {
+        title: 'Save File',
+        defaultPath: fileName,
+        filters: [
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+      
+      if (result.canceled || !result.filePath) {
+        return { success: false, canceled: true };
+      }
+      
+      // Convert base64 to buffer if needed
+      let buffer;
+      if (typeof fileBuffer === 'string') {
+        buffer = Buffer.from(fileBuffer, 'base64');
+      } else {
+        buffer = Buffer.from(fileBuffer);
+      }
+      
+      // Write file to disk
+      fs.writeFileSync(result.filePath, buffer);
+      
+      return { success: true, filePath: result.filePath };
+    } catch (error) {
+      console.error('Error saving file:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+  
+  // Open file handler
+  ipcMain.handle('open-file', async (event, filePath) => {
+    try {
+      if (!filePath) return { success: false, error: 'No file path provided' };
+      
+      const result = await shell.openPath(filePath);
+      
+      if (result) {
+        return { success: false, error: result };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error opening file:', error);
+      return { success: false, error: String(error) };
+    }
   });
 
   // Window control handlers

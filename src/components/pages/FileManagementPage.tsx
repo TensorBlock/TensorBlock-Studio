@@ -257,16 +257,24 @@ export const FileManagementPage = () => {
   // Export file
   const handleExportFile = async (file: FileData) => {
     try {
-      const blob = new Blob([file.data], { type: file.type || 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
+      if (!window.electron || !window.electron.saveFile) {
+        console.error("Electron saveFile API not available");
+        return;
+      }
       
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const result = await window.electron.saveFile(
+        file.data, 
+        file.name, 
+        file.type || 'application/octet-stream'
+      );
+      
+      if (!result.success) {
+        if (result.canceled) {
+          // User canceled the save dialog, no need to show error
+          return;
+        }
+        console.error("Error saving file:", result.error);
+      }
     } catch (error) {
       console.error("Error exporting file:", error);
     }
@@ -275,10 +283,32 @@ export const FileManagementPage = () => {
   // Open file
   const handleOpenFile = async (file: FileData) => {
     try {
-      // Use electron API to open the file
-      const blob = new Blob([file.data], { type: file.type || 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      window.electron.openUrl(url);
+      // First save the file to a temporary location
+      if (!window.electron || !window.electron.saveFile || !window.electron.openFile) {
+        console.error("Electron API not available");
+        return;
+      }
+      
+      // Save file to temp location and then open it
+      const saveResult = await window.electron.saveFile(
+        file.data,
+        file.name,
+        file.type || 'application/octet-stream'
+      );
+      
+      if (!saveResult.success || !saveResult.filePath) {
+        if (!saveResult.canceled) {
+          console.error("Error saving file:", saveResult.error);
+        }
+        return;
+      }
+      
+      // Now open the file with the default application
+      const openResult = await window.electron.openFile(saveResult.filePath);
+      
+      if (!openResult.success) {
+        console.error("Error opening file:", openResult.error);
+      }
     } catch (error) {
       console.error("Error opening file:", error);
     }
@@ -642,13 +672,13 @@ export const FileManagementPage = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center space-x-2">
-                            <button
+                            {/* <button
                               onClick={() => handleOpenFile(file)}
                               className="p-2 rounded-md message-icon-btn"
                               title={t("fileManagement.open")}
                             >
                               <FolderOpen size={16} />
-                            </button>
+                            </button> */}
                             <button
                               onClick={() => {
                                 setSelectedFile(file);
