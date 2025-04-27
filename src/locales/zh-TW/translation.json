@@ -58,7 +58,7 @@
     "title": "檔案管理",
     "noFiles": "暫無檔案",
     "noFilesDescription": "您上傳的檔案將會顯示在這裡",
-    "uploadButton": "上傳檔案",
+    "uploadButton": "匯入檔案",
     "uploading": "上傳中...",
     "fileName": "檔案名稱",
     "fileType": "類型",

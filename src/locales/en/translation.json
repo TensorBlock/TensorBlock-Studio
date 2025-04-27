@@ -58,7 +58,7 @@
     "title": "File Management",
     "noFiles": "No files yet",
     "noFilesDescription": "Your uploaded files will appear here",
-    "uploadButton": "Upload File",
+    "uploadButton": "Import File",
     "uploading": "Uploading...",
     "fileName": "File Name",
     "fileType": "Type",

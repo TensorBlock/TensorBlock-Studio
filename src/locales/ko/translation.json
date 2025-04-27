@@ -58,7 +58,7 @@
     "title": "파일 관리",
     "noFiles": "파일 없음",
     "noFilesDescription": "업로드한 파일이 여기에 표시됩니다",
-    "uploadButton": "파일 업로드",
+    "uploadButton": "파일 가져오기",
     "uploading": "업로드 중...",
     "fileName": "파일 이름",
     "fileType": "유형",

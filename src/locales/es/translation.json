@@ -58,7 +58,7 @@
     "title": "Gestión de Archivos",
     "noFiles": "No hay archivos todavía",
     "noFilesDescription": "Los archivos cargados aparecerán aquí",
-    "uploadButton": "Cargar Archivo",
+    "uploadButton": "Importar Archivo",
     "uploading": "Cargando...",
     "fileName": "Nombre del Archivo",
     "fileType": "Tipo",

@@ -1,22 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Upload,
   Trash2, 
   Edit2, 
-  Download, 
   Search, 
   File as FileIcon, 
   Code, 
   Image as ImageIcon, 
   FileText,
   Archive,
-  ExternalLink,
   ChevronDown,
   FolderOpen,
   Music,
   HardDrive,
-  AlertTriangle
+  AlertTriangle,
+  FolderUp,
+  FolderDown
 } from "lucide-react";
 import { DatabaseIntegrationService } from "../../services/database-integration";
 import { FileData } from "../../types/file";
@@ -394,79 +393,111 @@ export const FileManagementPage = () => {
     <div className="flex flex-col w-full h-full bg-white">
       <div className="flex flex-row h-full">
         {/* Left sidebar - Categories */}
-        <div className="w-[240px] p-4 overflow-y-auto frame-right-border bg-main-background-color">
-          <h2 className="mb-4 text-xl font-medium">{t("fileManagement.title")}</h2>
+        <div className="w-[240px] p-4 flex flex-col gap-2 overflow-y-auto frame-right-border bg-main-background-color">
           
+          {/* Upload button */}
+          <label className="relative px-6 py-2.5 text-white cursor-pointer confirm-btn flex items-center justify-center">
+            <FolderDown size={18} className="mr-2" />
+            {t("fileManagement.uploadButton")}
+            <input
+              type="file"
+              className="hidden"
+              onChange={handleFileUpload}
+              multiple
+              disabled={isLoading}
+            />
+          </label>
+
           {/* Category filters */}
           <div className="space-y-1">
             {/* All files */}
-            <div 
-              className={`flex items-center justify-between file-filter-item ${activeCategory === 'all' ? 'file-filter-item-active' : ''}`}
-              onClick={() => setActiveCategory('all')}
+            <div
+              className={`flex items-center justify-between file-filter-item ${
+                activeCategory === "all" ? "file-filter-item-active" : ""
+              }`}
+              onClick={() => setActiveCategory("all")}
             >
               <div className="flex items-center">
                 <div className="file-type-icon file-type-all">
-                  {getCategoryIcon('all')}
+                  {getCategoryIcon("all")}
                 </div>
                 <span>{t("fileManagement.categories.all")}</span>
               </div>
-              <span className="file-filter-count">{getCategoryCount('all')}</span>
+              <span className="file-filter-count">
+                {getCategoryCount("all")}
+              </span>
             </div>
-            
+
             {/* Documents */}
-            <div 
-              className={`flex items-center justify-between file-filter-item ${activeCategory === 'document' ? 'file-filter-item-active' : ''}`}
-              onClick={() => setActiveCategory('document')}
+            <div
+              className={`flex items-center justify-between file-filter-item ${
+                activeCategory === "document" ? "file-filter-item-active" : ""
+              }`}
+              onClick={() => setActiveCategory("document")}
             >
               <div className="flex items-center">
                 <div className="file-type-icon file-type-document">
-                  {getCategoryIcon('document')}
+                  {getCategoryIcon("document")}
                 </div>
                 <span>{t("fileManagement.categories.document")}</span>
               </div>
-              <span className="file-filter-count">{getCategoryCount('document')}</span>
+              <span className="file-filter-count">
+                {getCategoryCount("document")}
+              </span>
             </div>
-            
+
             {/* Images */}
-            <div 
-              className={`flex items-center justify-between file-filter-item ${activeCategory === 'image' ? 'file-filter-item-active' : ''}`}
-              onClick={() => setActiveCategory('image')}
+            <div
+              className={`flex items-center justify-between file-filter-item ${
+                activeCategory === "image" ? "file-filter-item-active" : ""
+              }`}
+              onClick={() => setActiveCategory("image")}
             >
               <div className="flex items-center">
                 <div className="file-type-icon file-type-image">
-                  {getCategoryIcon('image')}
+                  {getCategoryIcon("image")}
                 </div>
                 <span>{t("fileManagement.categories.image")}</span>
               </div>
-              <span className="file-filter-count">{getCategoryCount('image')}</span>
+              <span className="file-filter-count">
+                {getCategoryCount("image")}
+              </span>
             </div>
-            
+
             {/* Audio */}
-            <div 
-              className={`flex items-center justify-between file-filter-item ${activeCategory === 'audio' ? 'file-filter-item-active' : ''}`}
-              onClick={() => setActiveCategory('audio')}
+            <div
+              className={`flex items-center justify-between file-filter-item ${
+                activeCategory === "audio" ? "file-filter-item-active" : ""
+              }`}
+              onClick={() => setActiveCategory("audio")}
             >
               <div className="flex items-center">
                 <div className="file-type-icon file-type-audio">
-                  {getCategoryIcon('audio')}
+                  {getCategoryIcon("audio")}
                 </div>
                 <span>{t("fileManagement.categories.audio")}</span>
               </div>
-              <span className="file-filter-count">{getCategoryCount('audio')}</span>
+              <span className="file-filter-count">
+                {getCategoryCount("audio")}
+              </span>
             </div>
-            
+
             {/* Others */}
-            <div 
-              className={`flex items-center justify-between file-filter-item ${activeCategory === 'other' ? 'file-filter-item-active' : ''}`}
-              onClick={() => setActiveCategory('other')}
+            <div
+              className={`flex items-center justify-between file-filter-item ${
+                activeCategory === "other" ? "file-filter-item-active" : ""
+              }`}
+              onClick={() => setActiveCategory("other")}
             >
               <div className="flex items-center">
                 <div className="file-type-icon file-type-other">
-                  {getCategoryIcon('other')}
+                  {getCategoryIcon("other")}
                 </div>
                 <span>{t("fileManagement.categories.other")}</span>
               </div>
-              <span className="file-filter-count">{getCategoryCount('other')}</span>
+              <span className="file-filter-count">
+                {getCategoryCount("other")}
+              </span>
             </div>
           </div>
         </div>
@@ -474,32 +505,14 @@ export const FileManagementPage = () => {
         {/* Main content */}
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-semibold">
-                {activeCategory === 'all' 
-                  ? t("fileManagement.title") 
-                  : t(`fileManagement.categories.${activeCategory}`)}
-              </h1>
-
-              {/* Upload button */}
-              <label className="relative px-6 py-2.5 text-white cursor-pointer confirm-btn flex items-center">
-                <Upload size={18} className="mr-2" />
-                {t("fileManagement.uploadButton")}
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  multiple
-                  disabled={isLoading}
-                />
-              </label>
-            </div>
-
+            
             {/* Search and filters */}
             <div className="flex items-center mb-4">
               <div className="relative flex-grow">
-                <Search size={16} className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" />
+                <Search
+                  size={16}
+                  className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2"
+                />
                 <input
                   type="text"
                   placeholder={t("fileManagement.search")}
@@ -511,44 +524,68 @@ export const FileManagementPage = () => {
 
               {/* Sort dropdown */}
               <div className="relative ml-4">
-                <button 
+                <button
                   ref={sortButtonRef}
                   className="flex items-center px-3 py-2 rounded-md input-box"
                   onClick={toggleSortOptions}
                 >
-                  <span className="mr-2">
-                    {t("fileManagement.sortBy")}
-                  </span>
+                  <span className="mr-2">{t("fileManagement.sortBy")}</span>
                   <ChevronDown size={16} />
                 </button>
-                <div 
+                <div
                   ref={sortOptionsRef}
-                  className={`absolute right-0 z-10 mt-1 bg-white border rounded-md shadow-lg image-generation-popup ${!isSortOptionsOpen ? 'hidden' : ''}`}
+                  className={`absolute right-0 z-10 mt-1 bg-white border rounded-md shadow-lg image-generation-popup ${
+                    !isSortOptionsOpen ? "hidden" : ""
+                  }`}
                 >
                   <div className="py-1">
-                    <button 
-                      className={`flex items-center w-full px-4 py-2 ${sortBy === 'updatedAt' ? 'image-generation-provider-selected' : 'image-generation-provider-item'}`}
-                      onClick={() => handleSortChange('updatedAt')}
+                    <button
+                      className={`flex items-center w-full px-4 py-2 ${
+                        sortBy === "updatedAt"
+                          ? "image-generation-provider-selected"
+                          : "image-generation-provider-item"
+                      }`}
+                      onClick={() => handleSortChange("updatedAt")}
                     >
-                      {t("fileManagement.updatedAt")} {sortBy === 'updatedAt' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      {t("fileManagement.updatedAt")}{" "}
+                      {sortBy === "updatedAt" &&
+                        (sortDirection === "asc" ? "↑" : "↓")}
                     </button>
-                    <button 
-                      className={`flex items-center w-full px-4 py-2 ${sortBy === 'name' ? 'image-generation-provider-selected' : 'image-generation-provider-item'}`}
-                      onClick={() => handleSortChange('name')}
+                    <button
+                      className={`flex items-center w-full px-4 py-2 ${
+                        sortBy === "name"
+                          ? "image-generation-provider-selected"
+                          : "image-generation-provider-item"
+                      }`}
+                      onClick={() => handleSortChange("name")}
                     >
-                      {t("fileManagement.fileName")} {sortBy === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      {t("fileManagement.fileName")}{" "}
+                      {sortBy === "name" &&
+                        (sortDirection === "asc" ? "↑" : "↓")}
                     </button>
-                    <button 
-                      className={`flex items-center w-full px-4 py-2 ${sortBy === 'type' ? 'image-generation-provider-selected' : 'image-generation-provider-item'}`}
-                      onClick={() => handleSortChange('type')}
+                    <button
+                      className={`flex items-center w-full px-4 py-2 ${
+                        sortBy === "type"
+                          ? "image-generation-provider-selected"
+                          : "image-generation-provider-item"
+                      }`}
+                      onClick={() => handleSortChange("type")}
                     >
-                      {t("fileManagement.fileType")} {sortBy === 'type' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      {t("fileManagement.fileType")}{" "}
+                      {sortBy === "type" &&
+                        (sortDirection === "asc" ? "↑" : "↓")}
                     </button>
-                    <button 
-                      className={`flex items-center w-full px-4 py-2 ${sortBy === 'size' ? 'image-generation-provider-selected' : 'image-generation-provider-item'}`}
-                      onClick={() => handleSortChange('size')}
+                    <button
+                      className={`flex items-center w-full px-4 py-2 ${
+                        sortBy === "size"
+                          ? "image-generation-provider-selected"
+                          : "image-generation-provider-item"
+                      }`}
+                      onClick={() => handleSortChange("size")}
                     >
-                      {t("fileManagement.fileSize")} {sortBy === 'size' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      {t("fileManagement.fileSize")}{" "}
+                      {sortBy === "size" &&
+                        (sortDirection === "asc" ? "↑" : "↓")}
                     </button>
                   </div>
                 </div>
@@ -565,17 +602,27 @@ export const FileManagementPage = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-primary-50">
-                      <th className="px-4 py-3 text-left">{t("fileManagement.fileName")}</th>
-                      <th className="px-4 py-3 text-left">{t("fileManagement.fileType")}</th>
-                      <th className="px-4 py-3 text-left">{t("fileManagement.fileSize")}</th>
-                      <th className="px-4 py-3 text-left">{t("fileManagement.updatedAt")}</th>
-                      <th className="px-4 py-3 text-center">{t("fileManagement.actions")}</th>
+                      <th className="px-4 py-3 text-left">
+                        {t("fileManagement.fileName")}
+                      </th>
+                      {/* <th className="px-4 py-3 text-left">
+                        {t("fileManagement.fileType")}
+                      </th> */}
+                      <th className="px-4 py-3 text-left">
+                        {t("fileManagement.fileSize")}
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        {t("fileManagement.updatedAt")}
+                      </th>
+                      <th className="px-4 py-3 text-center">
+                        {t("fileManagement.actions")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedFiles.map((file) => (
-                      <tr 
-                        key={file.fileId} 
+                      <tr
+                        key={file.fileId}
                         className="border-b border-primary-100 hover:bg-primary-50"
                       >
                         <td className="px-4 py-3">
@@ -584,11 +631,24 @@ export const FileManagementPage = () => {
                             <span className="ml-2">{file.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3">{file.type.split("/").pop() || "Unknown"}</td>
-                        <td className="px-4 py-3">{formatFileSize(file.size)}</td>
-                        <td className="px-4 py-3">{formatDate(file.updatedAt)}</td>
+                        {/* <td className="px-4 py-3">
+                          {file.type.split("/").pop() || "Unknown"}
+                        </td> */}
+                        <td className="px-4 py-3">
+                          {formatFileSize(file.size)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatDate(file.updatedAt)}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center space-x-2">
+                            <button
+                              onClick={() => handleOpenFile(file)}
+                              className="p-2 rounded-md message-icon-btn"
+                              title={t("fileManagement.open")}
+                            >
+                              <FolderOpen size={16} />
+                            </button>
                             <button
                               onClick={() => {
                                 setSelectedFile(file);
@@ -605,14 +665,7 @@ export const FileManagementPage = () => {
                               className="p-2 rounded-md message-icon-btn"
                               title={t("fileManagement.export")}
                             >
-                              <Download size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleOpenFile(file)}
-                              className="p-2 rounded-md message-icon-btn"
-                              title={t("fileManagement.open")}
-                            >
-                              <ExternalLink size={16} />
+                              <FolderUp size={16} />
                             </button>
                             <button
                               onClick={() => handleDeleteClick(file)}

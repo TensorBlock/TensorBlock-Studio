@@ -58,7 +58,7 @@
     "title": "ファイル管理",
     "noFiles": "ファイルはまだありません",
     "noFilesDescription": "アップロードしたファイルがここに表示されます",
-    "uploadButton": "ファイルをアップロード",
+    "uploadButton": "ファイルをインポート",
     "uploading": "アップロード中...",
     "fileName": "ファイル名",
     "fileType": "タイプ",
