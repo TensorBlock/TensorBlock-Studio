@@ -292,7 +292,7 @@ export class ChatService {
       //#region Save user message with files to database and update title
       // eslint-disable-next-line prefer-const
       let {conversation: updatedConversation, message: userMessage} = await MessageHelper.addUserMessageWithFilesToConversation(
-        content, 
+        content,
         fileContents,
         currentConversation
       );

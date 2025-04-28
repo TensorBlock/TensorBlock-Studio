@@ -146,7 +146,7 @@ export class CommonProviderHelper implements AiServiceProvider {
     toolChoice: ToolChoice<ToolSet> | undefined = undefined
   ): Promise<Message> {
     try {
-      const formattedMessages = MessageHelper.MessagesContentToOpenAIFormat(messages);
+      const formattedMessages = await MessageHelper.MessagesContentToOpenAIFormat(messages);
 
       console.log('formattedMessages: ', formattedMessages);
 

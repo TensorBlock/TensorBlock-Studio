@@ -318,19 +318,19 @@ export class MessageHelper {
         }).join('');
     }
 
-    public static MessagesContentToOpenAIFormat(msgs: Message[]): CoreMessage[] {
+    public static async MessagesContentToOpenAIFormat(msgs: Message[]): Promise<CoreMessage[]> {
         if (!msgs || msgs.length === 0) {
             return [];
         }
 
         console.log('before msgs: ', msgs);
         
-        const results = msgs.map((msg) => {
+        const results = await Promise.all(msgs.map(async (msg) => {
             
             if(msg.role === 'user') {
                 const userMsg: CoreUserMessage = {
                     role: 'user',
-                    content: msg.content.map((content) => {
+                    content: await Promise.all(msg.content.map(async (content) => {
                         if(content.type === MessageContentType.Text) {
                             const textContent: TextPart = {
                                 type: 'text',
@@ -343,9 +343,25 @@ export class MessageHelper {
 
                             console.log('Processing file: ', dataJson.name);
 
+                            const dbService = DatabaseIntegrationService.getInstance();
+
+                            // Get the file data by the file id
+                            const fileData = await dbService.getFile(content.content); //content.content is the file id
+
+                            if(!fileData) {
+                                const emptyText: TextPart = {
+                                    type: 'text',
+                                    text: ''
+                                };
+                                console.log('File not found: ', content.content);
+                                return emptyText;
+                            }
+
+                            const fileBuffer = fileData.data;
+
                             const fileContent: FilePart = {
                                 type: 'file',
-                                data: content.content,
+                                data: fileBuffer,
                                 mimeType: 'application/pdf', // SDK requires pdf mime type, but it supports all mime types
                                 filename: dataJson.name
                             }
@@ -357,7 +373,7 @@ export class MessageHelper {
                             text: ''
                         };
                         return emptyText;
-                    })
+                    })),
                 }
 
                 return userMsg;
@@ -395,7 +411,7 @@ export class MessageHelper {
                 return systemMsg;
             }
             
-        });
+        }));
 
         return results.filter((result) => result !== undefined) as CoreMessage[];
     }
