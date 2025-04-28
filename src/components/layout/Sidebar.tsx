@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Settings, Image, Languages, FileText } from 'lucide-react';
+import { MessageSquare, Settings, Image, Languages, FolderClosed } from 'lucide-react';
 
 interface SidebarProps {
   activePage: string;
@@ -85,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onChangePage('files')}
           aria-label="File Management"
         >
-          <FileText size={22} />
+          <FolderClosed size={22} />
         </button>
       </div>
 

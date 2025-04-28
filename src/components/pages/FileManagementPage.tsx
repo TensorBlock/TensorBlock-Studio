@@ -281,38 +281,38 @@ export const FileManagementPage = () => {
   };
 
   // Open file
-//   const handleOpenFile = async (file: FileData) => {
-//     try {
-//       // First save the file to a temporary location
-//       if (!window.electron || !window.electron.saveFile || !window.electron.openFile) {
-//         console.error("Electron API not available");
-//         return;
-//       }
+  const handleOpenFile = async (file: FileData) => {
+    try {
+      // First save the file to a temporary location
+      if (!window.electron || !window.electron.saveFile || !window.electron.openFile) {
+        console.error("Electron API not available");
+        return;
+      }
       
-//       // Save file to temp location and then open it
-//       const saveResult = await window.electron.saveFile(
-//         file.data,
-//         file.name,
-//         file.type || 'application/octet-stream'
-//       );
+      // Save file to temp location and then open it
+      const saveResult = await window.electron.saveFile(
+        file.data,
+        file.name,
+        file.type || 'application/octet-stream'
+      );
       
-//       if (!saveResult.success || !saveResult.filePath) {
-//         if (!saveResult.canceled) {
-//           console.error("Error saving file:", saveResult.error);
-//         }
-//         return;
-//       }
+      if (!saveResult.success || !saveResult.filePath) {
+        if (!saveResult.canceled) {
+          console.error("Error saving file:", saveResult.error);
+        }
+        return;
+      }
       
-//       // Now open the file with the default application
-//       const openResult = await window.electron.openFile(saveResult.filePath);
+      // Now open the file with the default application
+      const openResult = await window.electron.openFile(saveResult.filePath);
       
-//       if (!openResult.success) {
-//         console.error("Error opening file:", openResult.error);
-//       }
-//     } catch (error) {
-//       console.error("Error opening file:", error);
-//     }
-//   };
+      if (!openResult.success) {
+        console.error("Error opening file:", openResult.error);
+      }
+    } catch (error) {
+      console.error("Error opening file:", error);
+    }
+  };
 
   // Format file size
   const formatFileSize = (bytes: number): string => {
@@ -672,13 +672,13 @@ export const FileManagementPage = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center space-x-2">
-                            {/* <button
+                            <button
                               onClick={() => handleOpenFile(file)}
                               className="p-2 rounded-md message-icon-btn"
                               title={t("fileManagement.open")}
                             >
                               <FolderOpen size={16} />
-                            </button> */}
+                            </button>
                             <button
                               onClick={() => {
                                 setSelectedFile(file);
