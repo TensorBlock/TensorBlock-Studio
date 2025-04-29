@@ -145,6 +145,20 @@
     "models_modelCapabilities_chat": "聊天",
     "webSearch_title": "網頁搜尋（預覽）",
     "webSearch_toggle_label": "啟用網頁搜尋功能",
-    "webSearch_description": "啟用後，AI 可以搜尋網頁以提供更即時的信息。請注意，網頁搜尋目前僅支援 OpenAI 和 Gemini 模型。此外，啟用網頁搜尋時，將無法使用流式回應（文字逐步顯示）。"
+    "webSearch_description": "啟用後，AI 可以搜尋網頁以提供更即時的信息。請注意，網頁搜尋目前僅支援 OpenAI 和 Gemini 模型。此外，啟用網頁搜尋時，將無法使用流式回應（文字逐步顯示）。",
+
+    "general": "一般設定",
+    "startup": "啟動設定",
+    "startWithSystem": "隨系統啟動",
+    "startupToTray": "啟動時最小化到系統匣",
+    "trayOptions": "系統匣選項",
+    "closeToTray": "關閉時最小化到系統匣而非退出",
+    "networkProxy": "網路代理",
+    "systemProxy": "使用系統代理",
+    "customProxy": "自定義代理",
+    "noProxy": "不使用代理",
+    "privacy": "隱私設定",
+    "sendErrorReports": "發送匿名錯誤報告和使用統計",
+    "sendErrorReports_description": "通過發送匿名當機報告和使用數據來幫助改進應用程式。"
   }
 }

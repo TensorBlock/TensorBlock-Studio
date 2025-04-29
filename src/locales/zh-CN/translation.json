@@ -145,6 +145,20 @@
     "models_modelCapabilities_chat": "聊天",
     "webSearch_title": "网页搜索（预览）",
     "webSearch_toggle_label": "启用网页搜索功能",
-    "webSearch_description": "启用后，AI 可以搜索网页以提供更及时的信息。请注意，网页搜索目前仅支持 OpenAI 和 Gemini 模型。此外，启用网页搜索时，流式响应（文本逐步出现）将不可用。"
+    "webSearch_description": "启用后，AI 可以搜索网页以提供更及时的信息。请注意，网页搜索目前仅支持 OpenAI 和 Gemini 模型。此外，启用网页搜索时，流式响应（文本逐步出现）将不可用。",
+
+    "general": "常规设置",
+    "startup": "启动设置",
+    "startWithSystem": "开机自启动",
+    "startupToTray": "启动时最小化到托盘",
+    "trayOptions": "托盘选项",
+    "closeToTray": "关闭时最小化到托盘而不是退出",
+    "networkProxy": "网络代理",
+    "systemProxy": "使用系统代理",
+    "customProxy": "自定义代理",
+    "noProxy": "不使用代理",
+    "privacy": "隐私设置",
+    "sendErrorReports": "发送匿名错误报告和数据统计",
+    "sendErrorReports_description": "通过发送匿名崩溃报告和使用数据来帮助改进应用程序。"
   }
 }

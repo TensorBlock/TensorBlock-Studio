@@ -148,6 +148,20 @@
     
     "webSearch_title": "Web Search (Preview)",
     "webSearch_toggle_label": "Enable Web Search Function",
-    "webSearch_description": "When enabled, the AI can search the web to provide more up-to-date information. Please note that web search is currently only supported with OpenAI and Gemini models. Also, when web search is enabled, streaming responses (where text appears incrementally) will not be available."
+    "webSearch_description": "When enabled, the AI can search the web to provide more up-to-date information. Please note that web search is currently only supported with OpenAI and Gemini models. Also, when web search is enabled, streaming responses (where text appears incrementally) will not be available.",
+
+    "general": "General",
+    "startup": "Startup",
+    "startWithSystem": "Start with system",
+    "startupToTray": "Start minimized to tray",
+    "trayOptions": "Tray Options",
+    "closeToTray": "Close to tray instead of quitting",
+    "networkProxy": "Network Proxy",
+    "systemProxy": "Use system proxy",
+    "customProxy": "Custom proxy",
+    "noProxy": "No proxy",
+    "privacy": "Privacy",
+    "sendErrorReports": "Send anonymous error reports and usage statistics",
+    "sendErrorReports_description": "Help improve the application by sending anonymous crash reports and usage data."
   }
 } 

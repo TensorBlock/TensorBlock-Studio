@@ -145,6 +145,20 @@
     "models_modelCapabilities_chat": "チャット",
     "webSearch_title": "ウェブ検索（プレビュー）",
     "webSearch_toggle_label": "ウェブ検索機能を有効にする",
-    "webSearch_description": "有効にすると、AIはウェブを検索してより最新の情報を提供できます。注意: ウェブ検索は現在、OpenAIとGeminiモデルでのみサポートされています。また、ウェブ検索が有効な場合、ストリーミング応答（テキストが段階的に表示される）は利用できません。"
+    "webSearch_description": "有効にすると、AIはウェブを検索してより最新の情報を提供できます。注意: ウェブ検索は現在、OpenAIとGeminiモデルでのみサポートされています。また、ウェブ検索が有効な場合、ストリーミング応答（テキストが段階的に表示される）は利用できません。",
+
+    "general": "一般設定",
+    "startup": "起動設定",
+    "startWithSystem": "システム起動時に起動する",
+    "startupToTray": "起動時にトレイに最小化する",
+    "trayOptions": "トレイオプション",
+    "closeToTray": "閉じる時に終了せずトレイに最小化する",
+    "networkProxy": "ネットワークプロキシ",
+    "systemProxy": "システムプロキシを使用",
+    "customProxy": "カスタムプロキシ",
+    "noProxy": "プロキシを使用しない",
+    "privacy": "プライバシー設定",
+    "sendErrorReports": "匿名のエラーレポートと使用統計を送信する",
+    "sendErrorReports_description": "匿名のクラッシュレポートと使用データを送信してアプリケーションの改善に協力する。"
   }
 }

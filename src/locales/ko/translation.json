@@ -145,6 +145,20 @@
     "models_modelCapabilities_chat": "채팅",
     "webSearch_title": "웹 검색 (미리보기)",
     "webSearch_toggle_label": "웹 검색 기능 활성화",
-    "webSearch_description": "활성화되면 AI가 웹을 검색하여 더 최신 정보를 제공합니다. 웹 검색은 현재 OpenAI 및 Gemini 모델에서만 지원됩니다. 또한 웹 검색이 활성화되면 스트리밍 응답(텍스트가 점진적으로 나타나는)이 제공되지 않습니다."
+    "webSearch_description": "활성화되면 AI가 웹을 검색하여 더 최신 정보를 제공합니다. 웹 검색은 현재 OpenAI 및 Gemini 모델에서만 지원됩니다. 또한 웹 검색이 활성화되면 스트리밍 응답(텍스트가 점진적으로 나타나는)이 제공되지 않습니다.",
+
+    "general": "일반 설정",
+    "startup": "시작 설정",
+    "startWithSystem": "시스템과 함께 시작",
+    "startupToTray": "트레이로 최소화하여 시작",
+    "trayOptions": "트레이 옵션",
+    "closeToTray": "종료 대신 트레이로 최소화",
+    "networkProxy": "네트워크 프록시",
+    "systemProxy": "시스템 프록시 사용",
+    "customProxy": "사용자 정의 프록시",
+    "noProxy": "프록시 사용 안 함",
+    "privacy": "개인정보 설정",
+    "sendErrorReports": "익명의 오류 보고서 및 사용 통계 보내기",
+    "sendErrorReports_description": "익명의 충돌 보고서와 사용 데이터를 보내 애플리케이션 개선에 도움을 줍니다."
   }
 }

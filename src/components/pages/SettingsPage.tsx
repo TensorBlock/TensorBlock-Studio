@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Server, MessageSquare, Languages } from 'lucide-react';
+import { Server, MessageSquare, Languages, Sliders } from 'lucide-react';
 import { SettingsService } from '../../services/settings-service';
 import { ProviderSettings } from '../../types/settings';
-import { ApiManagement, ChatSettings, LanguageSettings } from '../settings';
+import { ApiManagement, ChatSettings, LanguageSettings, GeneralSettings } from '../settings';
 import { DatabaseIntegrationService } from '../../services/database-integration';
 import { AIService } from '../../services/ai-service';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +13,7 @@ interface SettingsPageProps {
   isOpen: boolean;
 }
 
-type SettingsTab = 'api' | 'models' | 'chat' | 'language';
+type SettingsTab = 'api' | 'models' | 'chat' | 'language' | 'general';
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   isOpen,
@@ -25,6 +25,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [isDbInitialized, setIsDbInitialized] = useState(false);
   const [hasApiKeyChanged, setHasApiKeyChanged] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  // General settings state
+  const [startWithSystem, setStartWithSystem] = useState(false);
+  const [startupToTray, setStartupToTray] = useState(false);
+  const [closeToTray, setCloseToTray] = useState(true);
+  const [proxyMode, setProxyMode] = useState<'system' | 'custom' | 'none'>('system');
+  const [sendErrorReports, setSendErrorReports] = useState(true);
   
   const settingsService = SettingsService.getInstance();
   const aiService = AIService.getInstance();
@@ -57,6 +64,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setUseWebSearch(settings.enableWebSearch_Preview);
       setHasApiKeyChanged(false);
       lastOpenedSettings.current = true;
+      
+      // In a real implementation, we would load these from settings service
+      // This is just for the UI prototype
+      // setStartWithSystem(settings.startWithSystem || false);
+      // setStartupToTray(settings.startupToTray || false);
+      // setCloseToTray(settings.closeToTray || true);
+      // setProxyMode(settings.proxyMode || 'system');
+      // setSendErrorReports(settings.sendErrorReports || true);
     }
 
     if(!isOpen && lastOpenedSettings.current){
@@ -95,6 +110,31 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     console.log('Provider settings: ', providerSettings);
   };
 
+  // Handle general settings changes
+  const handleGeneralSettingChange = (key: string, value: unknown) => {
+    console.log(`Setting ${key} changed to: `, value);
+    
+    switch(key) {
+      case 'startWithSystem':
+        setStartWithSystem(value as boolean);
+        break;
+      case 'startupToTray':
+        setStartupToTray(value as boolean);
+        break;
+      case 'closeToTray':
+        setCloseToTray(value as boolean);
+        break;
+      case 'proxyMode':
+        setProxyMode(value as 'system' | 'custom' | 'none');
+        break;
+      case 'sendErrorReports':
+        setSendErrorReports(value as boolean);
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleSave = async () => {
     console.log('Saving settings');
 
@@ -111,6 +151,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       await settingsService.updateSettings({
         providers: providerSettings,
         enableWebSearch_Preview: useWebSearch
+        // In a real implementation, we would save general settings here
+        // startWithSystem,
+        // startupToTray,
+        // closeToTray,
+        // proxyMode,
+        // sendErrorReports
       });
       
       // Refresh models if API key has changed
@@ -218,6 +264,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           <div className="flex-1 px-2 overflow-y-auto">
             <button
               className={`flex items-center w-full px-4 py-3 text-left transition-all duration-200 ${
+                activeTab === 'general' ? 'settings-category-selected-item settings-category-selected-item-text font-medium' : 'settings-category-item settings-category-item-text'
+              }`}
+              onClick={() => setActiveTab('general')}
+            >
+              <Sliders size={18} className="mr-2" />
+              {t('settings.general')}
+            </button>
+
+            <button
+              className={`flex items-center w-full px-4 py-3 text-left transition-all duration-200 ${
                 activeTab === 'api' ? 'settings-category-selected-item settings-category-selected-item-text font-medium' : 'settings-category-item settings-category-item-text'
               }`}
               onClick={() => setActiveTab('api')}
@@ -245,34 +301,26 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <Languages size={18} className="mr-2" />
               {t('settings.language')}
             </button>
-            
-            {/*<button
-              className={`flex items-center w-full px-4 py-3 text-left ${
-                activeTab === 'models' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => setActiveTab('models')}
-            >
-              <Layers size={18} className="mr-2" />
-              Model Management
-            </button>*/}
           </div>
-          
-          {/* <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={async () => {
-                await handleSave();
-              }}
-              className="w-full px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
-              Close
-            </button>
-          </div> */}
         </div>
         
         {/* Main content */}
         <div className="flex flex-col flex-1 h-full">
           {/* Content area */}
           <div className="flex-1 overflow-y-auto">
+            {/* General Settings Tab */}
+            {activeTab === 'general' && (
+              <GeneralSettings
+                startWithSystem={startWithSystem}
+                startupToTray={startupToTray}
+                closeToTray={closeToTray}
+                proxyMode={proxyMode}
+                sendErrorReports={sendErrorReports}
+                onSettingChange={handleGeneralSettingChange}
+                onSaveSettings={handleSave}
+              />
+            )}
+            
             {/* API Management Tab */}
             {activeTab === 'api' && (
               <ApiManagement

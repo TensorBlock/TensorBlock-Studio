@@ -145,6 +145,20 @@
     "models_modelCapabilities_chat": "Chat",
     "webSearch_title": "Búsqueda Web (Vista Previa)",
     "webSearch_toggle_label": "Habilitar Función de Búsqueda Web",
-    "webSearch_description": "Cuando está habilitado, la IA puede buscar en la web para proporcionar información más actualizada. Ten en cuenta que la búsqueda web actualmente solo es compatible con los modelos de OpenAI y Gemini. Además, cuando la búsqueda web está habilitada, las respuestas en streaming (donde el texto aparece de forma incremental) no estarán disponibles."
+    "webSearch_description": "Cuando está habilitado, la IA puede buscar en la web para proporcionar información más actualizada. Ten en cuenta que la búsqueda web actualmente solo es compatible con los modelos de OpenAI y Gemini. Además, cuando la búsqueda web está habilitada, las respuestas en streaming (donde el texto aparece de forma incremental) no estarán disponibles.",
+
+    "general": "Configuración General",
+    "startup": "Inicio",
+    "startWithSystem": "Iniciar con el sistema",
+    "startupToTray": "Iniciar minimizado en la bandeja",
+    "trayOptions": "Opciones de Bandeja",
+    "closeToTray": "Minimizar a la bandeja en lugar de cerrar",
+    "networkProxy": "Proxy de Red",
+    "systemProxy": "Usar proxy del sistema",
+    "customProxy": "Proxy personalizado",
+    "noProxy": "Sin proxy",
+    "privacy": "Privacidad",
+    "sendErrorReports": "Enviar informes de errores anónimos y estadísticas de uso",
+    "sendErrorReports_description": "Ayuda a mejorar la aplicación enviando informes de fallos anónimos y datos de uso."
   }
 }
