@@ -22,6 +22,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [customProxyUrl, setCustomProxyUrl] = useState<string>('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isWindows, setIsWindows] = useState(false);
   
   // Check if running on Windows platform
