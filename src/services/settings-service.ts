@@ -239,6 +239,13 @@ const DEFAULT_SETTINGS: UserSettings = {
   useStreaming: true,
   webSearchEnabled: false,
   enableWebSearch_Preview: false,
+  // General settings
+  startWithSystem: false,
+  startupToTray: false,
+  closeToTray: true,
+  proxyMode: 'system',
+  customProxyUrl: '',
+  sendErrorReports: true,
 };
 
 /**

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface GeneralSettingsProps {
@@ -22,6 +22,19 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [customProxyUrl, setCustomProxyUrl] = useState<string>('');
+  const [isWindows, setIsWindows] = useState(false);
+  
+  // Check if running on Windows platform
+  useEffect(() => {
+    const checkPlatform = async () => {
+      if (window.electron && window.electron.getPlatform) {
+        const platform = await window.electron.getPlatform();
+        setIsWindows(platform === 'win32');
+      }
+    };
+    
+    checkPlatform();
+  }, []);
 
   const handleProxyModeChange = (mode: 'system' | 'custom' | 'none') => {
     onSettingChange('proxyMode', mode);

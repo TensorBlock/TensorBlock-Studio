@@ -10,6 +10,13 @@ export interface UserSettings {
   useStreaming: boolean;
   webSearchEnabled: boolean;
   enableWebSearch_Preview: boolean;
+  // General settings
+  startWithSystem?: boolean;
+  startupToTray?: boolean;
+  closeToTray?: boolean;
+  proxyMode?: 'system' | 'custom' | 'none';
+  customProxyUrl?: string;
+  sendErrorReports?: boolean;
 }
 
 /**

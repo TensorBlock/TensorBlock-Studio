@@ -65,13 +65,31 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setHasApiKeyChanged(false);
       lastOpenedSettings.current = true;
       
-      // In a real implementation, we would load these from settings service
-      // This is just for the UI prototype
-      // setStartWithSystem(settings.startWithSystem || false);
-      // setStartupToTray(settings.startupToTray || false);
-      // setCloseToTray(settings.closeToTray || true);
-      // setProxyMode(settings.proxyMode || 'system');
-      // setSendErrorReports(settings.sendErrorReports || true);
+      // Load general settings from settings service
+      setStartWithSystem(settings.startWithSystem || false);
+      setStartupToTray(settings.startupToTray || false);
+      setCloseToTray(settings.closeToTray || true);
+      setProxyMode(settings.proxyMode || 'system');
+      setSendErrorReports(settings.sendErrorReports || true);
+      
+      // Load current auto-start setting from system
+      const checkAutoLaunch = async () => {
+        if (window.electron && window.electron.getAutoLaunch) {
+          const autoLaunchEnabled = await window.electron.getAutoLaunch();
+          setStartWithSystem(autoLaunchEnabled);
+        }
+      };
+      
+      // Load current close-to-tray setting
+      const checkCloseToTray = async () => {
+        if (window.electron && window.electron.getCloseToTray) {
+          const closeToTrayEnabled = await window.electron.getCloseToTray();
+          setCloseToTray(closeToTrayEnabled);
+        }
+      };
+      
+      checkAutoLaunch();
+      checkCloseToTray();
     }
 
     if(!isOpen && lastOpenedSettings.current){
@@ -117,12 +135,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     switch(key) {
       case 'startWithSystem':
         setStartWithSystem(value as boolean);
+        // Apply auto-launch setting to system
+        if (window.electron && window.electron.setAutoLaunch) {
+          window.electron.setAutoLaunch(value as boolean);
+        }
         break;
       case 'startupToTray':
         setStartupToTray(value as boolean);
+        // Store startup-to-tray setting
+        if (window.electron && window.electron.setStartupToTray) {
+          window.electron.setStartupToTray(value as boolean);
+        }
         break;
       case 'closeToTray':
         setCloseToTray(value as boolean);
+        // Apply close-to-tray setting
+        if (window.electron && window.electron.setCloseToTray) {
+          window.electron.setCloseToTray(value as boolean);
+        }
         break;
       case 'proxyMode':
         setProxyMode(value as 'system' | 'custom' | 'none');
@@ -150,13 +180,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       // Update all settings in one go
       await settingsService.updateSettings({
         providers: providerSettings,
-        enableWebSearch_Preview: useWebSearch
-        // In a real implementation, we would save general settings here
-        // startWithSystem,
-        // startupToTray,
-        // closeToTray,
-        // proxyMode,
-        // sendErrorReports
+        enableWebSearch_Preview: useWebSearch,
+        // Save general settings
+        startWithSystem,
+        startupToTray,
+        closeToTray,
+        proxyMode,
+        sendErrorReports
       });
       
       // Refresh models if API key has changed

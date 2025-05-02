@@ -24,5 +24,11 @@ interface Window {
       success: boolean;
       error?: string;
     }>;
+    // Auto-startup and tray functions
+    getAutoLaunch: () => Promise<boolean>;
+    setAutoLaunch: (enable: boolean) => Promise<boolean>;
+    setCloseToTray: (enable: boolean) => Promise<boolean>;
+    getCloseToTray: () => Promise<boolean>;
+    setStartupToTray: (enable: boolean) => Promise<boolean>;
   };
 } 
