@@ -13,6 +13,7 @@ let tray: Tray | null = null;
 
 // Settings
 let closeToTray = true;
+let forceQuit = false; // Flag to indicate we're trying to actually quit
 
 // Check if app is running in development mode
 const args = process.argv.slice(1);
@@ -39,7 +40,10 @@ function createTray() {
       win?.setSkipTaskbar(false); // Show in taskbar
     }},
     { type: 'separator' },
-    { label: 'Quit', click: () => { app.quit(); } }
+    { label: 'Quit', click: () => { 
+      forceQuit = true; // Set flag to bypass close-to-tray
+      app.quit(); 
+    }}
   ]);
   
   tray.setContextMenu(contextMenu);
@@ -316,10 +320,11 @@ function createWindow(): BrowserWindow {
 
   // Close application
   ipcMain.on('close-app', () => {
-    if (closeToTray) {
+    if (closeToTray && !forceQuit) {
       win?.hide();
-      win?.setSkipTaskbar(true);
+      win?.setSkipTaskbar(true); // Hide from taskbar
     } else {
+      forceQuit = true; // Ensure we're really quitting
       app.quit();
     }
   });
@@ -369,10 +374,10 @@ function createWindow(): BrowserWindow {
 
   // Listen for window close event
   win.on('close', (e) => {
-    if (closeToTray) {
+    if (closeToTray && !forceQuit) {
       e.preventDefault();
       win?.hide();
-      win?.setSkipTaskbar(true);
+      win?.setSkipTaskbar(true); // Hide from taskbar
     }
   });
 
@@ -477,6 +482,11 @@ function getCPUName() {
 
 try {
   app.commandLine.appendSwitch('class', 'tensorblock-desktop');
+
+  // Set force quit flag when app is about to quit
+  app.on('before-quit', () => {
+    forceQuit = true;
+  });
 
   // Initialize app when Electron is ready
   // Added delay to fix black background issue with transparent windows
