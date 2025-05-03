@@ -3,6 +3,8 @@ import { ProviderFactory } from './providers/provider-factory';
 import { Message } from '../types/chat';
 import { StreamControlHandler } from './streaming-control';
 import { SETTINGS_CHANGE_EVENT, SettingsService } from './settings-service';
+import { MCPToolAdapter } from './mcp-tool-adapter';
+import { MCPService } from './mcp-service';
 
 export interface ModelOption {
   id: string;
@@ -185,6 +187,9 @@ export class AIService {
       const modelName = options.model;
       const useStreaming = options.stream;
       
+      // Check if there are any MCP tools to be used
+      const mcpTools = options.mcpTools;
+      
       // Get provider instance
       const provider = this.getProvider(providerName);
 
@@ -192,6 +197,20 @@ export class AIService {
       
       if (!provider) {
         throw new Error(`Provider ${providerName} not available`);
+      }
+      
+      // If MCP tools are specified, get them and add to options
+      if (mcpTools && mcpTools.length > 0) {
+        const mcpToolAdapter = MCPToolAdapter.getInstance();
+        const allTools: Record<string, any> = {};
+        
+        for (const mcpToolId of mcpTools) {
+          const tools = await mcpToolAdapter.getToolsForServer(mcpToolId, streamController);
+          Object.assign(allTools, tools);
+        }
+        
+        // Add tools to options
+        options.tools = allTools;
       }
       
       const result = await provider.getChatCompletion(
@@ -207,6 +226,7 @@ export class AIService {
           user: options?.user,
           stream: useStreaming,
           signal: streamController.getAbortSignal(),
+          tools: options?.tools,
         },
         streamController
       );
@@ -401,5 +421,12 @@ export class AIService {
 
     // Re-fetch all models
     await this.getCachedAllModels();
+  }
+
+  /**
+   * Get all available MCP servers
+   */
+  public getMCPServers(): Record<string, any> {
+    return MCPService.getInstance().getMCPServers();
   }
 } 

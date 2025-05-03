@@ -1,6 +1,7 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation, Message } from '../../types/chat';
-import { Send, Square, Copy, Pencil, Loader2, Globe, RefreshCw, Check, X } from 'lucide-react';
+import { MCPServerSettings } from '../../types/settings';
+import { Send, Square, Copy, Pencil, Loader2, Globe, RefreshCw, Check, X, ServerCog } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
@@ -26,6 +27,9 @@ interface ChatMessageAreaProps {
   isCurrentlyStreaming?: boolean;
   selectedProvider: string;
   selectedModel: string;
+  mcpServers?: Record<string, MCPServerSettings>;
+  selectedMcpServers?: string[];
+  onToggleMcpServer?: (serverId: string) => void;
 }
 
 export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
@@ -40,6 +44,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   isCurrentlyStreaming = false,
   selectedProvider,
   selectedModel,
+  mcpServers,
+  selectedMcpServers,
+  onToggleMcpServer,
 }) => {
   const { t } = useTranslation();
   const [inputValue, setInput] = useState('');
@@ -54,6 +61,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const [webSearchActive, setWebSearchActive] = useState(false);
   const [isWebSearchPreviewEnabled, setIsWebSearchPreviewEnabled] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [mcpPopupOpen, setMcpPopupOpen] = useState(false);
+  const mcpButtonRef = useRef<HTMLButtonElement>(null);
+  const mcpPopupRef = useRef<HTMLDivElement>(null);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -277,6 +287,25 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
     textarea.style.height = `${newHeight}px`;
   }
+
+  // Add useEffect to handle click outside for MCP popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        mcpPopupRef.current && 
+        !mcpPopupRef.current.contains(event.target as Node) &&
+        mcpButtonRef.current && 
+        !mcpButtonRef.current.contains(event.target as Node)
+      ) {
+        setMcpPopupOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // If no active conversation is selected
   if (!activeConversation) {
@@ -551,6 +580,70 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           {
             webSearchElement
           }
+
+          {/* MCP Servers dropdown */}
+          {mcpServers && Object.keys(mcpServers).length > 0 && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMcpPopupOpen(!mcpPopupOpen)}
+                ref={mcpButtonRef}
+                className={`flex items-center justify-center w-fit h-8 p-2 transition-all duration-200 rounded-full outline outline-2
+                  ${selectedMcpServers && selectedMcpServers.length > 0 ? 'bg-blue-50 outline-blue-300 hover:bg-blue-200 hover:outline hover:outline-blue-500' : 'bg-white outline-gray-100 hover:bg-blue-50 hover:outline hover:outline-blue-300'}`}
+                aria-label="MCP Servers"
+                title="MCP Servers"
+              >
+                <ServerCog className={`mr-1 ${selectedMcpServers && selectedMcpServers.length > 0 ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`} size={20} />
+                <span className={`text-sm font-light ${selectedMcpServers && selectedMcpServers.length > 0 ? 'text-blue-500' : 'text-gray-400'} transition-all duration-200`}>
+                  MCP Tools {selectedMcpServers && selectedMcpServers.length > 0 ? `(${selectedMcpServers.length})` : ''}
+                </span>
+              </button>
+              
+              {mcpPopupOpen && (
+                <div 
+                  ref={mcpPopupRef}
+                  className="absolute z-10 mt-2 image-generation-popup"
+                  style={{ bottom: '100%', left: 0, minWidth: '220px' }}
+                >
+                  <div className="p-2">
+                    <div className="mb-2 text-sm font-medium text-gray-700">
+                      {t('chat.availableMcpServers')}
+                    </div>
+                    <div className="overflow-y-auto max-h-60">
+                      {Object.values(mcpServers).map((server) => (
+                        <div
+                          key={server.id}
+                          className={`flex items-center px-3 py-2 cursor-pointer rounded-md ${
+                            selectedMcpServers?.includes(server.id)
+                              ? 'image-generation-provider-selected'
+                              : 'image-generation-provider-item'
+                          }`}
+                          onClick={() => onToggleMcpServer?.(server.id)}
+                        >
+                          <ServerCog className="w-5 h-5 mr-2" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{server.name}</span>
+                            {server.isDefault && (
+                              <span className="text-xs text-gray-500">{t('mcpServer.default')}</span>
+                            )}
+                            {server.isImageGeneration && (
+                              <span className="text-xs text-gray-500">{t('mcpServer.imageGeneration')}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {Object.keys(mcpServers).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          {t('chat.noMcpServersAvailable')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <span className={`flex-1 hidden text-xs text-center pt-4 text-gray-300 md:block truncate pr-6 lg:pr-12`}>
             {t('chat.pressShiftEnterToChangeLines')}

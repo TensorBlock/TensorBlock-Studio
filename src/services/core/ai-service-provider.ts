@@ -25,6 +25,8 @@ export interface CompletionOptions {
   user?: string;
   stream?: boolean; // Whether to stream the response
   signal?: AbortSignal; // AbortSignal for cancellation
+  mcpTools?: string[]; // IDs of MCP servers to use as tools
+  tools?: Record<string, unknown>; // Pre-configured tools for the AI
 }
 
 /**

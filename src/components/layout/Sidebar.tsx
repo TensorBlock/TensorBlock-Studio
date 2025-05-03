@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Settings, Image, Languages, FolderClosed } from 'lucide-react';
+import { MessageSquare, Settings, Image, Languages, FolderClosed, ServerCog } from 'lucide-react';
 
 interface SidebarProps {
   activePage: string;
@@ -30,6 +30,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     else if(activePage === 'files'){
       return 'files';
+    }
+    else if(activePage === 'mcpserver'){
+      return 'mcpserver';
     }
 
     return '';
@@ -86,6 +89,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-label="File Management"
         >
           <FolderClosed size={22} />
+        </button>
+
+        <button 
+          className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
+            getActivePage() === 'mcpserver' 
+              ? 'navigation-item-selected navigation-item-text' 
+              : 'navigation-item navigation-item-text'
+          }`}
+          onClick={() => onChangePage('mcpserver')}
+          aria-label="MCP Servers"
+        >
+          <ServerCog size={22} />
         </button>
       </div>
 

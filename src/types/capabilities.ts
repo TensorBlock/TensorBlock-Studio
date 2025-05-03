@@ -18,6 +18,7 @@ export enum AIServiceCapability {
   FineTuning = 'fineTuning',
   StreamingCompletion = 'streamingCompletion',
   WebSearch = 'webSearch',
+  MCPServer = 'mcpServer',
 }
 
 /**

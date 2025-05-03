@@ -30,7 +30,11 @@
     "edit": "Editar",
     "regenerate": "Regenerar",
     "stopResponse": "Detener Respuesta",
-    "pressShiftEnterToChangeLines": "Presiona Shift+Enter para cambiar de línea"
+    "pressShiftEnterToChangeLines": "Presiona Shift+Enter para cambiar de línea",
+    "generateImage": "Generar Imagen",
+    "imageGenerationNotAvailable": "Generación de imágenes no disponible",
+    "selectImageProvider": "Seleccionar Proveedor de Imágenes",
+    "noImageProvidersAvailable": "No hay proveedores de imágenes disponibles"
   },
   "translation": {
     "title": "Traducción",
@@ -103,6 +107,22 @@
     "placeholderText": "Ingresa un prompt y haz clic en generar para crear imágenes",
     "apiKeyMissing": "Por favor, configura tu clave API para el proveedor seleccionado en la configuración.",
     "seedHelp": "Semilla para resultados reproducibles"
+  },
+  "mcpServer": {
+    "title": "Servidores MCP",
+    "addServer": "Agregar Servidor",
+    "serverName": "Nombre del Servidor",
+    "serverNamePlaceholder": "Introduce el nombre del servidor",
+    "transportType": "Tipo de Transporte",
+    "serverURL": "URL del Servidor",
+    "serverURLPlaceholder": "Introduce la URL del servidor",
+    "headers": "Cabeceras (JSON)",
+    "default": "Predeterminado",
+    "imageGeneration": "Generación de Imágenes",
+    "noServers": "No hay servidores MCP configurados",
+    "addServerPrompt": "Haz clic en el botón 'Agregar Servidor' para crear uno",
+    "cannotEditDefault": "No se puede editar el servidor predeterminado",
+    "cannotDeleteDefault": "No se puede eliminar el servidor predeterminado"
   },
   "settings": {
     "language": "Idioma",

@@ -30,7 +30,11 @@
     "edit": "편집",
     "regenerate": "재생성",
     "stopResponse": "응답 중지",
-    "pressShiftEnterToChangeLines": "줄을 바꾸려면 Shift+Enter를 누르세요"
+    "pressShiftEnterToChangeLines": "줄을 바꾸려면 Shift+Enter를 누르세요",
+    "generateImage": "이미지 생성",
+    "imageGenerationNotAvailable": "이미지 생성을 사용할 수 없습니다",
+    "selectImageProvider": "이미지 제공자 선택",
+    "noImageProvidersAvailable": "사용 가능한 이미지 제공자가 없습니다"
   },
   "translation": {
     "title": "번역",
@@ -103,6 +107,22 @@
     "placeholderText": "프롬프트를 입력하고 생성 버튼을 클릭하여 이미지 생성",
     "apiKeyMissing": "선택한 제공자의 API 키를 설정에서 설정하세요.",
     "seedHelp": "재현 가능한 결과를 위한 시드"
+  },
+  "mcpServer": {
+    "title": "MCP 서버",
+    "addServer": "서버 추가",
+    "serverName": "서버 이름",
+    "serverNamePlaceholder": "서버 이름 입력",
+    "transportType": "전송 유형",
+    "serverURL": "서버 URL",
+    "serverURLPlaceholder": "서버 URL 입력",
+    "headers": "헤더 (JSON)",
+    "default": "기본값",
+    "imageGeneration": "이미지 생성",
+    "noServers": "구성된 MCP 서버가 없습니다",
+    "addServerPrompt": "'서버 추가' 버튼을 클릭하여 서버를 생성하세요",
+    "cannotEditDefault": "기본 서버는 편집할 수 없습니다",
+    "cannotDeleteDefault": "기본 서버는 삭제할 수 없습니다"
   },
   "settings": {
     "language": "언어",

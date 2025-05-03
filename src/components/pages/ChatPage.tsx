@@ -5,6 +5,7 @@ import { Conversation, ConversationFolder } from '../../types/chat';
 import { SETTINGS_CHANGE_EVENT, SettingsService } from '../../services/settings-service';
 import { ChatService } from '../../services/chat-service';
 import { AIService } from '../../services/ai-service';
+import { MCPServerSettings } from '../../types/settings';
 
 export const ChatPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -17,6 +18,8 @@ export const ChatPage = () => {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(true);
+  const [mcpServers, setMcpServers] = useState<Record<string, MCPServerSettings>>({});
+  const [selectedMcpServers, setSelectedMcpServers] = useState<string[]>([]);
 
   // Initialize the services
   useEffect(() => {
@@ -43,6 +46,10 @@ export const ChatPage = () => {
         const foldersList = chatService.getFolders();
         setFolders(foldersList);
         
+        // Load MCP servers
+        const mcpServersList = chatService.getAvailableMCPServers();
+        setMcpServers(mcpServersList);
+        
         // Set active conversation from chat service
         const activeId = chatService.getActiveConversationId();
         if (activeId) {
@@ -64,6 +71,22 @@ export const ChatPage = () => {
     }
     
   }, [isServiceInitialized]);
+
+  // Load MCP servers when settings change
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      if (chatServiceRef.current) {
+        const mcpServersList = chatServiceRef.current.getAvailableMCPServers();
+        setMcpServers(mcpServersList);
+      }
+    };
+    
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    
+    return () => {
+      window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    };
+  }, []);
 
   // Load active conversation details when selected
   useEffect(() => {
@@ -206,25 +229,32 @@ export const ChatPage = () => {
     
     try {
       const chatService = chatServiceRef.current;
-
-      // Send user message with streaming
-      await chatService.sendMessage(
-        content, 
-        activeConversationId,
-        true,
-        (updatedConversation) => {
-          setConversations(updatedConversation);
-        }
-      );
       
+      // Check if there are selected MCP servers to use
+      if (selectedMcpServers.length > 0) {
+        // Send message with MCP tools
+        await chatService.sendMessageWithMCPTools(
+          content,
+          activeConversationId,
+          selectedMcpServers,
+          true,
+          (updatedConversation) => {
+            setConversations(updatedConversation);
+          }
+        );
+      } else {
+        // Send regular message
+        await chatService.sendMessage(
+          content, 
+          activeConversationId,
+          true,
+          (updatedConversation) => {
+            setConversations(updatedConversation);
+          }
+        );
+      }
     } catch (err) {
       console.error('Error sending streaming message:', err);
-      
-      // // If streaming fails, we'll try to fall back to regular mode
-      // const error = err as Error;
-      // if (error.message && error.message.includes('does not support streaming')) {
-      //   await handleSendMessage(content);
-      // }
     }
   };
 
@@ -368,6 +398,17 @@ export const ChatPage = () => {
     }
   };
 
+  // Toggle selection of an MCP server
+  const handleToggleMcpServer = (serverId: string) => {
+    setSelectedMcpServers(prev => {
+      if (prev.includes(serverId)) {
+        return prev.filter(id => id !== serverId);
+      } else {
+        return [...prev, serverId];
+      }
+    });
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-white">
 
@@ -406,6 +447,9 @@ export const ChatPage = () => {
             isCurrentlyStreaming={chatServiceRef.current?.isCurrentlyStreaming(activeConversationId) || false}
             selectedProvider={selectedProvider}
             selectedModel={selectedModel}
+            mcpServers={mcpServers}
+            selectedMcpServers={selectedMcpServers}
+            onToggleMcpServer={handleToggleMcpServer}
           />
         </div>
       </div>

@@ -30,7 +30,11 @@
     "edit": "Edit",
     "regenerate": "Regenerate",
     "stopResponse": "Stop Response",
-    "pressShiftEnterToChangeLines": "Press Shift+Enter to change lines"
+    "pressShiftEnterToChangeLines": "Press Shift+Enter to change lines",
+    "generateImage": "Generate Image",
+    "imageGenerationNotAvailable": "Image generation not available",
+    "selectImageProvider": "Select Image Provider",
+    "noImageProvidersAvailable": "No image providers available"
   },
   "translation": {
     "title": "Translation",
@@ -103,6 +107,22 @@
     "placeholderText": "Enter a prompt and click generate to create images",
     "apiKeyMissing": "Please set your API key for the selected provider in the settings.",
     "seedHelp": "Seed for reproducible results"
+  },
+  "mcpServer": {
+    "title": "MCP Servers",
+    "addServer": "Add Server",
+    "serverName": "Server Name",
+    "serverNamePlaceholder": "Enter server name",
+    "transportType": "Transport Type",
+    "serverURL": "Server URL",
+    "serverURLPlaceholder": "Enter server URL",
+    "headers": "Headers (JSON)",
+    "default": "Default",
+    "imageGeneration": "Image Generation",
+    "noServers": "No MCP servers configured",
+    "addServerPrompt": "Click the 'Add Server' button to create one",
+    "cannotEditDefault": "Cannot edit default server",
+    "cannotDeleteDefault": "Cannot delete default server"
   },
   "settings": {
     "language": "Language",

@@ -17,6 +17,7 @@ export interface UserSettings {
   proxyMode?: 'system' | 'custom' | 'none';
   customProxyUrl?: string;
   sendErrorReports?: boolean;
+  mcpServers?: Record<string, MCPServerSettings>;
 }
 
 /**
@@ -45,4 +46,17 @@ export interface ModelSettings {
   modelCategory: string;
   modelDescription: string;
   modelCapabilities: AIServiceCapability[];
+}
+
+/**
+ * MCP Server settings interface
+ */
+export interface MCPServerSettings {
+  id: string;
+  name: string;
+  type: 'sse' | 'stdio' | 'streamableHttp';
+  url: string;
+  headers?: Record<string, string>;
+  isDefault?: boolean;
+  isImageGeneration?: boolean;
 }

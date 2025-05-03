@@ -30,7 +30,11 @@
     "edit": "編集",
     "regenerate": "再生成",
     "stopResponse": "応答を停止",
-    "pressShiftEnterToChangeLines": "Shift+Enterを押して行を変更"
+    "pressShiftEnterToChangeLines": "Shift+Enterを押して行を変更",
+    "generateImage": "画像を生成",
+    "imageGenerationNotAvailable": "画像生成は利用できません",
+    "selectImageProvider": "画像プロバイダーを選択",
+    "noImageProvidersAvailable": "利用可能な画像プロバイダーがありません"
   },
   "translation": {
     "title": "翻訳",
@@ -103,6 +107,22 @@
     "placeholderText": "プロンプトを入力して生成ボタンをクリックして画像を作成",
     "apiKeyMissing": "選択したプロバイダーのAPIキーを設定で設定してください。",
     "seedHelp": "再現可能な結果のためのシード値"
+  },
+  "mcpServer": {
+    "title": "MCPサーバー",
+    "addServer": "サーバーを追加",
+    "serverName": "サーバー名",
+    "serverNamePlaceholder": "サーバー名を入力",
+    "transportType": "トランスポートタイプ",
+    "serverURL": "サーバーURL",
+    "serverURLPlaceholder": "サーバーURLを入力",
+    "headers": "ヘッダー (JSON)",
+    "default": "デフォルト",
+    "imageGeneration": "画像生成",
+    "noServers": "MCPサーバーが設定されていません",
+    "addServerPrompt": "'サーバーを追加'ボタンをクリックして作成してください",
+    "cannotEditDefault": "デフォルトサーバーは編集できません",
+    "cannotDeleteDefault": "デフォルトサーバーは削除できません"
   },
   "settings": {
     "language": "言語",

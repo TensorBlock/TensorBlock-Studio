@@ -30,7 +30,11 @@
     "edit": "編輯",
     "regenerate": "重新生成",
     "stopResponse": "停止回應",
-    "pressShiftEnterToChangeLines": "按 Shift+Enter 換行"
+    "pressShiftEnterToChangeLines": "按 Shift+Enter 換行",
+    "generateImage": "生成圖片",
+    "imageGenerationNotAvailable": "圖片生成不可用",
+    "selectImageProvider": "選擇圖片提供商",
+    "noImageProvidersAvailable": "沒有可用的圖片提供商"
   },
   "translation": {
     "title": "翻譯",
@@ -103,6 +107,22 @@
     "placeholderText": "輸入提示詞並點擊生成按鈕來創建圖片",
     "apiKeyMissing": "請在設定中為所選提供商設置您的 API 金鑰。",
     "seedHelp": "用於可重現結果的種子"
+  },
+  "mcpServer": {
+    "title": "MCP 伺服器",
+    "addServer": "新增伺服器",
+    "serverName": "伺服器名稱",
+    "serverNamePlaceholder": "輸入伺服器名稱",
+    "transportType": "傳輸類型",
+    "serverURL": "伺服器 URL",
+    "serverURLPlaceholder": "輸入伺服器 URL",
+    "headers": "標頭 (JSON)",
+    "default": "預設",
+    "imageGeneration": "圖片生成",
+    "noServers": "尚未配置 MCP 伺服器",
+    "addServerPrompt": "點擊「新增伺服器」按鈕來建立一個",
+    "cannotEditDefault": "無法編輯預設伺服器",
+    "cannotDeleteDefault": "無法刪除預設伺服器"
   },
   "settings": {
     "language": "語言",

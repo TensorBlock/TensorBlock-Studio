@@ -1,5 +1,5 @@
 import { AIServiceCapability } from "../types/capabilities";
-import { UserSettings, ProviderSettings, ModelSettings } from "../types/settings";
+import { UserSettings, ProviderSettings, ModelSettings, MCPServerSettings } from "../types/settings";
 import { DatabaseService } from "./database";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -246,6 +246,16 @@ const DEFAULT_SETTINGS: UserSettings = {
   proxyMode: 'system',
   customProxyUrl: '',
   sendErrorReports: true,
+  mcpServers: {
+    'image-generation': {
+      id: 'image-generation',
+      name: 'Image Generation',
+      type: 'sse',
+      url: 'internal://image-generation',
+      isDefault: true,
+      isImageGeneration: true
+    }
+  }
 };
 
 /**
@@ -542,5 +552,64 @@ export class SettingsService {
   public async setUseStreaming(useStreaming: boolean): Promise<void> {
     this.settings.useStreaming = useStreaming;
     await this.saveSettings();
+  }
+
+  /**
+   * Get all MCP servers
+   */
+  public getMCPServers(): Record<string, MCPServerSettings> {
+    return this.settings.mcpServers || {};
+  }
+
+  /**
+   * Get a specific MCP server by ID
+   */
+  public getMCPServer(id: string): MCPServerSettings | undefined {
+    return this.settings.mcpServers?.[id];
+  }
+
+  /**
+   * Add or update an MCP server
+   */
+  public async addOrUpdateMCPServer(server: MCPServerSettings): Promise<void> {
+    if (!this.settings.mcpServers) {
+      this.settings.mcpServers = {};
+    }
+    
+    this.settings.mcpServers[server.id] = server;
+    await this.saveSettings();
+    this.notifySettingsChanged();
+  }
+
+  /**
+   * Delete an MCP server
+   */
+  public async deleteMCPServer(id: string): Promise<void> {
+    if (!this.settings.mcpServers || !this.settings.mcpServers[id]) {
+      return;
+    }
+    
+    // Don't delete default servers
+    if (this.settings.mcpServers[id].isDefault) {
+      throw new Error('Cannot delete default MCP server');
+    }
+    
+    delete this.settings.mcpServers[id];
+    await this.saveSettings();
+    this.notifySettingsChanged();
+  }
+
+  /**
+   * Check if an MCP server is the image generation server
+   */
+  public isImageGenerationMCPServer(id: string): boolean {
+    return !!this.settings.mcpServers?.[id]?.isImageGeneration;
+  }
+
+  /**
+   * Notify listeners that settings have changed
+   */
+  private notifySettingsChanged(): void {
+    window.dispatchEvent(new CustomEvent(SETTINGS_CHANGE_EVENT));
   }
 } 

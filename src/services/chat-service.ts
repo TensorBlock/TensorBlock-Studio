@@ -6,6 +6,7 @@ import { StreamControlHandler } from './streaming-control';
 import { MessageHelper } from './message-helper';
 import { AIServiceCapability } from '../types/capabilities';
 import { FileUploadService } from './file-upload-service';
+import { MCPService } from './mcp-service';
 
 /**
  * Service for managing chat conversations
@@ -894,5 +895,149 @@ export class ChatService {
    */
   public getFolders(): ConversationFolder[] {
     return [...this.folders];
+  }
+
+  /**
+   * Get available MCP servers
+   */
+  public getAvailableMCPServers(): Record<string, any> {
+    return MCPService.getInstance().getMCPServers();
+  }
+
+  /**
+   * Check if a specific model supports MCP tools
+   */
+  public doesModelSupportMCPTools(provider: string, model: string): boolean {
+    const providerService = this.aiService.getProvider(provider);
+    
+    if (!providerService) {
+      return false;
+    }
+    
+    const capabilities = providerService.getModelCapabilities(model);
+    return capabilities.includes(AIServiceCapability.ToolUsage) || 
+           capabilities.includes(AIServiceCapability.FunctionCalling) ||
+           capabilities.includes(AIServiceCapability.MCPServer);
+  }
+
+  /**
+   * Send a message with MCP tools
+   */
+  public async sendMessageWithMCPTools(
+    content: string,
+    conversationId: string,
+    mcpTools: string[],
+    isStreaming: boolean,
+    conversationUpdate: (conversations: Conversation[]) => void
+  ): Promise<void> {
+    if (!this.dbService) {
+      throw new Error('Database service not initialized');
+    }
+
+    const currentConversation = this.conversations.find(c => c.conversationId === conversationId);
+    if (currentConversation === undefined) {
+      throw new Error('Active conversation not found');
+    }
+    
+    try {
+      const settingsService = SettingsService.getInstance();
+      const provider = settingsService.getSelectedProvider();
+      const model = settingsService.getSelectedModel();
+
+      //#region Save user message to database and update title
+      // eslint-disable-next-line prefer-const
+      let {conversation: updatedConversation, message: userMessage} = await MessageHelper.addUserMessageToConversation(content, currentConversation);
+      
+      // Update in memory
+      this.conversations = this.conversations.map(c => 
+        c.conversationId === conversationId ? updatedConversation : c
+      );
+
+      conversationUpdate(this.conversations);
+      //#endregion
+
+      //#region Map messages to messages array
+      const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false);
+      //#endregion
+
+      //#region Streaming Special Message Handling
+      // Create a placeholder for the streaming message
+      const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
+
+      userMessage.childrenMessageIds.push(placeholderMessage.messageId);
+      userMessage.preferIndex = userMessage.childrenMessageIds.length - 1;
+
+      // Add placeholder to conversation and update UI
+      const messagesWithPlaceholder = new Map(updatedConversation.messages);
+      messagesWithPlaceholder.set(placeholderMessage.messageId, placeholderMessage);
+
+      updatedConversation = {
+        ...updatedConversation,
+        messages: messagesWithPlaceholder,
+        updatedAt: new Date()
+      };
+
+      this.conversations = this.conversations.map(c => 
+        c.conversationId === conversationId ? updatedConversation : c
+      );
+
+      conversationUpdate(this.conversations);
+      //#endregion
+
+      //#region Send Chat Message to AI with streaming
+      // Create a new abort controller for this request
+      const streamController = new StreamControlHandler(
+        updatedConversation, 
+        placeholderMessage,
+        // ---- On chunk callback ----
+        (updated: Conversation) => {  
+          this.conversations = this.conversations.map(c => 
+            c.conversationId === conversationId ? updated : c
+          );
+          conversationUpdate(this.conversations);
+        }, 
+        // ---- On finish callback ----
+        async (aiResponse: Message | null) => { 
+          if (aiResponse === null) return;
+
+          const finalConversation = await MessageHelper.insertAssistantMessageToConversation(userMessage, aiResponse, updatedConversation);
+
+          // Update in memory
+          this.conversations = this.conversations.map(c => 
+            c.conversationId === conversationId ? finalConversation : c
+          );
+
+          conversationUpdate(this.conversations);
+
+          this.streamControllerMap.delete(conversationId);
+        }
+      );
+
+      this.streamControllerMap.set(conversationId, streamController);
+
+      // Send Chat Message to AI with streaming and MCP tools
+      await this.aiService.getChatCompletion(
+        messages, 
+        {
+          model,
+          provider,
+          stream: isStreaming,
+          mcpTools
+        },
+        streamController
+      );
+
+      conversationUpdate(this.conversations);
+      //#endregion
+    } catch (err) {
+      console.error('Error sending message with MCP tools:', err);
+      
+      // Don't throw the error if it was an abort error
+      const error = err as Error;
+      if (error.name === 'AbortError') {
+        return;
+      }
+      throw error;
+    }
   }
 }
