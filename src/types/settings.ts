@@ -10,6 +10,10 @@ export interface UserSettings {
   useStreaming: boolean;
   webSearchEnabled: boolean;
   enableWebSearch_Preview: boolean;
+  // Image generation settings
+  imageGenerationEnabled?: boolean;
+  imageGenerationProvider?: string;
+  imageGenerationModel?: string;
   // General settings
   startWithSystem?: boolean;
   startupToTray?: boolean;

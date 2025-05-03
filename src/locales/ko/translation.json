@@ -33,6 +33,9 @@
     "pressShiftEnterToChangeLines": "줄을 바꾸려면 Shift+Enter를 누르세요",
     "generateImage": "이미지 생성",
     "imageGenerationNotAvailable": "이미지 생성을 사용할 수 없습니다",
+    "imageGenerationDisabled": "이미지 생성이 비활성화되었습니다",
+    "enableImageGeneration": "이미지 생성 활성화",
+    "disableImageGeneration": "이미지 생성 비활성화",
     "selectImageProvider": "이미지 제공자 선택",
     "noImageProvidersAvailable": "사용 가능한 이미지 제공자가 없습니다"
   },

@@ -33,6 +33,9 @@
     "pressShiftEnterToChangeLines": "Presiona Shift+Enter para cambiar de línea",
     "generateImage": "Generar Imagen",
     "imageGenerationNotAvailable": "Generación de imágenes no disponible",
+    "imageGenerationDisabled": "La generación de imágenes está desactivada",
+    "enableImageGeneration": "Activar generación de imágenes",
+    "disableImageGeneration": "Desactivar generación de imágenes",
     "selectImageProvider": "Seleccionar Proveedor de Imágenes",
     "noImageProvidersAvailable": "No hay proveedores de imágenes disponibles"
   },

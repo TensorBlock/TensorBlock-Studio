@@ -33,6 +33,9 @@
     "pressShiftEnterToChangeLines": "按 Shift+Enter 换行",
     "generateImage": "生成图片",
     "imageGenerationNotAvailable": "图片生成不可用",
+    "imageGenerationDisabled": "图片生成已禁用",
+    "enableImageGeneration": "启用图片生成",
+    "disableImageGeneration": "禁用图片生成",
     "selectImageProvider": "选择图片提供商",
     "noImageProvidersAvailable": "没有可用的图片提供商"
   },

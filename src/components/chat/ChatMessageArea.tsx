@@ -610,30 +610,30 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                       {t('chat.availableMcpServers')}
                     </div>
                     <div className="overflow-y-auto max-h-60">
-                      {Object.values(mcpServers).map((server) => (
-                        <div
-                          key={server.id}
-                          className={`flex items-center px-3 py-2 cursor-pointer rounded-md ${
-                            selectedMcpServers?.includes(server.id)
-                              ? 'image-generation-provider-selected'
-                              : 'image-generation-provider-item'
-                          }`}
-                          onClick={() => onToggleMcpServer?.(server.id)}
-                        >
-                          <ServerCog className="w-5 h-5 mr-2" />
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">{server.name}</span>
-                            {server.isDefault && (
-                              <span className="text-xs text-gray-500">{t('mcpServer.default')}</span>
-                            )}
-                            {server.isImageGeneration && (
-                              <span className="text-xs text-gray-500">{t('mcpServer.imageGeneration')}</span>
-                            )}
+                      {Object.values(mcpServers)
+                        // Filter out image generation servers - they're handled by the ImageGenerationButton
+                        .filter(server => !server.isImageGeneration)
+                        .map((server) => (
+                          <div
+                            key={server.id}
+                            className={`flex items-center px-3 py-2 cursor-pointer rounded-md ${
+                              selectedMcpServers?.includes(server.id)
+                                ? 'image-generation-provider-selected'
+                                : 'image-generation-provider-item'
+                            }`}
+                            onClick={() => onToggleMcpServer?.(server.id)}
+                          >
+                            <ServerCog className="w-5 h-5 mr-2" />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{server.name}</span>
+                              {server.isDefault && (
+                                <span className="text-xs text-gray-500">{t('mcpServer.default')}</span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                       
-                      {Object.keys(mcpServers).length === 0 && (
+                      {Object.values(mcpServers).filter(server => !server.isImageGeneration).length === 0 && (
                         <div className="px-3 py-2 text-sm text-gray-500">
                           {t('chat.noMcpServersAvailable')}
                         </div>
