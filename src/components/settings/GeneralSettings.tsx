@@ -15,15 +15,13 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
   startWithSystem,
   startupToTray,
   closeToTray,
-  proxyMode,
-  sendErrorReports,
   onSettingChange,
   onSaveSettings
 }) => {
-  const { t } = useTranslation();
-  const [customProxyUrl, setCustomProxyUrl] = useState<string>('');
+  const { t, i18n } = useTranslation();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isWindows, setIsWindows] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
   
   // Check if running on Windows platform
   useEffect(() => {
@@ -37,15 +35,34 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
     checkPlatform();
   }, []);
 
-  const handleProxyModeChange = (mode: 'system' | 'custom' | 'none') => {
-    onSettingChange('proxyMode', mode);
-    onSaveSettings();
-  };
+  // Update currentLanguage when i18n.language changes
+  useEffect(() => {
+    setCurrentLanguage(i18n.language);
+  }, [i18n.language]);
+
+  // const handleProxyModeChange = (mode: 'system' | 'custom' | 'none') => {
+  //   onSettingChange('proxyMode', mode);
+  //   onSaveSettings();
+  // };
 
   const handleToggleChange = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     onSettingChange(key, e.target.checked);
     onSaveSettings();
   };
+
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+    setCurrentLanguage(langCode);
+  };
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'zh_CN', name: '简体中文' },
+    { code: 'zh_TW', name: '繁體中文' },
+    { code: 'ja', name: '日本語' },
+    { code: 'ko', name: '한국어' },
+    { code: 'es', name: 'Español' }
+  ];
 
   return (
     <div className="flex flex-col h-full p-4">
@@ -105,93 +122,31 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           </div>
         </div>
         
-        {/* Network Settings */}
+        {/* Language Settings */}
         <div className="p-4 mb-4 settings-section">
-          <h3 className="mb-4 text-lg font-medium settings-section-title">{t('settings.networkProxy')}</h3>
+          <h3 className="mb-4 text-lg font-medium settings-section-title">{t('settings.language')}</h3>
           
-          <div className="p-3 space-y-4 settings-radio-group">
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="proxy-system"
-                name="proxy-mode"
-                checked={proxyMode === 'system'}
-                onChange={() => handleProxyModeChange('system')}
-                className="w-4 h-4 text-blue-600 form-radio"
-              />
-              <label htmlFor="proxy-system" className={`ml-2 text-sm font-medium ${proxyMode === 'system' ? 'settings-radio-item-active' : 'settings-radio-item'}`}>
-                {t('settings.systemProxy')}
-              </label>
-            </div>
-            
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="proxy-custom"
-                name="proxy-mode"
-                checked={proxyMode === 'custom'}
-                onChange={() => handleProxyModeChange('custom')}
-                className="w-4 h-4 text-blue-600 form-radio"
-              />
-              <label htmlFor="proxy-custom" className={`ml-2 text-sm font-medium ${proxyMode === 'custom' ? 'settings-radio-item-active' : 'settings-radio-item'}`}>
-                {t('settings.customProxy')}
-              </label>
-            </div>
-            
-            {proxyMode === 'custom' && (
-              <div className="pl-6 mt-2">
+          <div className="space-y-4">
+            {languages.map((lang) => (
+              <div key={lang.code} className="flex items-center">
                 <input
-                  type="text"
-                  value={customProxyUrl}
-                  onChange={(e) => setCustomProxyUrl(e.target.value)}
-                  onBlur={() => {
-                    onSettingChange('customProxyUrl', customProxyUrl);
-                    onSaveSettings();
-                  }}
-                  placeholder="http://proxy.example.com:8080"
-                  className="w-full p-2 input-box"
+                  type="radio"
+                  id={`lang-${lang.code}`}
+                  name="language"
+                  value={lang.code}
+                  checked={currentLanguage === lang.code}
+                  onChange={() => handleLanguageChange(lang.code)}
+                  className="w-4 h-4 text-blue-600 form-radio"
                 />
+                <label htmlFor={`lang-${lang.code}`} className="ml-2 text-sm font-medium settings-toggle-label">
+                  {lang.name}
+                </label>
               </div>
-            )}
-            
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="proxy-none"
-                name="proxy-mode"
-                checked={proxyMode === 'none'}
-                onChange={() => handleProxyModeChange('none')}
-                className="w-4 h-4 text-blue-600 form-radio"
-              />
-              <label htmlFor="proxy-none" className={`ml-2 text-sm font-medium ${proxyMode === 'none' ? 'settings-radio-item-active' : 'settings-radio-item'}`}>
-                {t('settings.noProxy')}
-              </label>
-            </div>
+            ))}
           </div>
         </div>
         
-        {/* Privacy Settings */}
-        <div className="p-4 mb-4 settings-section">
-          <h3 className="mb-4 text-lg font-medium settings-section-title">{t('settings.privacy')}</h3>
-          
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="send-error-reports"
-                checked={sendErrorReports}
-                onChange={handleToggleChange('sendErrorReports')}
-                className="w-4 h-4 checkbox-input"
-              />
-              <label htmlFor="send-error-reports" className="ml-2 text-sm font-medium settings-toggle-label">
-                {t('settings.sendErrorReports')}
-              </label>
-            </div>
-            <p className="text-xs settings-toggle-description">
-              {t('settings.sendErrorReports_description')}
-            </p>
-          </div>
-        </div>
+        {/* Network Proxy and Privacy sections are hidden as requested */}
       </div>
     </div>
   );

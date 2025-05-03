@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Server, MessageSquare, Languages, Sliders } from 'lucide-react';
+import { Server, MessageSquare, Sliders } from 'lucide-react';
 import { SettingsService } from '../../services/settings-service';
 import { ProviderSettings } from '../../types/settings';
-import { ApiManagement, ChatSettings, LanguageSettings, GeneralSettings } from '../settings';
+import { ApiManagement, ChatSettings, GeneralSettings } from '../settings';
 import { DatabaseIntegrationService } from '../../services/database-integration';
 import { AIService } from '../../services/ai-service';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +13,7 @@ interface SettingsPageProps {
   isOpen: boolean;
 }
 
-type SettingsTab = 'api' | 'models' | 'chat' | 'language' | 'general';
+type SettingsTab = 'api' | 'models' | 'chat' | 'general';
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   isOpen,
@@ -321,16 +321,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <MessageSquare size={18} className="mr-2" />
               {t('chat.sendMessage')}
             </button>
-
-            <button
-              className={`flex items-center w-full px-4 py-3 text-left transition-all duration-200 ${
-                activeTab === 'language' ? 'settings-category-selected-item settings-category-selected-item-text font-medium' : 'settings-category-item settings-category-item-text'
-              }`}
-              onClick={() => setActiveTab('language')}
-            >
-              <Languages size={18} className="mr-2" />
-              {t('settings.language')}
-            </button>
           </div>
         </div>
         
@@ -370,14 +360,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 onWebSearchChange={handleWebSearchChange}
                 onSaveSettings={handleSave}
               />
-            )}
-            
-            {/* Language Settings Tab */}
-            {activeTab === 'language' && (
-              <div className="p-6">
-                <h1 className="mb-6 text-2xl font-semibold">{t('settings.language')}</h1>
-                <LanguageSettings />
-              </div>
             )}
           </div>
         </div>
