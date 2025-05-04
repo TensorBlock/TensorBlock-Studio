@@ -127,6 +127,7 @@
     "title": "MCPサーバー",
     "addServer": "サーバーを追加",
     "editServer": "サーバーを編集",
+    "exploreMore": "もっと探す",
     "serverName": "サーバー名",
     "serverNamePlaceholder": "サーバー名を入力",
     "description": "説明",
@@ -201,6 +202,7 @@
     "webSearch_toggle_label": "ウェブ検索機能を有効にする",
     "webSearch_description": "有効にすると、AIはウェブを検索してより最新の情報を提供できます。注意: ウェブ検索は現在、OpenAIとGeminiモデルでのみサポートされています。また、ウェブ検索が有効な場合、ストリーミング応答（テキストが段階的に表示される）は利用できません。",
 
+    "general": "一般",
     "startup": "起動設定",
     "startWithSystem": "システム起動時に起動する",
     "startupToTray": "起動時にトレイに最小化する",

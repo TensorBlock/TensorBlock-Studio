@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Server, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Server, X, Globe } from 'lucide-react';
 import { MCPServerSettings } from '../../types/settings';
 import { MCPService } from '../../services/mcp-service';
 import { SETTINGS_CHANGE_EVENT } from '../../services/settings-service';
@@ -379,13 +379,22 @@ export const MCPServerPage: React.FC = () => {
       <div className="w-full p-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">{t('mcpServer.title')}</h1>
-          <button
-            onClick={handleAddServer}
-            className="flex items-center px-4 py-2 text-white rounded-md confirm-btn"
-          >
-            <Plus size={18} className="mr-1" />
-            {t('mcpServer.addServer')}
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => {/* Will be implemented later */}}
+              className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              <Globe size={18} className="mr-1" />
+              {t('mcpServer.exploreMore')}
+            </button>
+            <button
+              onClick={handleAddServer}
+              className="flex items-center px-4 py-2 text-white rounded-md confirm-btn"
+            >
+              <Plus size={18} className="mr-1" />
+              {t('mcpServer.addServer')}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4">

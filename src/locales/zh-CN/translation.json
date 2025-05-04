@@ -127,6 +127,7 @@
     "title": "MCP 服务器",
     "addServer": "添加服务器",
     "editServer": "编辑服务器",
+    "exploreMore": "探索更多",
     "serverName": "服务器名称",
     "serverNamePlaceholder": "输入服务器名称",
     "description": "描述",
@@ -201,6 +202,7 @@
     "webSearch_toggle_label": "启用网页搜索功能",
     "webSearch_description": "启用后，AI 可以搜索网页以提供更及时的信息。请注意，网页搜索目前仅支持 OpenAI 和 Gemini 模型。此外，启用网页搜索时，流式响应（文本逐步出现）将不可用。",
 
+    "general": "常规",
     "startup": "启动设置",
     "startWithSystem": "开机自启动",
     "startupToTray": "启动时最小化到托盘",

@@ -127,6 +127,7 @@
     "title": "Servidores MCP",
     "addServer": "Agregar Servidor",
     "editServer": "Editar Servidor",
+    "exploreMore": "Explorar Más",
     "serverName": "Nombre del Servidor",
     "serverNamePlaceholder": "Ingrese el nombre del servidor",
     "description": "Descripción",

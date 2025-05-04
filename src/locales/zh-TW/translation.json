@@ -127,6 +127,7 @@
     "title": "MCP 伺服器",
     "addServer": "新增伺服器",
     "editServer": "編輯伺服器",
+    "exploreMore": "探索更多",
     "serverName": "伺服器名稱",
     "serverNamePlaceholder": "輸入伺服器名稱",
     "description": "描述",
