@@ -900,7 +900,7 @@ export class ChatService {
   /**
    * Get available MCP servers
    */
-  public getAvailableMCPServers(): Record<string, any> {
+  public getAvailableMCPServers(): Record<string, unknown> {
     return MCPService.getInstance().getMCPServers();
   }
 
@@ -943,6 +943,28 @@ export class ChatService {
       const settingsService = SettingsService.getInstance();
       const provider = settingsService.getSelectedProvider();
       const model = settingsService.getSelectedModel();
+
+      // Check if any of the selected MCP servers is for image generation
+      const mcpService = MCPService.getInstance();
+      const selectedMcpServers = mcpTools.map(id => mcpService.getMCPServer(id)).filter(Boolean);
+      const hasImageGenerationTool = selectedMcpServers.some(server => server?.isImageGeneration);
+
+      // Check if the message content starts with image generation command
+      const isImageGenerationRequest = content.toLowerCase().startsWith('/image')
+        || content.toLowerCase().includes('generate an image')
+        || content.toLowerCase().includes('create an image');
+
+      // If user is requesting image generation but hasn't selected the image tool, add it automatically
+      if (isImageGenerationRequest && !hasImageGenerationTool) {
+        // Find the default image generation server
+        const imageServer = Object.values(mcpService.getMCPServers())
+          .find(server => server.isImageGeneration);
+          
+        if (imageServer) {
+          console.log('Adding image generation tool automatically');
+          mcpTools.push(imageServer.id);
+        }
+      }
 
       //#region Save user message to database and update title
       // eslint-disable-next-line prefer-const

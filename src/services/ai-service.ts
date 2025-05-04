@@ -5,6 +5,7 @@ import { StreamControlHandler } from './streaming-control';
 import { SETTINGS_CHANGE_EVENT, SettingsService } from './settings-service';
 import { MCPToolAdapter } from './mcp-tool-adapter';
 import { MCPService } from './mcp-service';
+import { AIServiceCapability } from '../types/capabilities';
 
 export interface ModelOption {
   id: string;
@@ -199,18 +200,34 @@ export class AIService {
         throw new Error(`Provider ${providerName} not available`);
       }
       
-      // If MCP tools are specified, get them and add to options
-      if (mcpTools && mcpTools.length > 0) {
+      // Check if the selected model supports tool calls
+      const modelCapabilities = provider.getModelCapabilities(modelName);
+      const supportsTools = modelCapabilities.includes(AIServiceCapability.ToolUsage) || 
+                            modelCapabilities.includes(AIServiceCapability.FunctionCalling) ||
+                            modelCapabilities.includes(AIServiceCapability.MCPServer);
+      
+      // If MCP tools are specified and model supports tools, get them and add to options
+      if (mcpTools && mcpTools.length > 0 && supportsTools) {
         const mcpToolAdapter = MCPToolAdapter.getInstance();
-        const allTools: Record<string, any> = {};
+        const allTools: Record<string, unknown> = {};
         
         for (const mcpToolId of mcpTools) {
-          const tools = await mcpToolAdapter.getToolsForServer(mcpToolId, streamController);
-          Object.assign(allTools, tools);
+          try {
+            const tools = await mcpToolAdapter.getToolsForServer(mcpToolId, streamController);
+            Object.assign(allTools, tools);
+          } catch (error) {
+            console.error(`Error loading tools for MCP server ${mcpToolId}:`, error);
+            // Continue with other tools if one fails
+          }
         }
         
-        // Add tools to options
-        options.tools = allTools;
+        // Add tools to options if any were loaded
+        if (Object.keys(allTools).length > 0) {
+          console.log('Adding tools to request:', Object.keys(allTools));
+          options.tools = allTools;
+        }
+      } else if (mcpTools && mcpTools.length > 0 && !supportsTools) {
+        console.warn(`Model ${modelName} does not support tools, but tools were requested`);
       }
       
       const result = await provider.getChatCompletion(
@@ -426,7 +443,7 @@ export class AIService {
   /**
    * Get all available MCP servers
    */
-  public getMCPServers(): Record<string, any> {
+  public getMCPServers(): Record<string, unknown> {
     return MCPService.getInstance().getMCPServers();
   }
 } 

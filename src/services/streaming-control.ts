@@ -1,7 +1,8 @@
-import { LanguageModelUsage, type ToolCall } from "ai";
+import { LanguageModelUsage } from "ai";
 import { Conversation, Message, MessageContent, MessageContentType } from "../types/chat";
 import { v4 as uuidv4 } from 'uuid';
 import { MessageHelper } from "./message-helper";
+import { CustomToolCall, ToolCallStatus } from "../types/tool-call";
 
 export class StreamControlHandler {
     public targetConverstation: Conversation;
@@ -11,7 +12,7 @@ export class StreamControlHandler {
 
     private placeholderMessage: Message;
     private fullText: string = '';
-    private toolCallsInProgress: Map<string, ToolCall> = new Map();
+    private toolCallsInProgress: Map<string, CustomToolCall> = new Map();
     private imageContents: MessageContent[] = [];
 
     constructor(
@@ -58,23 +59,30 @@ export class StreamControlHandler {
         this.onChunkCallback(updatedConversation);
     }
 
-    public onToolCall(toolCall: ToolCall) {
-        // Store the tool call
-        this.toolCallsInProgress.set(toolCall.id, toolCall);
+    public onToolCall(toolName: string, toolId: string, args: Record<string, unknown>) {
+        // Create and store the tool call
+        const toolCall: CustomToolCall = {
+            id: toolId,
+            name: toolName,
+            args: args,
+            status: ToolCallStatus.CALLED
+        };
+        
+        this.toolCallsInProgress.set(toolId, toolCall);
 
         // Update the message to include information about the tool call
         let toolCallText = this.fullText;
         
         // Append a message about the tool call in progress
-        if (toolCall.name === 'generate_image') {
-            const imagePrompt = toolCall.parameters?.prompt;
+        if (toolName === 'generate_image') {
+            const imagePrompt = args?.prompt as string;
             if (imagePrompt) {
                 toolCallText += `\n\nGenerating image with prompt: "${imagePrompt}"`;
             } else {
                 toolCallText += `\n\nGenerating image...`;
             }
         } else {
-            toolCallText += `\n\nExecuting tool call: ${toolCall.name}`;
+            toolCallText += `\n\nExecuting tool call: ${toolName}`;
         }
 
         const updatedMessages = new Map(this.targetConverstation.messages);
@@ -92,13 +100,26 @@ export class StreamControlHandler {
         this.onChunkCallback(updatedConversation);
     }
 
-    public onToolCallResult(toolCallId: string, result: any) {
+    public onToolCallInProgress(toolCallId: string) {
+        const toolCall = this.toolCallsInProgress.get(toolCallId);
+        if (!toolCall) return;
+        
+        toolCall.status = ToolCallStatus.IN_PROGRESS;
+        this.toolCallsInProgress.set(toolCallId, toolCall);
+    }
+
+    public onToolCallResult(toolCallId: string, result: unknown) {
         const toolCall = this.toolCallsInProgress.get(toolCallId);
         if (!toolCall) return;
 
+        // Update tool call status
+        toolCall.status = ToolCallStatus.COMPLETED;
+        toolCall.result = result;
+        this.toolCallsInProgress.set(toolCallId, toolCall);
+
         // Handle image generation results
-        if (toolCall.name === 'generate_image' && result?.images) {
-            const images = result.images;
+        if (toolCall.name === 'generate_image' && (result as {images?: string[]})?.images) {
+            const images = (result as {images: string[]}).images;
             if (Array.isArray(images)) {
                 // Store the images for later inclusion in the final message
                 for (const imageData of images) {
@@ -139,6 +160,11 @@ export class StreamControlHandler {
     public onToolCallError(toolCallId: string, error: Error) {
         const toolCall = this.toolCallsInProgress.get(toolCallId);
         if (!toolCall) return;
+
+        // Update tool call status
+        toolCall.status = ToolCallStatus.ERROR;
+        toolCall.error = error;
+        this.toolCallsInProgress.set(toolCallId, toolCall);
 
         // Update message with error info
         let errorText = this.fullText;

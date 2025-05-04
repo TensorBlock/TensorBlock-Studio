@@ -39,6 +39,14 @@
     "selectImageProvider": "Select Image Provider",
     "noImageProvidersAvailable": "No image providers available"
   },
+  "tools": {
+    "executing": "Executing tool...",
+    "executedSuccessfully": "Tool execution completed",
+    "executionFailed": "Tool execution failed",
+    "toolName": "Tool name",
+    "result": "Result",
+    "error": "Error"
+  },
   "translation": {
     "title": "Translation",
     "sourceLanguageWithAutoSelected": "Source Language will be auto detected",
