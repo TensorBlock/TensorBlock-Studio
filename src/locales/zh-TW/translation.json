@@ -9,7 +9,8 @@
     "submit": "提交",
     "loading": "載入中...",
     "error": "錯誤",
-    "success": "成功"
+    "success": "成功",
+    "general": "一般"
   },
   "chat": {
     "sendMessage": "發送訊息",
@@ -38,6 +39,14 @@
     "disableImageGeneration": "禁用圖片生成",
     "selectImageProvider": "選擇圖片提供商",
     "noImageProvidersAvailable": "沒有可用的圖片提供商"
+  },
+  "tools": {
+    "executing": "正在執行工具...",
+    "executedSuccessfully": "工具執行完成",
+    "executionFailed": "工具執行失敗",
+    "toolName": "工具名稱",
+    "result": "結果",
+    "error": "錯誤"
   },
   "translation": {
     "title": "翻譯",
@@ -117,18 +126,37 @@
   "mcpServer": {
     "title": "MCP 伺服器",
     "addServer": "新增伺服器",
+    "editServer": "編輯伺服器",
     "serverName": "伺服器名稱",
     "serverNamePlaceholder": "輸入伺服器名稱",
+    "description": "描述",
+    "descriptionPlaceholder": "輸入伺服器描述（選填）",
     "transportType": "傳輸類型",
     "serverURL": "伺服器 URL",
     "serverURLPlaceholder": "輸入伺服器 URL",
     "headers": "標頭 (JSON)",
     "default": "預設",
-    "imageGeneration": "圖片生成",
-    "noServers": "尚未配置 MCP 伺服器",
+    "imageGeneration": "圖像生成",
+    "noServers": "尚未設定 MCP 伺服器",
     "addServerPrompt": "點擊「新增伺服器」按鈕來建立一個",
     "cannotEditDefault": "無法編輯預設伺服器",
-    "cannotDeleteDefault": "無法刪除預設伺服器"
+    "cannotDeleteDefault": "無法刪除預設伺服器",
+    "sseOption": "伺服器傳送事件 (SSE)",
+    "stdioOption": "標準輸入/輸出 (stdio)",
+    "streamableHttpOption": "可串流的 HTTP",
+    "sseDisplay": "SSE",
+    "stdioDisplay": "STDIO",
+    "streamableHttpDisplay": "串流 HTTP",
+    "connectionSettings": "連線設定",
+    "command": "指令",
+    "commandPlaceholder": "輸入指令（例如：python, node）",
+    "args": "參數",
+    "argsPlaceholder": "每行一個參數",
+    "argsHelp": "每個參數請單獨一行輸入",
+    "env": "環境變數 (JSON)",
+    "advancedSettings": "進階設定",
+    "timeout": "逾時",
+    "seconds": "秒"
   },
   "settings": {
     "language": "語言",

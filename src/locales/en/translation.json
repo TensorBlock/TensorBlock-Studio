@@ -9,7 +9,8 @@
     "submit": "Submit",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "general": "General"
   },
   "chat": {
     "sendMessage": "Send Message",
@@ -125,8 +126,11 @@
   "mcpServer": {
     "title": "MCP Servers",
     "addServer": "Add Server",
+    "editServer": "Edit Server",
     "serverName": "Server Name",
     "serverNamePlaceholder": "Enter server name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter server description (optional)",
     "transportType": "Transport Type",
     "serverURL": "Server URL",
     "serverURLPlaceholder": "Enter server URL",
@@ -136,7 +140,23 @@
     "noServers": "No MCP servers configured",
     "addServerPrompt": "Click the 'Add Server' button to create one",
     "cannotEditDefault": "Cannot edit default server",
-    "cannotDeleteDefault": "Cannot delete default server"
+    "cannotDeleteDefault": "Cannot delete default server",
+    "sseOption": "Server-Sent Events (SSE)",
+    "stdioOption": "Standard IO (stdio)",
+    "streamableHttpOption": "Streamable HTTP",
+    "sseDisplay": "SSE",
+    "stdioDisplay": "STDIO",
+    "streamableHttpDisplay": "Streamable HTTP",
+    "connectionSettings": "Connection Settings",
+    "command": "Command",
+    "commandPlaceholder": "Enter command (e.g., python, node)",
+    "args": "Arguments",
+    "argsPlaceholder": "One argument per line",
+    "argsHelp": "Enter each argument on a separate line",
+    "env": "Environment Variables (JSON)",
+    "advancedSettings": "Advanced Settings",
+    "timeout": "Timeout",
+    "seconds": "seconds"
   },
   "settings": {
     "language": "Language",

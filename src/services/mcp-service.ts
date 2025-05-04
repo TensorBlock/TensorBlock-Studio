@@ -43,17 +43,43 @@ export class MCPService {
 
   /**
    * Create a new MCP server
+   * @param params - Server parameters depending on the type
    */
-  public async createMCPServer(name: string, type: 'sse' | 'stdio' | 'streamableHttp', url: string, headers?: Record<string, string>): Promise<MCPServerSettings> {
+  public async createMCPServer(params: {
+    name: string;
+    type: 'sse' | 'stdio' | 'streamableHttp';
+    description?: string;
+    url?: string;
+    headers?: Record<string, string>;
+    command?: string;
+    args?: string[];
+    env?: Record<string, string>;
+    timeout?: number;
+  }): Promise<MCPServerSettings> {
     const id = uuidv4();
+    
     const server: MCPServerSettings = {
       id,
-      name,
-      type,
-      url,
-      headers,
+      name: params.name,
+      type: params.type,
+      description: params.description,
       isDefault: false
     };
+
+    // Add type-specific parameters
+    if (params.type === 'sse' || params.type === 'streamableHttp') {
+      server.url = params.url;
+      server.headers = params.headers;
+    } else if (params.type === 'stdio') {
+      server.command = params.command;
+      server.args = params.args;
+      server.env = params.env;
+    }
+
+    // Add timeout parameter (common to all types)
+    if (params.timeout) {
+      server.timeout = params.timeout;
+    }
     
     await this.settingsService.addOrUpdateMCPServer(server);
     return server;

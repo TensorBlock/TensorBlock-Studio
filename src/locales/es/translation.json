@@ -9,7 +9,8 @@
     "submit": "Enviar",
     "loading": "Cargando...",
     "error": "Error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "general": "General"
   },
   "chat": {
     "sendMessage": "Enviar Mensaje",
@@ -38,6 +39,14 @@
     "disableImageGeneration": "Desactivar generación de imágenes",
     "selectImageProvider": "Seleccionar Proveedor de Imágenes",
     "noImageProvidersAvailable": "No hay proveedores de imágenes disponibles"
+  },
+  "tools": {
+    "executing": "Ejecutando herramienta...",
+    "executedSuccessfully": "Ejecución de herramienta completada",
+    "executionFailed": "Fallo en la ejecución de la herramienta",
+    "toolName": "Nombre de la herramienta",
+    "result": "Resultado",
+    "error": "Error"
   },
   "translation": {
     "title": "Traducción",
@@ -117,18 +126,37 @@
   "mcpServer": {
     "title": "Servidores MCP",
     "addServer": "Agregar Servidor",
+    "editServer": "Editar Servidor",
     "serverName": "Nombre del Servidor",
-    "serverNamePlaceholder": "Introduce el nombre del servidor",
+    "serverNamePlaceholder": "Ingrese el nombre del servidor",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Ingrese descripción del servidor (opcional)",
     "transportType": "Tipo de Transporte",
     "serverURL": "URL del Servidor",
-    "serverURLPlaceholder": "Introduce la URL del servidor",
-    "headers": "Cabeceras (JSON)",
+    "serverURLPlaceholder": "Ingrese URL del servidor",
+    "headers": "Encabezados (JSON)",
     "default": "Predeterminado",
     "imageGeneration": "Generación de Imágenes",
     "noServers": "No hay servidores MCP configurados",
-    "addServerPrompt": "Haz clic en el botón 'Agregar Servidor' para crear uno",
+    "addServerPrompt": "Haga clic en el botón 'Agregar Servidor' para crear uno",
     "cannotEditDefault": "No se puede editar el servidor predeterminado",
-    "cannotDeleteDefault": "No se puede eliminar el servidor predeterminado"
+    "cannotDeleteDefault": "No se puede eliminar el servidor predeterminado",
+    "sseOption": "Eventos enviados por el servidor (SSE)",
+    "stdioOption": "Entrada/Salida estándar (stdio)",
+    "streamableHttpOption": "HTTP transmisible",
+    "sseDisplay": "SSE",
+    "stdioDisplay": "STDIO",
+    "streamableHttpDisplay": "HTTP Transmisible",
+    "connectionSettings": "Configuración de Conexión",
+    "command": "Comando",
+    "commandPlaceholder": "Ingrese el comando (ej., python, node)",
+    "args": "Argumentos",
+    "argsPlaceholder": "Un argumento por línea",
+    "argsHelp": "Ingrese cada argumento en una línea separada",
+    "env": "Variables de Entorno (JSON)",
+    "advancedSettings": "Configuración Avanzada",
+    "timeout": "Tiempo de espera",
+    "seconds": "segundos"
   },
   "settings": {
     "language": "Idioma",

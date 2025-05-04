@@ -9,7 +9,8 @@
     "submit": "送信",
     "loading": "読み込み中...",
     "error": "エラー",
-    "success": "成功"
+    "success": "成功",
+    "general": "一般"
   },
   "chat": {
     "sendMessage": "メッセージを送信",
@@ -38,6 +39,14 @@
     "disableImageGeneration": "画像生成を無効にする",
     "selectImageProvider": "画像プロバイダーを選択",
     "noImageProvidersAvailable": "利用可能な画像プロバイダーがありません"
+  },
+  "tools": {
+    "executing": "ツールを実行中...",
+    "executedSuccessfully": "ツール実行が完了しました",
+    "executionFailed": "ツール実行に失敗しました",
+    "toolName": "ツール名",
+    "result": "結果",
+    "error": "エラー"
   },
   "translation": {
     "title": "翻訳",
@@ -117,18 +126,37 @@
   "mcpServer": {
     "title": "MCPサーバー",
     "addServer": "サーバーを追加",
+    "editServer": "サーバーを編集",
     "serverName": "サーバー名",
     "serverNamePlaceholder": "サーバー名を入力",
+    "description": "説明",
+    "descriptionPlaceholder": "サーバーの説明を入力（任意）",
     "transportType": "トランスポートタイプ",
     "serverURL": "サーバーURL",
     "serverURLPlaceholder": "サーバーURLを入力",
-    "headers": "ヘッダー (JSON)",
+    "headers": "ヘッダー（JSON）",
     "default": "デフォルト",
     "imageGeneration": "画像生成",
     "noServers": "MCPサーバーが設定されていません",
-    "addServerPrompt": "'サーバーを追加'ボタンをクリックして作成してください",
+    "addServerPrompt": "「サーバーを追加」ボタンをクリックして作成してください",
     "cannotEditDefault": "デフォルトサーバーは編集できません",
-    "cannotDeleteDefault": "デフォルトサーバーは削除できません"
+    "cannotDeleteDefault": "デフォルトサーバーは削除できません",
+    "sseOption": "サーバー送信イベント（SSE）",
+    "stdioOption": "標準入出力（stdio）",
+    "streamableHttpOption": "ストリーミング可能なHTTP",
+    "sseDisplay": "SSE",
+    "stdioDisplay": "STDIO",
+    "streamableHttpDisplay": "ストリーミングHTTP",
+    "connectionSettings": "接続設定",
+    "command": "コマンド",
+    "commandPlaceholder": "コマンドを入力（例：python、node）",
+    "args": "引数",
+    "argsPlaceholder": "引数を1行に1つずつ入力",
+    "argsHelp": "各引数を別々の行に入力してください",
+    "env": "環境変数（JSON）",
+    "advancedSettings": "詳細設定",
+    "timeout": "タイムアウト",
+    "seconds": "秒"
   },
   "settings": {
     "language": "言語",
@@ -173,7 +201,6 @@
     "webSearch_toggle_label": "ウェブ検索機能を有効にする",
     "webSearch_description": "有効にすると、AIはウェブを検索してより最新の情報を提供できます。注意: ウェブ検索は現在、OpenAIとGeminiモデルでのみサポートされています。また、ウェブ検索が有効な場合、ストリーミング応答（テキストが段階的に表示される）は利用できません。",
 
-    "general": "一般設定",
     "startup": "起動設定",
     "startWithSystem": "システム起動時に起動する",
     "startupToTray": "起動時にトレイに最小化する",
