@@ -1,4 +1,4 @@
-import { generateText, streamText, Provider, type LanguageModelUsage, type ToolSet } from 'ai';
+import { generateText, streamText, Provider, type LanguageModelUsage, type ToolSet, tool } from 'ai';
 import { Message, MessageRole } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
 import { SettingsService } from '../settings-service';
@@ -7,7 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { MessageHelper } from '../message-helper';
 import { AIServiceCapability, mapModelCapabilities } from '../../types/capabilities';
 import { ModelSettings } from '../../types/settings';
-import { LanguageModelV1, ToolChoice } from 'ai';
+import { LanguageModelV1 } from 'ai';
+import { z } from 'zod';
 
 // Define an interface for tool results to fix the 'never' type errors
 interface ToolResult {
@@ -159,22 +160,63 @@ export class CommonProviderHelper implements AiServiceProvider {
     modelInstance: LanguageModelV1,
     messages: Message[],
     options: CompletionOptions,
-    streamController: StreamControlHandler,
-    tools: ToolSet | undefined = undefined,
-    toolChoice: ToolChoice<ToolSet> | undefined = undefined
+    streamController: StreamControlHandler
   ): Promise<Message> {
     try {
       const formattedMessages = await MessageHelper.MessagesContentToOpenAIFormat(messages);
 
       console.log('formattedMessages: ', formattedMessages);
 
+      // Build ToolSet & ToolChoice for getChatCompletionByModel API
+      const rawTools = options.tools;
+      
+      // Convert raw tools to AI SDK format
+      const formattedTools: ToolSet = {};
+      
+      if (rawTools && typeof rawTools === 'object') {
+        for (const [toolName, toolConfig] of Object.entries(rawTools)) {
+          if (toolConfig && typeof toolConfig === 'object') {
+            // Special case for image generation
+            if (toolName === 'generate_image') {
+              formattedTools[toolName] = tool({
+                description: 'Generate an image from a text prompt',
+                parameters: z.object({
+                  prompt: z.string().describe('The text prompt to generate an image from'),
+                  size: z.string().optional().describe('The size of the image to generate'),
+                  style: z.enum(['vivid', 'natural']).optional().describe('The style of the image to generate')
+                }),
+                execute: async (args) => {
+                  // Execute is handled later in the tool call handler
+                  return (toolConfig as ToolWithExecute).execute(args);
+                }
+              });
+            } else {
+              // For other tools, try to extract description and parameters
+              const toolWithExecute = toolConfig as ToolWithExecute;
+              const description = (toolConfig as {description?: string}).description || `Execute ${toolName} tool`;
+              
+              // Create a fallback schema if not provided
+              const parameters = z.object({}).catchall(z.unknown());
+              
+              formattedTools[toolName] = tool({
+                description,
+                parameters,
+                execute: async (args) => {
+                  if (typeof toolWithExecute.execute === 'function') {
+                    return toolWithExecute.execute(args);
+                  }
+                  throw new Error(`Tool ${toolName} does not have an execute function`);
+                }
+              });
+            }
+          }
+        }
+      }
+
       let fullText = '';
 
       if (options.stream) {
         console.log(`Streaming ${options.provider}/${options.model} response`);
-        
-        // Prepare tools for AI SDK format if they exist
-        const toolsForStream = tools || options.tools as unknown as ToolSet;
         
         const result = streamText({
           model: modelInstance,
@@ -185,8 +227,7 @@ export class CommonProviderHelper implements AiServiceProvider {
           topP: options.top_p,
           frequencyPenalty: options.frequency_penalty,
           presencePenalty: options.presence_penalty,
-          tools: toolsForStream,
-          toolChoice: toolChoice,
+          tools: Object.keys(formattedTools).length > 0 ? formattedTools : undefined,
           toolCallStreaming: true,
           onFinish: (result: { usage: LanguageModelUsage }) => {
             console.log('OpenAI streaming chat completion finished');
@@ -266,9 +307,9 @@ export class CommonProviderHelper implements AiServiceProvider {
                     error instanceof Error ? error : new Error('Unknown error in image generation')
                   );
                 }
-              } else if (options.tools) {
+              } else if (rawTools) {
                 // Use a safer way to check for and execute tools
-                const toolsMap = options.tools as Record<string, unknown>;
+                const toolsMap = rawTools as Record<string, unknown>;
                 const tool = toolsMap[toolName] as ToolWithExecute | undefined;
                 
                 if (tool && typeof tool.execute === 'function') {
@@ -300,9 +341,6 @@ export class CommonProviderHelper implements AiServiceProvider {
       else {
         console.log(`Generating ${options.provider}/${options.model} response`);
         
-        // Prepare tools for AI SDK format if they exist
-        const toolsForGenerate = tools || options.tools as unknown as ToolSet;
-        
         const { text, usage, toolResults } = await generateText({
           model: modelInstance,
           messages: formattedMessages,
@@ -311,8 +349,7 @@ export class CommonProviderHelper implements AiServiceProvider {
           topP: options.top_p,
           frequencyPenalty: options.frequency_penalty,
           presencePenalty: options.presence_penalty,
-          tools: toolsForGenerate,
-          toolChoice: toolChoice,
+          tools: Object.keys(formattedTools).length > 0 ? formattedTools : undefined,
           maxSteps: 3, // Allow multiple steps for tool calls
         });
 

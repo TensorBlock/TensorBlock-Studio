@@ -27,6 +27,7 @@ export interface CompletionOptions {
   signal?: AbortSignal; // AbortSignal for cancellation
   mcpTools?: string[]; // IDs of MCP servers to use as tools
   tools?: Record<string, unknown>; // Pre-configured tools for the AI
+  toolChoice?: Record<string, unknown>; // Pre-configured tool Choice for the AI
 }
 
 /**
@@ -79,7 +80,7 @@ export interface AiServiceProvider {
   getChatCompletion(
     messages: Message[], 
     options: CompletionOptions,
-    streamController: StreamControlHandler
+    streamController: StreamControlHandler,
   ): Promise<Message>;
   
   /**

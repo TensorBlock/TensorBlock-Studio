@@ -152,7 +152,17 @@ export class OpenAIService implements AiServiceProvider {
 
     options.stream = false;
 
-    return CommonProviderHelper.getChatCompletionByModel(modelInstance, messages, options, streamController, tools, toolChoice);
+    options.tools = {
+      ...options.tools,
+      tools
+    }
+
+    options.toolChoice = {
+      ...options.toolChoice,
+      toolChoice
+    }
+
+    return CommonProviderHelper.getChatCompletionByModel(modelInstance, messages, options, streamController);
   }
 
   /**
