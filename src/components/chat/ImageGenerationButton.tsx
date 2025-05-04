@@ -141,7 +141,6 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
     });
   };
 
-  const isButtonEnabled = !disabled && providers.length > 0 && isEnabled;
   const buttonClass = `flex items-center justify-center w-8 h-8 rounded-full focus:outline-none ${
     isEnabled ? 'image-generation-button' : 'text-gray-400 bg-gray-100'
   }`;
@@ -152,10 +151,10 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
         ref={buttonRef}
         type="button"
         onClick={togglePopup}
-        disabled={!providers.length > 0 || disabled}
+        disabled={providers.length === 0 || disabled}
         className={buttonClass}
         title={
-          !providers.length > 0 
+          providers.length === 0 
             ? t('chat.imageGenerationNotAvailable') 
             : isEnabled 
               ? t('chat.generateImage') 

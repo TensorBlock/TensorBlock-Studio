@@ -11,6 +11,8 @@ import type { HTMLProps } from 'react';
 import { MessageContent, MessageContentType } from '../../types/chat';
 import { MessageHelper } from '../../services/message-helper';
 import FileAttachmentDisplay from './FileAttachmentDisplay';
+import { Loader2 } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface MarkdownContentProps {
   content: MessageContent[];
@@ -23,27 +25,37 @@ type CodeProps = React.ClassAttributes<HTMLElement> &
   };
 
 export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, isUserMessage = false }) => {
+  const { t } = useTranslation();
   const [processedContent, setProcessedContent] = useState('');
   const [thinkContent, setThinkContent] = useState<string | null>(null);
   const [isThinkExpanded, setIsThinkExpanded] = useState(true);
   const [fileContents, setFileContents] = useState<MessageContent[]>([]);
+  const [imageContents, setImageContents] = useState<MessageContent[]>([]);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [imageGenerationError, setImageGenerationError] = useState<string | null>(null);
   
-  // Process content and check for thinking blocks and files
+  // Process content and check for thinking blocks, files, and image generation
   useEffect(() => {
-    // Extract text and file contents
+    // Extract text, file, and image contents
     const textContents: MessageContent[] = [];
     const files: MessageContent[] = [];
+    const images: MessageContent[] = [];
     
     content.forEach(item => {
       if (item.type === MessageContentType.Text) {
         textContents.push(item);
       } else if (item.type === MessageContentType.File) {
         files.push(item);
+      } else if (item.type === MessageContentType.Image) {
+        images.push(item);
       }
     });
     
     // Save file contents for rendering
     setFileContents(files);
+    
+    // Save image contents for rendering
+    setImageContents(images);
     
     // Create a function for a safer replacement
     function safeReplace(str: string, search: string, replace: string): string {
@@ -54,6 +66,32 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, isUse
     }
     
     let processed = MessageHelper.MessageContentToText(textContents);
+    
+    // Detect image generation in progress
+    const imageGenInProgressMatch = processed.match(
+      /(?:generating|creating|processing)\s+(?:an\s+)?image(?:s)?\s+(?:with|using|for|from)?(?:\s+prompt)?(?::|;)?\s*["']?([^"']+)["']?/i
+    ) || processed.match(/\bimage\s+generation\s+in\s+progress\b/i);
+    
+    if ((imageGenInProgressMatch && images.length === 0) || 
+        (processed.includes('generate_image') && processed.includes('tool call') && images.length === 0)) {
+      setIsProcessingImage(true);
+      setImageGenerationError(null);
+    } else {
+      setIsProcessingImage(false);
+    }
+    
+    // Detect image generation errors
+    const imageGenErrorMatch = processed.match(
+      /(?:error|failed|couldn't|unable)\s+(?:in\s+)?(?:generating|creating|processing)\s+(?:an\s+)?image(?:s)?(?::|;)?\s*["']?([^"']+)["']?/i
+    ) || processed.match(/\bimage\s+generation\s+(?:error|failed)\b:?\s*["']?([^"']+)["']?/i);
+    
+    if (imageGenErrorMatch || (processed.includes('error') && processed.includes('generate_image'))) {
+      const errorMessage = imageGenErrorMatch ? (imageGenErrorMatch[1] || "Unknown error occurred") : "Failed to generate image";
+      setImageGenerationError(errorMessage);
+      setIsProcessingImage(false);
+    } else if (images.length > 0) {
+      setImageGenerationError(null);
+    }
     
     // Check if content contains thinking block
     const thinkMatch = processed.match(/<think>([\s\S]*?)<\/think>([\s\S]*)/);
@@ -130,6 +168,46 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, isUse
               content={file} 
               isUser={isUserMessage} 
             />
+          ))}
+        </div>
+      )}
+      
+      {/* Image Generation In Progress */}
+      {isProcessingImage && (
+        <div className="p-4 mb-3 border border-gray-200 rounded-md">
+          <div className="flex items-center gap-2 mb-2">
+            <Loader2 size={20} className="text-blue-500 animate-spin" />
+            <span className="font-medium">{t('imageGeneration.generating')}</span>
+          </div>
+          <div className="flex items-center justify-center w-full h-40 bg-gray-100 rounded-md">
+            <span className="text-sm text-gray-400">{t('imageGeneration.creatingImage')}</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Image Generation Error */}
+      {imageGenerationError && (
+        <div className="p-4 mb-3 border border-red-200 rounded-md bg-red-50">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-medium text-red-600">{t('imageGeneration.generationFailed')}</span>
+          </div>
+          <div className="text-sm text-red-600">
+            {imageGenerationError}
+          </div>
+        </div>
+      )}
+      
+      {/* Generated Images */}
+      {imageContents.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 mb-3 md:grid-cols-2">
+          {imageContents.map((image, index) => (
+            <div key={index} className="overflow-hidden border border-gray-200 rounded-md">
+              <img 
+                src={`data:image/png;base64,${image.content}`} 
+                alt={t('imageGeneration.generatedImage')} 
+                className="w-full h-auto"
+              />
+            </div>
           ))}
         </div>
       )}

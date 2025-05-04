@@ -103,13 +103,16 @@
     "generationCount": "生成数",
     "randomSeed": "ランダムシード",
     "generateButton": "生成",
-    "generating": "生成中...",
+    "generating": "画像を生成中...",
+    "creatingImage": "AIが画像を作成しています",
+    "generationFailed": "画像生成に失敗しました",
+    "generatedImage": "生成された画像",
     "prompt": "プロンプト",
-    "promptPlaceholder": "作成したい画像を説明してください。例：夕日が沈む静かな湖、背景には山々",
+    "promptPlaceholder": "作成したい画像を説明してください。例：夕暮れの穏やかな湖と背景の山々",
     "results": "生成結果",
-    "placeholderText": "プロンプトを入力して生成ボタンをクリックして画像を作成",
-    "apiKeyMissing": "選択したプロバイダーのAPIキーを設定で設定してください。",
-    "seedHelp": "再現可能な結果のためのシード値"
+    "placeholderText": "プロンプトを入力して生成ボタンをクリックすると画像が作成されます",
+    "apiKeyMissing": "設定で選択したプロバイダーのAPIキーを設定してください。",
+    "seedHelp": "再現可能な結果のためのシード"
   },
   "mcpServer": {
     "title": "MCPサーバー",

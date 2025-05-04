@@ -1,13 +1,13 @@
-import { generateText, LanguageModelV1, LanguageModelUsage, Provider, streamText, ToolSet, ToolChoice } from 'ai';
-import { v4 as uuidv4 } from 'uuid';
+import { generateText, streamText, Provider, type LanguageModelUsage } from 'ai';
 import { Message, MessageRole } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
 import { SettingsService } from '../settings-service';
 import { StreamControlHandler } from '../streaming-control';
-import { AIServiceCapability } from '../../types/capabilities';
-import { mapModelCapabilities } from '../../types/capabilities';
-import { ModelSettings } from '../../types/settings';
+import { v4 as uuidv4 } from 'uuid';
 import { MessageHelper } from '../message-helper';
+import { AIServiceCapability, mapModelCapabilities } from '../../types/capabilities';
+import { ModelSettings } from '../../types/settings';
+import { LanguageModelV1, ToolChoice, ToolSet } from 'ai';
 /**
  * Implementation of OpenAI service provider using the AI SDK
  */
@@ -165,6 +165,18 @@ export class CommonProviderHelper implements AiServiceProvider {
           presencePenalty: options.presence_penalty,
           tools: tools,
           toolChoice: toolChoice,
+          onToolCall: (toolCall) => {
+            console.log('Tool call:', toolCall);
+            streamController.onToolCall(toolCall);
+          },
+          onToolCallResult: (toolCallId, result) => {
+            console.log('Tool call result:', toolCallId, result);
+            streamController.onToolCallResult(toolCallId, result);
+          },
+          onToolCallError: (toolCallId, error) => {
+            console.error('Tool call error:', toolCallId, error);
+            streamController.onToolCallError(toolCallId, error);
+          },
           onFinish: (result: { usage: LanguageModelUsage }) => {
             console.log('OpenAI streaming chat completion finished');
             streamController.onFinish(result.usage);
@@ -192,9 +204,26 @@ export class CommonProviderHelper implements AiServiceProvider {
           presencePenalty: options.presence_penalty,
           tools: tools,
           toolChoice: toolChoice,
+          maxSteps: 3, // Allow multiple steps for tool calls
         });
 
         console.log('toolResults: ', toolResults);
+        
+        // Process tool results for images
+        if (toolResults && toolResults.length > 0) {
+          for (const toolResult of toolResults) {
+            if (toolResult.name === 'generate_image' && toolResult.result?.images) {
+              const images = toolResult.result.images;
+              if (Array.isArray(images)) {
+                for (const imageData of images) {
+                  if (typeof imageData === 'string') {
+                    streamController.onToolCallResult(toolResult.id, { images: [imageData] });
+                  }
+                }
+              }
+            }
+          }
+        }
 
         fullText = text;
         streamController.onChunk(fullText);
