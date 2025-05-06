@@ -224,35 +224,22 @@ export const ChatPage = () => {
   };
 
   // Handle sending a message with streaming
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, files?: File[]) => {
     if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
     
     try {
       const chatService = chatServiceRef.current;
       
-      // Check if there are selected MCP servers to use
-      if (selectedMcpServers.length > 0) {
-        // Send message with MCP tools
-        await chatService.sendMessageWithMCPTools(
-          content,
-          activeConversationId,
-          selectedMcpServers,
-          true,
-          (updatedConversation) => {
-            setConversations(updatedConversation);
-          }
-        );
-      } else {
-        // Send regular message
-        await chatService.sendMessage(
-          content, 
-          activeConversationId,
-          true,
-          (updatedConversation) => {
-            setConversations(updatedConversation);
-          }
-        );
-      }
+      // Send message with optional files
+      await chatService.sendMessage(
+        content, 
+        activeConversationId,
+        true,
+        (updatedConversation) => {
+          setConversations(updatedConversation);
+        },
+        files
+      );
     } catch (err) {
       console.error('Error sending streaming message:', err);
     }
@@ -375,27 +362,10 @@ export const ChatPage = () => {
     }
   };
 
-  // Handle sending a message with files
+  // Handle sending a message with files (deprecated - now handled by handleSendMessage)
+  // This method is kept for backward compatibility but delegates to handleSendMessage
   const handleSendMessageWithFiles = async (content: string, files: File[]) => {
-    if (!activeConversationId || !isServiceInitialized || !chatServiceRef.current) return;
-    
-    try {
-      const chatService = chatServiceRef.current;
-
-      // Send user message with files
-      await chatService.sendMessageWithFiles(
-        content, 
-        files,
-        activeConversationId,
-        true,
-        (updatedConversation) => {
-          setConversations(updatedConversation);
-        }
-      );
-      
-    } catch (err) {
-      console.error('Error sending message with files:', err);
-    }
+    await handleSendMessage(content, files);
   };
 
   // Toggle selection of an MCP server

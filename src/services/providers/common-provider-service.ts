@@ -170,6 +170,10 @@ export class CommonProviderHelper implements AiServiceProvider {
       // Build ToolSet & ToolChoice for getChatCompletionByModel API
       const rawTools = options.tools;
       
+      const err = new Error('test');
+      console.log('rawTools: ', rawTools);
+      console.log('err track trace: ', err);
+
       // Convert raw tools to AI SDK format
       const formattedTools: ToolSet = {};
       
@@ -178,6 +182,8 @@ export class CommonProviderHelper implements AiServiceProvider {
           if (toolConfig && typeof toolConfig === 'object') {
             // Special case for image generation
             if (toolName === 'generate_image') {
+              console.log('toolName: ', toolName);
+              console.log('toolConfig: ', toolConfig);
               formattedTools[toolName] = tool({
                 description: 'Generate an image from a text prompt',
                 parameters: z.object({

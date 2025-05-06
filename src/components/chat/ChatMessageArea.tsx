@@ -19,7 +19,7 @@ interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
   isLoading: boolean;
   error: string | null;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, files?: File[]) => void;
   onSendMessageWithFiles?: (content: string, files: File[]) => void;
   onStopStreaming?: () => void;
   onRegenerateResponse?: (messageId: string) => void;
@@ -126,10 +126,12 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
     e.preventDefault();
     if (isLoading || isCurrentlyStreaming || !inputValue.trim()) return;
 
-    if (selectedFiles.length > 0 && onSendMessageWithFiles) {
-      onSendMessageWithFiles(inputValue, selectedFiles);
+    if (selectedFiles.length > 0) {
+      // Use the combined method with files parameter
+      onSendMessage(inputValue, selectedFiles);
       setSelectedFiles([]);
     } else {
+      // Use the combined method without files
       onSendMessage(inputValue);
     }
 
