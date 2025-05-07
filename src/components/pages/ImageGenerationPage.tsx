@@ -7,12 +7,14 @@ import { ChevronDown, RefreshCw, Settings, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AIService } from "../../services/ai-service";
 import { OPENAI_PROVIDER_NAME } from "../../services/providers/openai-service";
+import { ImageGenerationManager, ImageGenerationStatus, ImageGenerationHandler } from "../../services/image-generation-handler";
+import { DatabaseIntegrationService } from "../../services/database-integration";
+import { ImageGenerationResult } from "../../types/image";
+import ImageGenerateHistoryItem from "../image/ImageGenerateHistoryItem";
 
 export const ImageGenerationPage = () => {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [imageResult, setImageResult] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(true);
   const [aspectRatio, setAspectRatio] = useState("1:1");
@@ -20,6 +22,37 @@ export const ImageGenerationPage = () => {
   const [randomSeed, setRandomSeed] = useState(
     Math.floor(Math.random() * 1000000).toString()
   );
+  const [generationResults, setGenerationResults] = useState<Map<string, ImageGenerationHandler>>(
+    new Map()
+  );
+  const [historyResults, setHistoryResults] = useState<ImageGenerationResult[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  // Initialize image generation manager
+  useEffect(() => {
+    const imageManager = ImageGenerationManager.getInstance();
+    
+    // Register for updates on generation status changes
+    imageManager.setUpdateCallback((handlers) => {
+      setGenerationResults(new Map(handlers));
+    });
+    
+    // Load history from database
+    const loadHistoryResults = async () => {
+      try {
+        setIsLoadingHistory(true);
+        const dbService = DatabaseIntegrationService.getInstance();
+        await dbService.initialize();
+        // TODO: Implement loading image history from database when available
+        setIsLoadingHistory(false);
+      } catch (error) {
+        console.error('Error loading image history:', error);
+        setIsLoadingHistory(false);
+      }
+    };
+    
+    loadHistoryResults();
+  }, []);
 
   // Check if API key is available
   useEffect(() => {
@@ -40,7 +73,6 @@ export const ImageGenerationPage = () => {
   const handleGenerateImage = async () => {
     if (!prompt.trim()) return;
 
-    setIsGenerating(true);
     setError(null);
 
     try {
@@ -50,6 +82,20 @@ export const ImageGenerationPage = () => {
       if (!openaiService) {
         throw new Error("OpenAI service not available");
       }
+
+      // Create a new generation handler
+      const imageManager = ImageGenerationManager.getInstance();
+      const handler = imageManager.createHandler({
+        prompt: prompt,
+        seed: randomSeed,
+        number: imageCount,
+        aspectRatio: aspectRatio,
+        provider: OPENAI_PROVIDER_NAME,
+        model: "dall-e-3",
+      });
+      
+      // Set status to generating
+      handler.setGenerating();
 
       // Map aspect ratio to size dimensions
       const sizeMap: Record<string, `${number}x${number}`> = {
@@ -68,29 +114,53 @@ export const ImageGenerationPage = () => {
         style: "vivid"
       });
       
-      // Set the result image
+      // Process the result
       if (images && images.length > 0) {
-        // Check if the image is already a full data URL
-        const base64Data = images[0] as string;
-        if (base64Data.startsWith('data:image')) {
-          setImageResult(base64Data);
-        } else {
-          // If it's just a base64 string without the data URI prefix, add it
-          setImageResult(`data:image/png;base64,${base64Data}`);
-        }
+        // Convert image data to full URLs if needed
+        const processedImages = images.map(img => {
+          const base64Data = img as string;
+          if (base64Data.startsWith('data:image')) {
+            return base64Data;
+          } else {
+            return `data:image/png;base64,${base64Data}`;
+          }
+        });
+        
+        // Update the handler with successful results
+        handler.setSuccess(processedImages);
+        
+        // Generate new seed for next generation
+        generateNewSeed();
       } else {
         throw new Error("No images generated");
       }
     } catch (err) {
       setError(err as Error);
-    } finally {
-      setIsGenerating(false);
     }
   };
 
   // Generate new random seed
   const generateNewSeed = () => {
     setRandomSeed(Math.floor(Math.random() * 1000000).toString());
+  };
+
+  // Get all results to display in order (active generations first, then history)
+  const getAllResults = () => {
+    const handlerResults = Array.from(generationResults.values())
+      .map(handler => handler.getResult())
+      .sort((a, b) => {
+        // Prioritize active generations first
+        if (a.status === ImageGenerationStatus.GENERATING && b.status !== ImageGenerationStatus.GENERATING) {
+          return -1;
+        }
+        if (b.status === ImageGenerationStatus.GENERATING && a.status !== ImageGenerationStatus.GENERATING) {
+          return 1;
+        }
+        // Then sort by most recent first (assuming imageResultId is a UUID with timestamp components)
+        return b.imageResultId.localeCompare(a.imageResultId);
+      });
+    
+    return [...handlerResults, ...historyResults];
   };
 
   return (
@@ -121,7 +191,7 @@ export const ImageGenerationPage = () => {
               <div className="flex flex-row gap-2 p-2 border border-gray-300 rounded-lg shadow-sm">
                 <button
                   onClick={handleGenerateImage}
-                  disabled={isGenerating || !prompt.trim() || isApiKeyMissing}
+                  disabled={!prompt.trim() || isApiKeyMissing}
                   className="px-4 py-2.5 text-nowrap flex flex-row gap-1 text-white text-center confirm-btn"
                 >
                   <Settings></Settings>
@@ -129,11 +199,11 @@ export const ImageGenerationPage = () => {
                 </button>
                 <button
                   onClick={handleGenerateImage}
-                  disabled={isGenerating || !prompt.trim() || isApiKeyMissing}
+                  disabled={!prompt.trim() || isApiKeyMissing}
                   className="px-4 py-2.5 text-nowrap flex flex-row gap-1 text-white text-center confirm-btn"
                 >
                   <Zap></Zap>
-                  {isGenerating
+                  {Array.from(generationResults.values()).some(h => h.getStatus() === ImageGenerationStatus.GENERATING)
                     ? t("imageGeneration.generating")
                     : t("imageGeneration.generateButton")}
                 </button>
@@ -154,41 +224,34 @@ export const ImageGenerationPage = () => {
             </div>
           )}
 
-          {/* Loading indicator */}
-          {isGenerating && (
-            <div className="flex items-center justify-center h-64 rounded-lg bg-gray-50">
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 border-4 rounded-full border-primary-300 border-t-primary-600 animate-spin"></div>
-                <p className="mt-4 text-gray-600">
-                  {t("imageGeneration.generating")}
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Results display */}
-          {imageResult && !isGenerating && (
-            <div className="grid grid-cols-1 gap-4">
-              <div className="overflow-hidden border rounded-lg image-result-area">
-                <img
-                  src={imageResult}
-                  alt="Generated from AI"
-                  className="object-contain w-full"
-                />
+          <div className="grid grid-cols-1 gap-4">
+            {/* Active generations and history */}
+            {getAllResults().map(result => (
+              <ImageGenerateHistoryItem 
+                key={result.imageResultId} 
+                imageResult={result} 
+              />
+            ))}
+            
+            {/* Loading indicator for history */}
+            {isLoadingHistory && (
+              <div className="flex items-center justify-center h-24 rounded-lg bg-gray-50">
+                <div className="w-8 h-8 border-4 rounded-full border-primary-300 border-t-primary-600 animate-spin"></div>
               </div>
-            </div>
-          )}
-
-          {/* Placeholder when no results */}
-          {!imageResult && !isGenerating && (
-            <div className="flex items-center justify-center h-64 rounded-lg image-generation-result-placeholder">
-              <div className="text-center">
-                <p className="text-gray-500">
-                  {t("imageGeneration.placeholderText")}
-                </p>
+            )}
+            
+            {/* Placeholder when no results */}
+            {getAllResults().length === 0 && !isLoadingHistory && (
+              <div className="flex items-center justify-center h-64 rounded-lg image-generation-result-placeholder">
+                <div className="text-center">
+                  <p className="text-gray-500">
+                    {t("imageGeneration.placeholderText")}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Right side - Results */}
