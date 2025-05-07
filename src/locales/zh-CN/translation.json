@@ -113,6 +113,7 @@
     "randomSeed": "随机种子",
     "generateButton": "生成",
     "generating": "正在生成图像...",
+    "settingsButton": "设置",
     "creatingImage": "AI正在创建您的图像",
     "generationFailed": "图像生成失败",
     "generatedImage": "生成的图像",

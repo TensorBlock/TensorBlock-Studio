@@ -3,7 +3,7 @@ import {
   SettingsService,
   SETTINGS_CHANGE_EVENT,
 } from "../../services/settings-service";
-import { ChevronDown, RefreshCw } from "lucide-react";
+import { ChevronDown, RefreshCw, Settings, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AIService } from "../../services/ai-service";
 import { OPENAI_PROVIDER_NAME } from "../../services/providers/openai-service";
@@ -101,38 +101,44 @@ export const ImageGenerationPage = () => {
         </div>
       )}
 
-      <div className="flex flex-row h-full">
+      <div className="flex flex-row justify-center h-full">
         {/* Left side - Controls */}
-        <div className="flex-1 p-6 overflow-y-auto frame-right-border">
-          <h1 className="mb-6 text-2xl font-semibold">
-            {t("imageGeneration.title")}
-          </h1>
-
+        <div className="flex-1 max-w-5xl p-6 overflow-y-auto">
           {/* Prompt input */}
           <div className="mb-6">
             <label className="block mb-2 text-sm font-medium text-gray-700">
               {t("imageGeneration.prompt")}
             </label>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder={t("imageGeneration.promptPlaceholder")}
-              className="w-full p-3 input-box min-h-14"
-              rows={4}
-            />
-          </div>
+            <div className="flex flex-row gap-2">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={t("imageGeneration.promptPlaceholder")}
+                className="w-full p-3 input-box min-h-14"
+                rows={1}
+              />
 
-          {/* Generation button */}
-          <div className="flex justify-center mb-6">
-            <button
-              onClick={handleGenerateImage}
-              disabled={isGenerating || !prompt.trim() || isApiKeyMissing}
-              className="px-8 py-2.5 text-white confirm-btn"
-            >
-              {isGenerating
-                ? t("imageGeneration.generating")
-                : t("imageGeneration.generateButton")}
-            </button>
+              <div className="flex flex-row gap-2 p-2 border border-gray-300 rounded-lg shadow-sm">
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={isGenerating || !prompt.trim() || isApiKeyMissing}
+                  className="px-4 py-2.5 text-nowrap flex flex-row gap-1 text-white text-center confirm-btn"
+                >
+                  <Settings></Settings>
+                  {t("imageGeneration.settingsButton")}
+                </button>
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={isGenerating || !prompt.trim() || isApiKeyMissing}
+                  className="px-4 py-2.5 text-nowrap flex flex-row gap-1 text-white text-center confirm-btn"
+                >
+                  <Zap></Zap>
+                  {isGenerating
+                    ? t("imageGeneration.generating")
+                    : t("imageGeneration.generateButton")}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center mb-4">
@@ -186,7 +192,7 @@ export const ImageGenerationPage = () => {
         </div>
 
         {/* Right side - Results */}
-        <div className="w-[420px] h-full p-6 overflow-y-auto">
+        <div className="hidden w-[420px] h-full p-6 overflow-y-auto">
           {/* Provider selection */}
           <div className="mb-6">
             <label className="block mb-2 text-sm font-medium text-gray-700">
