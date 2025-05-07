@@ -3,12 +3,13 @@ import { Conversation, Message, ConversationFolder } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 import { UserSettings } from '../types/settings';
 import { FileData } from '../types/file';
+import { ImageGenerationResult } from '../types/image';
 
 // database.ts
 export class DatabaseService {
     private db: IDBDatabase | null = null;
     private readonly DB_NAME = 'tensorblock_db';
-    private readonly DB_VERSION = 3; // Increase version to trigger upgrade
+    private readonly DB_VERSION = 4; // Increase version to trigger upgrade
     private readonly ENCRYPTION_KEY = 'your-secure-encryption-key'; // In production, use a secure key management system
 
     private isInitialized: boolean = false;
@@ -70,6 +71,12 @@ export class DatabaseService {
                     chatStore.createIndex('messageId', 'messageId');
                 }
 
+                // Create image generation results store
+                if (!db.objectStoreNames.contains('imageGenerationResults')) {
+                    db.createObjectStore('imageGenerationResults', {
+                        keyPath: 'imageResultId'
+                    });
+                }
                 // Create API settings store
                 if (!db.objectStoreNames.contains('apiSettings')) {
                     db.createObjectStore('apiSettings', {
@@ -541,6 +548,19 @@ export class DatabaseService {
             const request = store.add(file);
 
             console.log('saveFile', file);
+
+            request.onsuccess = () => resolve(request.result as string);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    public async saveImageGenerationResult(imageGenerationResult: ImageGenerationResult): Promise<string> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('imageGenerationResults', 'readwrite');
+            const store = transaction.objectStore('imageGenerationResults');
+            const request = store.add(imageGenerationResult);
 
             request.onsuccess = () => resolve(request.result as string);
             request.onerror = () => reject(request.error);
