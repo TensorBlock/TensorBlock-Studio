@@ -11,4 +11,5 @@ export interface ImageGenerationResult {
     provider: string;
     model: string;
     images: MessageContent[];
+    updatedAt: Date;
 }

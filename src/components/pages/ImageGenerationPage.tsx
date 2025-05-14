@@ -43,11 +43,17 @@ export const ImageGenerationPage = () => {
       const dbService = DatabaseIntegrationService.getInstance();
       const results = await dbService.getImageGenerationResults();
       if (results && results.length > 0) {
-        // Sort by most recent first
-        const sortedResults = results.sort((a, b) => 
-          b.imageResultId.localeCompare(a.imageResultId)
-        );
+        // Sort by most recent first using updatedAt timestamp
+        const sortedResults = results.sort((a, b) => {
+          // Convert string dates to Date objects if necessary
+          const dateA = a.updatedAt instanceof Date ? a.updatedAt : new Date(a.updatedAt);
+          const dateB = b.updatedAt instanceof Date ? b.updatedAt : new Date(b.updatedAt);
+          // Sort newest first
+          return dateB.getTime() - dateA.getTime();
+        });
         setHistoryResults(sortedResults);
+      } else {
+        setHistoryResults([]);
       }
     } catch (error) {
       console.error('Error refreshing image history:', error);
@@ -142,6 +148,32 @@ export const ImageGenerationPage = () => {
     };
   }, []);
 
+  // Process and update the result after generation
+  const processGenerationResult = async (handler: ImageGenerationHandler, images: string[]) => {
+    // Convert image data to full URLs if needed
+    const processedImages = images.map(img => {
+      const base64Data = img as string;
+      if (base64Data.startsWith('data:image')) {
+        return base64Data;
+      } else {
+        return `data:image/png;base64,${base64Data}`;
+      }
+    });
+    
+    // Update the handler with successful results
+    await handler.setSuccess(processedImages);
+    
+    // Refresh history to include the new generation
+    await refreshImageHistory();
+    
+    // Remove the handler to prevent duplication with database results
+    const imageManager = ImageGenerationManager.getInstance();
+    imageManager.removeHandler(handler.getId());
+    
+    // Generate new seed for next generation
+    generateNewSeed();
+  };
+
   // Handle generating an image using selected provider
   const handleGenerateImage = async () => {
     if (!prompt.trim()) return;
@@ -195,24 +227,7 @@ export const ImageGenerationPage = () => {
       
       // Process the result
       if (images && images.length > 0) {
-        // Convert image data to full URLs if needed
-        const processedImages = images.map(img => {
-          const base64Data = img as string;
-          if (base64Data.startsWith('data:image')) {
-            return base64Data;
-          } else {
-            return `data:image/png;base64,${base64Data}`;
-          }
-        });
-        
-        // Update the handler with successful results
-        handler.setSuccess(processedImages);
-        
-        // Refresh history to include the new generation
-        refreshImageHistory();
-        
-        // Generate new seed for next generation
-        generateNewSeed();
+        await processGenerationResult(handler, images as string[]);
       } else {
         throw new Error("No images generated");
       }
@@ -239,11 +254,13 @@ export const ImageGenerationPage = () => {
         if (b.status === ImageGenerationStatus.GENERATING && a.status !== ImageGenerationStatus.GENERATING) {
           return 1;
         }
-        // Then sort by most recent first (assuming imageResultId is a UUID with timestamp components)
-        return b.imageResultId.localeCompare(a.imageResultId);
+        // Then sort by most recent first using updatedAt timestamp
+        const dateA = a.updatedAt instanceof Date ? a.updatedAt : new Date(a.updatedAt);
+        const dateB = b.updatedAt instanceof Date ? b.updatedAt : new Date(b.updatedAt);
+        return dateB.getTime() - dateA.getTime();
       });
     
-    // Combine with historical results
+    // Combine with historical results and ensure newest is first
     return [...handlerResults, ...historyResults];
   };
 

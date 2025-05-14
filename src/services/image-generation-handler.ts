@@ -28,6 +28,7 @@ export class ImageGenerationHandler {
   private errorMessage: string | null = null;
   private onStatusChangeCallback: (handler: ImageGenerationHandler) => void;
   private dbService: DatabaseIntegrationService;
+  private updatedAt: Date;
 
   constructor(
     options: ImageGenerationOptions,
@@ -38,6 +39,7 @@ export class ImageGenerationHandler {
     this.status = ImageGenerationStatus.PENDING;
     this.onStatusChangeCallback = onStatusChangeCallback;
     this.dbService = DatabaseIntegrationService.getInstance();
+    this.updatedAt = new Date();
   }
 
   public getId(): string {
@@ -71,17 +73,20 @@ export class ImageGenerationHandler {
       aspectRatio: this.options.aspectRatio,
       provider: this.options.provider,
       model: this.options.model,
-      images: this.images
+      images: this.images,
+      updatedAt: this.updatedAt
     };
   }
 
   public setGenerating(): void {
     this.status = ImageGenerationStatus.GENERATING;
+    this.updatedAt = new Date();
     this.notifyStatusChange();
   }
 
-  public setSuccess(imageUrls: string[]): void {
+  public async setSuccess(imageUrls: string[]): Promise<void> {
     this.status = ImageGenerationStatus.SUCCESS;
+    this.updatedAt = new Date();
     this.images = imageUrls.map(url => ({
       type: MessageContentType.Image,
       content: url,
@@ -89,12 +94,13 @@ export class ImageGenerationHandler {
     }));
     
     // Save to database
-    this.saveToDatabase();
+    await this.saveToDatabase();
     this.notifyStatusChange();
   }
 
   public setFailed(error: Error): void {
     this.status = ImageGenerationStatus.FAILED;
+    this.updatedAt = new Date();
     this.errorMessage = error.message;
     this.notifyStatusChange();
   }
@@ -144,6 +150,13 @@ export class ImageGenerationManager {
 
   public getHandler(id: string): ImageGenerationHandler | undefined {
     return this.handlers.get(id);
+  }
+
+  public removeHandler(id: string): void {
+    if (this.handlers.has(id)) {
+      this.handlers.delete(id);
+      this.notifyUpdate();
+    }
   }
 
   public getAllHandlers(): Map<string, ImageGenerationHandler> {
