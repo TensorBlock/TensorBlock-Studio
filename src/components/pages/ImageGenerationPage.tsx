@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   SettingsService,
   SETTINGS_CHANGE_EVENT,
@@ -18,6 +18,7 @@ export const ImageGenerationPage = () => {
   const [error, setError] = useState<Error | null>(null);
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(true);
   const [aspectRatio, setAspectRatio] = useState("1:1");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [imageCount, setImageCount] = useState(1);
   const [randomSeed, setRandomSeed] = useState(
     Math.floor(Math.random() * 1000000).toString()
@@ -27,6 +28,10 @@ export const ImageGenerationPage = () => {
   );
   const [historyResults, setHistoryResults] = useState<ImageGenerationResult[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const settingsPopupRef = useRef<HTMLDivElement>(null);
 
   // Load image generation history from database
   const refreshImageHistory = useCallback(async () => {
@@ -87,6 +92,25 @@ export const ImageGenerationPage = () => {
 
     return () => {
       window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    };
+  }, []);
+
+  // Handle clicks outside the settings popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        settingsPopupRef.current && 
+        !settingsPopupRef.current.contains(event.target as Node) &&
+        settingsButtonRef.current && 
+        !settingsButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -196,6 +220,11 @@ export const ImageGenerationPage = () => {
     );
   };
 
+  // Toggle settings popup
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-white">
       {isApiKeyMissing && (
@@ -223,8 +252,8 @@ export const ImageGenerationPage = () => {
 
               <div className="flex flex-row gap-2 p-2 border border-gray-300 rounded-lg shadow-sm">
                 <button
-                  onClick={handleGenerateImage}
-                  disabled={!prompt.trim() || isApiKeyMissing || isAnyImageGenerating()}
+                  ref={settingsButtonRef}
+                  onClick={toggleSettings}
                   className="px-4 py-2.5 text-nowrap flex flex-row gap-1 text-white text-center confirm-btn"
                 >
                   <Settings></Settings>
@@ -292,167 +321,151 @@ export const ImageGenerationPage = () => {
           </div>
         </div>
 
-        {/* Right side - Results */}
-        <div className="hidden w-[420px] h-full p-6 overflow-y-auto">
-          {/* Provider selection */}
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              {t("imageGeneration.provider")}
-            </label>
-            <div className="relative">
-              <button
-                className="flex items-center justify-between w-full p-3 text-left input-box"
-                disabled={true}
-              >
-                <span>OpenAI</span>
-                <ChevronDown size={18} className="text-gray-500" />
-              </button>
-            </div>
-          </div>
-
-          {/* Model selection */}
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              {t("imageGeneration.model")}
-            </label>
-            <div className="relative">
-              <button
-                className="flex items-center justify-between w-full p-3 text-left input-box"
-                disabled={true}
-              >
-                <span>DALL-E 3</span>
-                <ChevronDown size={18} className="text-gray-500" />
-              </button>
-            </div>
-          </div>
-
-          {/* Aspect ratio selection */}
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              {t("imageGeneration.imageSize")}
-            </label>
-            <div className="grid grid-cols-6 gap-1">
-              <button
-                onClick={() => setAspectRatio("1:1")}
-                className={`p-2 text-center border rounded-lg aspect-ratio-button ${
-                  aspectRatio === "1:1" ? "active" : ""
-                }`}
-              >
-                <div className="flex justify-center mb-1">
-                  <div className="w-6 h-6 border border-gray-500 rounded-sm"></div>
-                </div>
-                <span className="text-xs">1:1</span>
-              </button>
-              <button
-                onClick={() => setAspectRatio("1:2")}
-                className={`p-2 text-center border rounded-lg aspect-ratio-button ${
-                  aspectRatio === "1:2" ? "active" : ""
-                }`}
-              >
-                <div className="flex justify-center mb-1">
-                  <div className="w-4 h-6 border border-gray-500 rounded-sm"></div>
-                </div>
-                <span className="text-xs">1:2</span>
-              </button>
-              <button
-                onClick={() => setAspectRatio("3:2")}
-                className={`p-2 text-center border rounded-lg aspect-ratio-button ${
-                  aspectRatio === "3:2" ? "active" : ""
-                }`}
-              >
-                <div className="flex justify-center mb-1">
-                  <div className="w-6 h-4 border border-gray-500 rounded-sm"></div>
-                </div>
-                <span className="text-xs">3:2</span>
-              </button>
-              <button
-                onClick={() => setAspectRatio("3:4")}
-                className={`p-2 text-center border rounded-lg aspect-ratio-button ${
-                  aspectRatio === "3:4" ? "active" : ""
-                }`}
-              >
-                <div className="flex justify-center mb-1">
-                  <div className="w-[1rem] h-[1.5rem] border border-gray-500 rounded-sm"></div>
-                </div>
-                <span className="text-xs">3:4</span>
-              </button>
-              <button
-                onClick={() => setAspectRatio("16:9")}
-                className={`p-2 text-center border rounded-lg aspect-ratio-button ${
-                  aspectRatio === "16:9" ? "active" : ""
-                }`}
-              >
-                <div className="flex justify-center mb-1">
-                  <div className="w-6 h-3.5 border border-gray-500 rounded-sm"></div>
-                </div>
-                <span className="text-xs">16:9</span>
-              </button>
-              <button
-                onClick={() => setAspectRatio("9:16")}
-                className={`p-2 text-center border rounded-lg aspect-ratio-button ${
-                  aspectRatio === "9:16" ? "active" : ""
-                }`}
-              >
-                <div className="flex justify-center mb-1">
-                  <div className="w-3.5 h-6 border border-gray-500 rounded-sm"></div>
-                </div>
-                <span className="text-xs">9:16</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Image count */}
-          <div className="mb-6">
-            <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
-              {t("imageGeneration.generationCount")}
-              <div
-                className="flex items-center justify-center w-4 h-4 ml-1 text-xs text-gray-500 bg-gray-200 rounded-full cursor-help"
-                title={t("imageGeneration.generationCount")}
-              >
-                ?
+        {/* Settings popup */}
+        {isSettingsOpen && (
+          <div 
+            ref={settingsPopupRef}
+            className="absolute z-10 p-4 bg-white border border-gray-300 rounded-lg shadow-lg image-generation-settings-popup"
+            style={{ 
+              top: settingsButtonRef.current ? 
+                settingsButtonRef.current.getBoundingClientRect().top + 5 : 100,
+              left: settingsButtonRef.current ? 
+                settingsButtonRef.current.getBoundingClientRect().left - 130 : 100,
+              width: '320px'
+            }}
+          >
+            <div className="mb-4">
+              <h3 className="mb-2 text-base font-medium text-gray-800">
+                {t("imageGeneration.imageSize")}
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setAspectRatio("1:1")}
+                  className={`p-2 text-center border rounded-lg aspect-ratio-button ${
+                    aspectRatio === "1:1" ? "active" : ""
+                  }`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <div className="w-6 h-6 border border-gray-500 rounded-sm"></div>
+                  </div>
+                  <span className="text-xs">1:1</span>
+                </button>
+                <button
+                  onClick={() => setAspectRatio("3:2")}
+                  className={`p-2 text-center border rounded-lg aspect-ratio-button ${
+                    aspectRatio === "3:2" ? "active" : ""
+                  }`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <div className="w-6 h-4 border border-gray-500 rounded-sm"></div>
+                  </div>
+                  <span className="text-xs">3:2</span>
+                </button>
+                <button
+                  onClick={() => setAspectRatio("16:9")}
+                  className={`p-2 text-center border rounded-lg aspect-ratio-button ${
+                    aspectRatio === "16:9" ? "active" : ""
+                  }`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <div className="w-6 h-3.5 border border-gray-500 rounded-sm"></div>
+                  </div>
+                  <span className="text-xs">16:9</span>
+                </button>
+                <button
+                  onClick={() => setAspectRatio("1:2")}
+                  className={`p-2 text-center border rounded-lg aspect-ratio-button ${
+                    aspectRatio === "1:2" ? "active" : ""
+                  }`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <div className="w-4 h-6 border border-gray-500 rounded-sm"></div>
+                  </div>
+                  <span className="text-xs">1:2</span>
+                </button>
+                <button
+                  onClick={() => setAspectRatio("3:4")}
+                  className={`p-2 text-center border rounded-lg aspect-ratio-button ${
+                    aspectRatio === "3:4" ? "active" : ""
+                  }`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <div className="w-[1rem] h-[1.5rem] border border-gray-500 rounded-sm"></div>
+                  </div>
+                  <span className="text-xs">3:4</span>
+                </button>
+                <button
+                  onClick={() => setAspectRatio("9:16")}
+                  className={`p-2 text-center border rounded-lg aspect-ratio-button ${
+                    aspectRatio === "9:16" ? "active" : ""
+                  }`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <div className="w-3.5 h-6 border border-gray-500 rounded-sm"></div>
+                  </div>
+                  <span className="text-xs">9:16</span>
+                </button>
               </div>
-            </label>
-            <input
-              type="number"
-              value={imageCount}
-              onChange={(e) => setImageCount(parseInt(e.target.value) || 1)}
-              min="1"
-              max="4"
-              className="w-full p-3 input-box"
-              disabled={true}
-            />
-          </div>
+            </div>
 
-          {/* Random seed */}
-          <div className="mb-6">
-            <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
-              {t("imageGeneration.randomSeed")}
-              <div
-                className="flex items-center justify-center w-4 h-4 ml-1 text-xs text-gray-500 bg-gray-200 rounded-full cursor-help"
-                title={t("imageGeneration.seedHelp")}
-              >
-                ?
+            <div className="mb-4">
+              <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
+                {t("imageGeneration.randomSeed")}
+                <div
+                  className="flex items-center justify-center w-4 h-4 ml-1 text-xs text-gray-500 bg-gray-200 rounded-full cursor-help"
+                  title={t("imageGeneration.seedHelp")}
+                >
+                  ?
+                </div>
+              </label>
+              <div className="flex">
+                <input
+                  type="text"
+                  value={randomSeed}
+                  onChange={(e) => setRandomSeed(e.target.value)}
+                  className="flex-grow p-3 mr-2 input-box"
+                />
+                <button
+                  onClick={generateNewSeed}
+                  className="p-2 rounded-lg image-generation-refresh-button"
+                  title={t("imageGeneration.randomSeed")}
+                >
+                  <RefreshCw size={20} />
+                </button>
               </div>
-            </label>
-            <div className="flex">
-              <input
-                type="text"
-                value={randomSeed}
-                onChange={(e) => setRandomSeed(e.target.value)}
-                className="flex-grow p-3 mr-2 input-box"
-                disabled={true}
-              />
-              <button
-                onClick={generateNewSeed}
-                className="p-2 rounded-lg image-generation-refresh-button"
-                title={t("imageGeneration.randomSeed")}
-                disabled={true}
-              >
-                <RefreshCw size={20} />
-              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
+                {t("imageGeneration.provider")}
+              </label>
+              <div className="relative">
+                <button
+                  className="flex items-center justify-between w-full p-3 text-left input-box"
+                  disabled={true}
+                >
+                  <span>OpenAI</span>
+                  <ChevronDown size={18} className="text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
+                {t("imageGeneration.model")}
+              </label>
+              <div className="relative">
+                <button
+                  className="flex items-center justify-between w-full p-3 text-left input-box"
+                  disabled={true}
+                >
+                  <span>DALL-E 3</span>
+                  <ChevronDown size={18} className="text-gray-500" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
