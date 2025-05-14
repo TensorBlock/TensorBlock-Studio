@@ -9,23 +9,31 @@ import { v4 as uuidv4 } from 'uuid';
  */
 const DEFAULT_SETTINGS: UserSettings = {
   providers: {
-    // ['TensorBlock']: {
-    //   providerId: 'TensorBlock',
-    //   providerName: 'TensorBlock',
-    //   apiKey: '',
-    //   baseUrl: 'http://54.177.123.202:8000/v1',
-    //   customProvider: false,
-    //   models:[
-    //     {
-    //       modelName: 'GPT-4o',
-    //       modelId: 'gpt-4o',
-    //       modelCategory: 'GPT 4',
-    //       modelDescription: 'GPT-4o is the latest and most powerful model from OpenAI.',
-    //       modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
-    //       modelRefUUID: uuidv4(),
-    //     },
-    //   ]
-    // },
+    ['TensorBlock']: {
+      providerId: 'TensorBlock',
+      providerName: 'TensorBlock',
+      apiKey: '',
+      baseUrl: 'http://54.177.123.202:8000/v1',
+      customProvider: false,
+      models:[
+        {
+          modelName: 'GPT-4o',
+          modelId: 'gpt-4o',
+          modelCategory: 'GPT 4',
+          modelDescription: 'GPT-4o is the latest and most powerful model from OpenAI.',
+          modelCapabilities: [AIServiceCapability.TextCompletion, AIServiceCapability.WebSearch],
+          modelRefUUID: uuidv4(),
+        },
+        {
+          modelName: 'DALL-E 3',
+          modelId: 'dall-e-3',
+          modelCategory: 'Image Generation',
+          modelDescription: 'DALL-E 3 is OpenAI\'s advanced image generation model.',
+          modelCapabilities: [AIServiceCapability.ImageGeneration],
+          modelRefUUID: uuidv4(),
+        },
+      ]
+    },
     ['OpenAI']: {
       providerId: 'OpenAI',
       providerName: 'OpenAI',

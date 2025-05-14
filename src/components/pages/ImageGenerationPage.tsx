@@ -7,6 +7,7 @@ import { ChevronDown, RefreshCw, Settings, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AIService } from "../../services/ai-service";
 import { OPENAI_PROVIDER_NAME } from "../../services/providers/openai-service";
+import { FORGE_PROVIDER_NAME as TENSORBLOCK_PROVIDER_NAME } from "../../services/providers/forge-service";
 import { ImageGenerationManager, ImageGenerationStatus, ImageGenerationHandler } from "../../services/image-generation-handler";
 import { DatabaseIntegrationService } from "../../services/database-integration";
 import { ImageGenerationResult } from "../../types/image";
@@ -29,9 +30,12 @@ export const ImageGenerationPage = () => {
   const [historyResults, setHistoryResults] = useState<ImageGenerationResult[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState(OPENAI_PROVIDER_NAME);
   
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const settingsPopupRef = useRef<HTMLDivElement>(null);
+  const providerDropdownRef = useRef<HTMLDivElement>(null);
+  const [isProviderDropdownOpen, setIsProviderDropdownOpen] = useState(false);
 
   // Load image generation history from database
   const refreshImageHistory = useCallback(async () => {
@@ -50,7 +54,7 @@ export const ImageGenerationPage = () => {
     }
   }, []);
 
-  // Initialize image generation manager
+  // Initialize image generation manager and load settings
   useEffect(() => {
     const initialize = async () => {
       // Initialize image generation manager
@@ -67,6 +71,16 @@ export const ImageGenerationPage = () => {
         const dbService = DatabaseIntegrationService.getInstance();
         await dbService.initialize();
         
+        // Load settings
+        const settingsService = SettingsService.getInstance();
+        await settingsService.initialize();
+        
+        // Load saved provider preference
+        const settings = settingsService.getSettings();
+        if (settings.imageGenerationProvider) {
+          setSelectedProvider(settings.imageGenerationProvider);
+        }
+        
         // Load image generation history from database
         await refreshImageHistory();
         
@@ -82,10 +96,16 @@ export const ImageGenerationPage = () => {
 
   // Check if API key is available
   useEffect(() => {
-    setIsApiKeyMissing(!SettingsService.getInstance().getApiKey());
+    const checkApiKey = () => {
+      // Check if the selected provider has an API key
+      const hasApiKey = !!SettingsService.getInstance().getApiKey(selectedProvider);
+      setIsApiKeyMissing(!hasApiKey);
+    };
+    
+    checkApiKey();
 
     const handleSettingsChange = () => {
-      setIsApiKeyMissing(!SettingsService.getInstance().getApiKey());
+      checkApiKey();
     };
 
     window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
@@ -93,7 +113,7 @@ export const ImageGenerationPage = () => {
     return () => {
       window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
     };
-  }, []);
+  }, [selectedProvider]);
 
   // Handle clicks outside the settings popup
   useEffect(() => {
@@ -105,6 +125,14 @@ export const ImageGenerationPage = () => {
         !settingsButtonRef.current.contains(event.target as Node)
       ) {
         setIsSettingsOpen(false);
+        setIsProviderDropdownOpen(false);
+      } else if (
+        providerDropdownRef.current &&
+        !providerDropdownRef.current.contains(event.target as Node) &&
+        event.target instanceof Element &&
+        !event.target.closest('.provider-dropdown-toggle')
+      ) {
+        setIsProviderDropdownOpen(false);
       }
     };
 
@@ -114,18 +142,24 @@ export const ImageGenerationPage = () => {
     };
   }, []);
 
-  // Handle generating an image using OpenAI's DALL-E 3
+  // Handle generating an image using selected provider
   const handleGenerateImage = async () => {
     if (!prompt.trim()) return;
 
     setError(null);
 
     try {
-      // Get the OpenAI service from AIService
-      const openaiService = AIService.getInstance().getProvider(OPENAI_PROVIDER_NAME);
+      let providerService;
       
-      if (!openaiService) {
-        throw new Error("OpenAI service not available");
+      // Get the appropriate service based on selected provider
+      if (selectedProvider === TENSORBLOCK_PROVIDER_NAME) {
+        providerService = AIService.getInstance().getProvider(TENSORBLOCK_PROVIDER_NAME);
+      } else {
+        providerService = AIService.getInstance().getProvider(OPENAI_PROVIDER_NAME);
+      }
+      
+      if (!providerService) {
+        throw new Error(`${selectedProvider} service not available`);
       }
 
       // Create a new generation handler
@@ -135,7 +169,7 @@ export const ImageGenerationPage = () => {
         seed: randomSeed,
         number: imageCount,
         aspectRatio: aspectRatio,
-        provider: OPENAI_PROVIDER_NAME,
+        provider: selectedProvider,
         model: "dall-e-3",
       });
       
@@ -153,7 +187,7 @@ export const ImageGenerationPage = () => {
       };
       
       // Generate the image
-      const images = await openaiService.getImageGeneration(prompt, {
+      const images = await providerService.getImageGeneration(prompt, {
         size: sizeMap[aspectRatio] || "1024x1024",
         aspectRatio: aspectRatio as `${number}:${number}`,
         style: "vivid"
@@ -223,6 +257,24 @@ export const ImageGenerationPage = () => {
   // Toggle settings popup
   const toggleSettings = () => {
     setIsSettingsOpen(!isSettingsOpen);
+    setIsProviderDropdownOpen(false);
+  };
+
+  // Toggle provider dropdown
+  const toggleProviderDropdown = () => {
+    setIsProviderDropdownOpen(!isProviderDropdownOpen);
+  };
+
+  // Handle provider selection
+  const handleProviderSelect = async (provider: string) => {
+    setSelectedProvider(provider);
+    setIsProviderDropdownOpen(false);
+    
+    // Save provider preference to settings
+    const settingsService = SettingsService.getInstance();
+    await settingsService.updateSettings({
+      imageGenerationProvider: provider
+    });
   };
 
   return (
@@ -441,12 +493,38 @@ export const ImageGenerationPage = () => {
               </label>
               <div className="relative">
                 <button
-                  className="flex items-center justify-between w-full p-3 text-left input-box"
-                  disabled={true}
+                  className="flex items-center justify-between w-full p-3 text-left provider-dropdown-toggle input-box"
+                  onClick={toggleProviderDropdown}
                 >
-                  <span>OpenAI</span>
+                  <span>{selectedProvider}</span>
                   <ChevronDown size={18} className="text-gray-500" />
                 </button>
+                
+                {isProviderDropdownOpen && (
+                  <div 
+                    ref={providerDropdownRef}
+                    className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
+                  >
+                    <ul className="py-1">
+                      <li 
+                        className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                          selectedProvider === OPENAI_PROVIDER_NAME ? 'bg-gray-50 font-medium' : ''
+                        }`}
+                        onClick={() => handleProviderSelect(OPENAI_PROVIDER_NAME)}
+                      >
+                        OpenAI
+                      </li>
+                      <li 
+                        className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                          selectedProvider === TENSORBLOCK_PROVIDER_NAME ? 'bg-gray-50 font-medium' : ''
+                        }`}
+                        onClick={() => handleProviderSelect(TENSORBLOCK_PROVIDER_NAME)}
+                      >
+                        TensorBlock
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
 
