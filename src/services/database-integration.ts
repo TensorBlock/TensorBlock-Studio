@@ -361,6 +361,17 @@ export class DatabaseIntegrationService {
         }
     }
 
+    /**
+     * Get all image generation results from the database
+     */
+    public async getImageGenerationResults(): Promise<ImageGenerationResult[]> {
+        try {
+            return await this.dbService.getImageGenerationResults();
+        } catch (error) {
+            console.error('Error getting image generation results:', error);
+            return [];
+        }
+    }
 
     public async saveFile(fileData: FileJsonData, arrayBuffer: ArrayBuffer): Promise<string> {
         const fileId = uuidv4();

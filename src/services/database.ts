@@ -568,6 +568,22 @@ export class DatabaseService {
     }
 
     /**
+     * Get all image generation results from the database
+     */
+    public async getImageGenerationResults(): Promise<ImageGenerationResult[]> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) throw new Error('Database not initialized');
+
+            const transaction = this.db.transaction('imageGenerationResults', 'readonly');
+            const store = transaction.objectStore('imageGenerationResults');
+            const request = store.getAll();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
      * Get all files from the database
      * @returns List of files
      */

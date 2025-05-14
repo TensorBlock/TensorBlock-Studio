@@ -121,7 +121,8 @@
     "results": "Generated Results",
     "placeholderText": "Enter a prompt and click generate to create images",
     "apiKeyMissing": "Please set your API key for the selected provider in the settings.",
-    "seedHelp": "Seed for reproducible results"
+    "seedHelp": "Seed for reproducible results",
+    "loading": "Loading image history..."
   },
   "mcpServer": {
     "title": "MCP Servers",

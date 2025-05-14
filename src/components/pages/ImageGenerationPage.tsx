@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   SettingsService,
   SETTINGS_CHANGE_EVENT,
@@ -28,31 +28,52 @@ export const ImageGenerationPage = () => {
   const [historyResults, setHistoryResults] = useState<ImageGenerationResult[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
+  // Load image generation history from database
+  const refreshImageHistory = useCallback(async () => {
+    try {
+      const dbService = DatabaseIntegrationService.getInstance();
+      const results = await dbService.getImageGenerationResults();
+      if (results && results.length > 0) {
+        // Sort by most recent first
+        const sortedResults = results.sort((a, b) => 
+          b.imageResultId.localeCompare(a.imageResultId)
+        );
+        setHistoryResults(sortedResults);
+      }
+    } catch (error) {
+      console.error('Error refreshing image history:', error);
+    }
+  }, []);
+
   // Initialize image generation manager
   useEffect(() => {
-    const imageManager = ImageGenerationManager.getInstance();
-    
-    // Register for updates on generation status changes
-    imageManager.setUpdateCallback((handlers) => {
-      setGenerationResults(new Map(handlers));
-    });
-    
-    // Load history from database
-    const loadHistoryResults = async () => {
+    const initialize = async () => {
+      // Initialize image generation manager
+      const imageManager = ImageGenerationManager.getInstance();
+      
+      // Register for updates on generation status changes
+      imageManager.setUpdateCallback((handlers) => {
+        setGenerationResults(new Map(handlers));
+      });
+      
+      // Initialize database and load history
       try {
         setIsLoadingHistory(true);
         const dbService = DatabaseIntegrationService.getInstance();
         await dbService.initialize();
-        // TODO: Implement loading image history from database when available
+        
+        // Load image generation history from database
+        await refreshImageHistory();
+        
         setIsLoadingHistory(false);
       } catch (error) {
-        console.error('Error loading image history:', error);
+        console.error('Error initializing database or loading image history:', error);
         setIsLoadingHistory(false);
       }
     };
     
-    loadHistoryResults();
-  }, []);
+    initialize();
+  }, [refreshImageHistory]);
 
   // Check if API key is available
   useEffect(() => {
@@ -129,6 +150,9 @@ export const ImageGenerationPage = () => {
         // Update the handler with successful results
         handler.setSuccess(processedImages);
         
+        // Refresh history to include the new generation
+        refreshImageHistory();
+        
         // Generate new seed for next generation
         generateNewSeed();
       } else {
@@ -146,6 +170,7 @@ export const ImageGenerationPage = () => {
 
   // Get all results to display in order (active generations first, then history)
   const getAllResults = () => {
+    // Get results from active generation handlers
     const handlerResults = Array.from(generationResults.values())
       .map(handler => handler.getResult())
       .sort((a, b) => {
@@ -160,7 +185,15 @@ export const ImageGenerationPage = () => {
         return b.imageResultId.localeCompare(a.imageResultId);
       });
     
+    // Combine with historical results
     return [...handlerResults, ...historyResults];
+  };
+
+  // Check if any images are currently generating
+  const isAnyImageGenerating = () => {
+    return Array.from(generationResults.values()).some(
+      h => h.getStatus() === ImageGenerationStatus.GENERATING
+    );
   };
 
   return (
@@ -191,7 +224,7 @@ export const ImageGenerationPage = () => {
               <div className="flex flex-row gap-2 p-2 border border-gray-300 rounded-lg shadow-sm">
                 <button
                   onClick={handleGenerateImage}
-                  disabled={!prompt.trim() || isApiKeyMissing}
+                  disabled={!prompt.trim() || isApiKeyMissing || isAnyImageGenerating()}
                   className="px-4 py-2.5 text-nowrap flex flex-row gap-1 text-white text-center confirm-btn"
                 >
                   <Settings></Settings>
@@ -199,11 +232,11 @@ export const ImageGenerationPage = () => {
                 </button>
                 <button
                   onClick={handleGenerateImage}
-                  disabled={!prompt.trim() || isApiKeyMissing}
+                  disabled={!prompt.trim() || isApiKeyMissing || isAnyImageGenerating()}
                   className="px-4 py-2.5 text-nowrap flex flex-row gap-1 text-white text-center confirm-btn"
                 >
                   <Zap></Zap>
-                  {Array.from(generationResults.values()).some(h => h.getStatus() === ImageGenerationStatus.GENERATING)
+                  {isAnyImageGenerating()
                     ? t("imageGeneration.generating")
                     : t("imageGeneration.generateButton")}
                 </button>
@@ -237,7 +270,12 @@ export const ImageGenerationPage = () => {
             {/* Loading indicator for history */}
             {isLoadingHistory && (
               <div className="flex items-center justify-center h-24 rounded-lg bg-gray-50">
-                <div className="w-8 h-8 border-4 rounded-full border-primary-300 border-t-primary-600 animate-spin"></div>
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 border-4 rounded-full border-primary-300 border-t-primary-600 animate-spin"></div>
+                  <p className="mt-2 text-sm text-gray-600">
+                    {t("imageGeneration.loading")}
+                  </p>
+                </div>
               </div>
             )}
             
