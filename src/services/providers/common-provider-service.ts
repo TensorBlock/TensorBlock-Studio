@@ -55,6 +55,8 @@ export class CommonProviderHelper implements AiServiceProvider {
     
     this._apiKey = providerSettings.apiKey || '';
     
+    this.apiModels = this.settingsService.getModels(providerName);
+
     this.ProviderInstance = this.createClient();
   }
 
@@ -106,7 +108,7 @@ export class CommonProviderHelper implements AiServiceProvider {
    */
   getModelCapabilities(modelId: string): AIServiceCapability[] {
     // Get model data by modelId
-    const models = this.settingsService.getModels(this.providerID);
+    const models = this.settingsService.getModels(this.providerName);
     const modelData = models.find(x => x.modelId === modelId);
     let hasImageGeneration = false;
 

@@ -26,6 +26,7 @@ export class GeminiService implements AiServiceProvider {
    */
   constructor() {
     this.settingsService = SettingsService.getInstance();
+    this.apiModels = this.settingsService.getModels(GEMINI_PROVIDER_NAME);
     const providerSettings = this.settingsService.getProviderSettings(GEMINI_PROVIDER_NAME);
     
     this._apiKey = providerSettings.apiKey || '';

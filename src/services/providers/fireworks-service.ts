@@ -24,6 +24,7 @@ export class FireworksService implements AiServiceProvider {
    */
   constructor() {
     this.settingsService = SettingsService.getInstance();
+    this.apiModels = this.settingsService.getModels(FIREWORKS_PROVIDER_NAME);
     this.commonProviderHelper = new CommonProviderHelper(FIREWORKS_PROVIDER_NAME, this.createClient);
   }
 

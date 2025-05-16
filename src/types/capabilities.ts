@@ -37,7 +37,7 @@ export const mapModelCapabilities = (
   ];
 
   if (supportsImages) {
-    capabilities.push(AIServiceCapability.VisionAnalysis);
+    capabilities.push(AIServiceCapability.ImageGeneration);
   }
 
   if (supportsAudio) {

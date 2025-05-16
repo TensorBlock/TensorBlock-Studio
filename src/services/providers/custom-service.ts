@@ -38,6 +38,8 @@ export class CustomService implements AiServiceProvider {
     this.baseURL = `${baseURL}/${this.apiVersion}`;
     this.apiKey = apiKey;
 
+    this.apiModels = this.settingsService.getModels(this.providerID);
+
     this.openAIProvider = createOpenAI({
       apiKey: this.apiKey,
       compatibility: 'compatible',
@@ -51,9 +53,6 @@ export class CustomService implements AiServiceProvider {
    */
   get name(): string {
     const providerSettings = this.settingsService.getProviderSettings(this.providerID);
-    const error = new Error('Custom provider settings: ' + JSON.stringify(providerSettings));
-    console.log(error);
-    console.log('Provider Name: ', providerSettings.providerName);
     return providerSettings.providerName;
   }
 
@@ -88,8 +87,7 @@ export class CustomService implements AiServiceProvider {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getModelCapabilities(modelId: string): AIServiceCapability[] {
     // Get model data by modelId
-    const models = this.settingsService.getModels(this.providerID);
-    const modelData = models.find(x => x.modelId === modelId);
+    const modelData = this.apiModels.find(x => x.modelId === modelId);
     let hasImageGeneration = false;
 
     if(modelData?.modelCapabilities.findIndex(x => x === AIServiceCapability.ImageGeneration) !== -1){

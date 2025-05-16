@@ -7,13 +7,11 @@ import { ChevronDown, RefreshCw, Settings, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AIService } from "../../services/ai-service";
 import { OPENAI_PROVIDER_NAME } from "../../services/providers/openai-service";
-import { FORGE_PROVIDER_NAME as TENSORBLOCK_PROVIDER_NAME } from "../../services/providers/forge-service";
 import { ImageGenerationManager, ImageGenerationStatus, ImageGenerationHandler } from "../../services/image-generation-handler";
 import { DatabaseIntegrationService } from "../../services/database-integration";
 import { ImageGenerationResult } from "../../types/image";
 import ImageGenerateHistoryItem from "../image/ImageGenerateHistoryItem";
-import { AiServiceProvider } from "../../types/ai-service";
-import { AiServiceCapability } from "../../types/ai-service";
+
 
 export const ImageGenerationPage = () => {
   const { t } = useTranslation();
@@ -33,6 +31,8 @@ export const ImageGenerationPage = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(OPENAI_PROVIDER_NAME);
+  const [selectedModel, setSelectedModel] = useState("dall-e-3");
+  const [availableProviders, setAvailableProviders] = useState<{id: string, name: string}[]>([]);
   
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const settingsPopupRef = useRef<HTMLDivElement>(null);
@@ -62,6 +62,31 @@ export const ImageGenerationPage = () => {
     }
   }, []);
 
+  // Load available image generation providers
+  const loadImageGenerationProviders = useCallback(async () => {
+    const aiService = AIService.getInstance();
+    const providers = aiService.getImageGenerationProviders();
+    
+    const providerOptions = providers.map(provider => ({
+      id: provider.id,
+      name: provider.name || provider.id
+    }));
+    
+    setAvailableProviders(providerOptions);
+    
+    // Set default provider if none is selected or current one isn't available
+    if (!selectedProvider || !providerOptions.some(p => p.id === selectedProvider)) {
+      if (providerOptions.length > 0) {
+        setSelectedProvider(providerOptions[0].id);
+      }
+    }
+  }, [selectedProvider]);
+
+  const handleGetProviderNameById = (id: string) => {
+    const provider = availableProviders.find(p => p.id === id);
+    return provider ? provider.name : id;
+  }
+
   // Initialize image generation manager and load settings
   useEffect(() => {
     const initialize = async () => {
@@ -88,6 +113,12 @@ export const ImageGenerationPage = () => {
         if (settings.imageGenerationProvider) {
           setSelectedProvider(settings.imageGenerationProvider);
         }
+        if (settings.imageGenerationModel) {
+          setSelectedModel(settings.imageGenerationModel);
+        }
+        
+        // Load available providers
+        await loadImageGenerationProviders();
         
         // Load image generation history from database
         await refreshImageHistory();
@@ -100,7 +131,19 @@ export const ImageGenerationPage = () => {
     };
     
     initialize();
-  }, [refreshImageHistory]);
+  }, [refreshImageHistory, loadImageGenerationProviders]);
+
+  // Listen for settings changes
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      loadImageGenerationProviders();
+    };
+
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    return () => {
+      window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    };
+  }, [loadImageGenerationProviders]);
 
   // Check if API key is available
   useEffect(() => {
@@ -183,14 +226,9 @@ export const ImageGenerationPage = () => {
     setError(null);
 
     try {
-      let providerService;
-      
       // Get the appropriate service based on selected provider
-      if (selectedProvider === TENSORBLOCK_PROVIDER_NAME) {
-        providerService = AIService.getInstance().getProvider(TENSORBLOCK_PROVIDER_NAME);
-      } else {
-        providerService = AIService.getInstance().getProvider(OPENAI_PROVIDER_NAME);
-      }
+      const aiService = AIService.getInstance();
+      const providerService = aiService.getProvider(selectedProvider);
       
       if (!providerService) {
         throw new Error(`${selectedProvider} service not available`);
@@ -201,10 +239,10 @@ export const ImageGenerationPage = () => {
       const handler = imageManager.createHandler({
         prompt: prompt,
         seed: randomSeed,
-        number: imageCount,
+        number: 1,
         aspectRatio: aspectRatio,
         provider: selectedProvider,
-        model: "dall-e-3",
+        model: selectedModel,
       });
       
       // Set status to generating
@@ -480,7 +518,7 @@ export const ImageGenerationPage = () => {
             </div>
 
             <div className="mb-4">
-              <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
+              <label className="flex items-center mb-2 text-sm font-medium text-gray-700">
                 {t("imageGeneration.randomSeed")}
                 <div
                   className="flex items-center justify-center w-4 h-4 ml-1 text-xs text-gray-500 bg-gray-200 rounded-full cursor-help"
@@ -507,7 +545,7 @@ export const ImageGenerationPage = () => {
             </div>
 
             <div className="mb-4">
-              <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
+              <label className="flex items-center mb-2 text-sm font-medium text-gray-700">
                 {t("imageGeneration.provider")}
               </label>
               <div className="relative">
@@ -515,7 +553,7 @@ export const ImageGenerationPage = () => {
                   className="flex items-center justify-between w-full p-3 text-left provider-dropdown-toggle input-box"
                   onClick={toggleProviderDropdown}
                 >
-                  <span>{selectedProvider}</span>
+                  <span>{handleGetProviderNameById(selectedProvider)}</span>
                   <ChevronDown size={18} className="text-gray-500" />
                 </button>
                 
@@ -525,22 +563,23 @@ export const ImageGenerationPage = () => {
                     className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
                   >
                     <ul className="py-1">
-                      <li 
-                        className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                          selectedProvider === OPENAI_PROVIDER_NAME ? 'bg-gray-50 font-medium' : ''
-                        }`}
-                        onClick={() => handleProviderSelect(OPENAI_PROVIDER_NAME)}
-                      >
-                        OpenAI
-                      </li>
-                      <li 
-                        className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                          selectedProvider === TENSORBLOCK_PROVIDER_NAME ? 'bg-gray-50 font-medium' : ''
-                        }`}
-                        onClick={() => handleProviderSelect(TENSORBLOCK_PROVIDER_NAME)}
-                      >
-                        TensorBlock
-                      </li>
+                      {availableProviders.length > 0 ? (
+                        availableProviders.map(provider => (
+                          <li 
+                            key={provider.id}
+                            className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                              selectedProvider === provider.id ? 'bg-gray-50 font-medium' : ''
+                            }`}
+                            onClick={() => handleProviderSelect(provider.id)}
+                          >
+                            {provider.name}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-3 py-2 text-gray-500">
+                          {t("chat.noImageProvidersAvailable")}
+                        </li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -548,7 +587,7 @@ export const ImageGenerationPage = () => {
             </div>
 
             <div className="mb-4">
-              <label className="flex items-center block mb-2 text-sm font-medium text-gray-700">
+              <label className="flex items-center mb-2 text-sm font-medium text-gray-700">
                 {t("imageGeneration.model")}
               </label>
               <div className="relative">

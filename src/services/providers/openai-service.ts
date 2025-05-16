@@ -24,6 +24,7 @@ export class OpenAIService implements AiServiceProvider {
    */
   constructor() {
     this.settingsService = SettingsService.getInstance();
+    this.apiModels = this.settingsService.getModels(OPENAI_PROVIDER_NAME);
     this.commonProviderHelper = new CommonProviderHelper(OPENAI_PROVIDER_NAME, this.createClient);
   }
 

@@ -24,6 +24,7 @@ export class ForgeService implements AiServiceProvider {
    */
   constructor() {
     this.settingsService = SettingsService.getInstance();
+    this.apiModels = this.settingsService.getModels(FORGE_PROVIDER_NAME);
     this.commonProviderHelper = new CommonProviderHelper(FORGE_PROVIDER_NAME, this.createClient);
   }
 

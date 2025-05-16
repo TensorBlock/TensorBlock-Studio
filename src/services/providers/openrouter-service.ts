@@ -25,6 +25,7 @@ export class OpenRouterService implements AiServiceProvider {
    */
   constructor() {
     this.settingsService = SettingsService.getInstance();
+    this.apiModels = this.settingsService.getModels(OPENROUTER_PROVIDER_NAME);
     const providerSettings = this.settingsService.getProviderSettings(OPENROUTER_PROVIDER_NAME);
     
     this._apiKey = providerSettings.apiKey || '';

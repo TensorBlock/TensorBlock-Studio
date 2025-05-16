@@ -29,6 +29,8 @@ export class AnthropicService implements AiServiceProvider {
     this.settingsService = SettingsService.getInstance();
     const providerSettings = this.settingsService.getProviderSettings(ANTHROPIC_PROVIDER_NAME);
     
+    this.apiModels = this.settingsService.getModels(ANTHROPIC_PROVIDER_NAME);
+
     this._apiKey = providerSettings.apiKey || '';
 
     this.anthropic = new Anthropic({

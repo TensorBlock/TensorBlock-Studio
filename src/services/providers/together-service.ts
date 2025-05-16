@@ -24,6 +24,7 @@ export class TogetherService implements AiServiceProvider {
    */
   constructor() {
     this.settingsService = SettingsService.getInstance();
+    this.apiModels = this.settingsService.getModels(TOGETHER_PROVIDER_NAME);
     this.commonProviderHelper = new CommonProviderHelper(TOGETHER_PROVIDER_NAME, this.createClient);
   }
 
