@@ -104,10 +104,18 @@ export class CommonProviderHelper implements AiServiceProvider {
   /**
    * Get the capabilities of a model with this provider
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getModelCapabilities(model: string): AIServiceCapability[] {
+  getModelCapabilities(modelId: string): AIServiceCapability[] {
+    // Get model data by modelId
+    const models = this.settingsService.getModels(this.providerID);
+    const modelData = models.find(x => x.modelId === modelId);
+    let hasImageGeneration = false;
+
+    if(modelData?.modelCapabilities.findIndex(x => x === AIServiceCapability.ImageGeneration) !== -1){
+      hasImageGeneration = true;
+    }
+
     return mapModelCapabilities(
-      false,
+      hasImageGeneration,
       false,
       false,
       false,

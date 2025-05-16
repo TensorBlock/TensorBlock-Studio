@@ -17,11 +17,13 @@ export class ForgeService implements AiServiceProvider {
 
   private commonProviderHelper: CommonProviderHelper;
   private apiModels: ModelSettings[] = [];
+  private settingsService: SettingsService;
 
   /**
    * Create a new Forge service provider
    */
   constructor() {
+    this.settingsService = SettingsService.getInstance();
     this.commonProviderHelper = new CommonProviderHelper(FORGE_PROVIDER_NAME, this.createClient);
   }
 
@@ -59,8 +61,7 @@ export class ForgeService implements AiServiceProvider {
    * Fetch the list of available models from Forge
    */
   public async fetchAvailableModels(): Promise<ModelSettings[]> {
-    const settingsService = SettingsService.getInstance();
-    const models = settingsService.getModels(FORGE_PROVIDER_NAME);
+    const models = this.settingsService.getModels(FORGE_PROVIDER_NAME);
 
     this.apiModels = models;
 
@@ -70,10 +71,18 @@ export class ForgeService implements AiServiceProvider {
   /**
    * Get the capabilities of a model with this provider
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getModelCapabilities(model: string): AIServiceCapability[] {
+  getModelCapabilities(modelId: string): AIServiceCapability[] {
+    // Get model data by modelId
+    const models = this.settingsService.getModels(this.name);
+    const modelData = models.find(x => x.modelId === modelId);
+    let hasImageGeneration = false;
+
+    if(modelData?.modelCapabilities.findIndex(x => x === AIServiceCapability.ImageGeneration) !== -1){
+      hasImageGeneration = true;
+    }
+
     return mapModelCapabilities(
-      false,
+      hasImageGeneration,
       false,
       false,
       false,

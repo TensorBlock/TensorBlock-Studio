@@ -51,7 +51,7 @@ export interface AiServiceProvider {
   /**
    * Get the capabilities of a model with this provider
    */
-  getModelCapabilities(model: string): AIServiceCapability[];
+  getModelCapabilities(modelId: string): AIServiceCapability[];
 
   /**
    * Fetch available models from the provider API

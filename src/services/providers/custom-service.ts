@@ -13,6 +13,7 @@ import { CommonProviderHelper } from './common-provider-service';
  */
 export class CustomService implements AiServiceProvider {
 
+  private settingsService: SettingsService;
   private openAIProvider: OpenAIProvider;
   private apiModels: ModelSettings[] = [];
 
@@ -29,8 +30,8 @@ export class CustomService implements AiServiceProvider {
   constructor(providerID: string) {
     this.providerID = providerID;
     
-    const settingsService = SettingsService.getInstance();
-    const providerSettings = settingsService.getProviderSettings(this.providerID);
+    this.settingsService = SettingsService.getInstance();
+    const providerSettings = this.settingsService.getProviderSettings(this.providerID);
     const apiKey = providerSettings.apiKey;
     const baseURL = providerSettings.baseUrl;
 
@@ -49,8 +50,7 @@ export class CustomService implements AiServiceProvider {
    * Get the name of the service provider
    */
   get name(): string {
-    const settingsService = SettingsService.getInstance();
-    const providerSettings = settingsService.getProviderSettings(this.providerID);
+    const providerSettings = this.settingsService.getProviderSettings(this.providerID);
     const error = new Error('Custom provider settings: ' + JSON.stringify(providerSettings));
     console.log(error);
     console.log('Provider Name: ', providerSettings.providerName);
@@ -75,8 +75,7 @@ export class CustomService implements AiServiceProvider {
    * Fetch the list of available models from Forge
    */
   public async fetchAvailableModels(): Promise<ModelSettings[]> {
-    const settingsService = SettingsService.getInstance();
-    const models = settingsService.getModels(this.providerID);
+    const models = this.settingsService.getModels(this.providerID);
 
     this.apiModels = models;
 
@@ -87,9 +86,18 @@ export class CustomService implements AiServiceProvider {
    * Get the capabilities of a model with this provider
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getModelCapabilities(model: string): AIServiceCapability[] {
+  getModelCapabilities(modelId: string): AIServiceCapability[] {
+    // Get model data by modelId
+    const models = this.settingsService.getModels(this.providerID);
+    const modelData = models.find(x => x.modelId === modelId);
+    let hasImageGeneration = false;
+
+    if(modelData?.modelCapabilities.findIndex(x => x === AIServiceCapability.ImageGeneration) !== -1){
+      hasImageGeneration = true;
+    }
+    
     return mapModelCapabilities(
-      false,
+      hasImageGeneration,
       false,
       false,
       false,

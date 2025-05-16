@@ -60,8 +60,7 @@ export class GeminiService implements AiServiceProvider {
    * Fetch the list of available models from OpenAI
    */
   public async fetchAvailableModels(): Promise<ModelSettings[]> {
-    const settingsService = SettingsService.getInstance();
-    const models = settingsService.getModels(GEMINI_PROVIDER_NAME);
+    const models = this.settingsService.getModels(GEMINI_PROVIDER_NAME);
 
     this.apiModels = models;
 
@@ -71,10 +70,18 @@ export class GeminiService implements AiServiceProvider {
   /**
    * Get the capabilities of a model with this provider
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getModelCapabilities(model: string): AIServiceCapability[] {
+  getModelCapabilities(modelId: string): AIServiceCapability[] {
+    // Get model data by modelId
+    const models = this.settingsService.getModels(this.name);
+    const modelData = models.find(x => x.modelId === modelId);
+    let hasImageGeneration = false;
+
+    if(modelData?.modelCapabilities.findIndex(x => x === AIServiceCapability.ImageGeneration) !== -1){
+      hasImageGeneration = true;
+    }
+
     return mapModelCapabilities(
-      false,
+      hasImageGeneration,
       false,
       false,
       false,

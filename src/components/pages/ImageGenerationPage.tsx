@@ -12,6 +12,8 @@ import { ImageGenerationManager, ImageGenerationStatus, ImageGenerationHandler }
 import { DatabaseIntegrationService } from "../../services/database-integration";
 import { ImageGenerationResult } from "../../types/image";
 import ImageGenerateHistoryItem from "../image/ImageGenerateHistoryItem";
+import { AiServiceProvider } from "../../types/ai-service";
+import { AiServiceCapability } from "../../types/ai-service";
 
 export const ImageGenerationPage = () => {
   const { t } = useTranslation();
