@@ -3,6 +3,7 @@ import { ImageGenerationResult } from '../../types/image';
 import { MessageContent } from '../../types/chat';
 import { Loader } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { AIService } from '../../services/ai-service';
 
 interface ImageGenerateHistoryItemProps {
   imageResult: ImageGenerationResult;
@@ -78,6 +79,11 @@ const ImageGenerateHistoryItem: React.FC<ImageGenerateHistoryItemProps> = ({
     );
   };
 
+  const getProviderName = (providerId: string, providerName: string) => {
+    const providerService = AIService.getInstance().getProvider(providerId);
+    return providerService?.name || providerName || providerId;
+  }
+
   return (
     <div className={`mb-6 overflow-hidden border rounded-lg shadow-sm image-result-item ${isGenerating ? 'border-primary-300' : ''}`}>
       <div className="image-result-container">
@@ -95,7 +101,7 @@ const ImageGenerateHistoryItem: React.FC<ImageGenerateHistoryItemProps> = ({
                   {imageResult.model}
                 </span>
                 <span className={`px-2 py-1 text-xs rounded-full ${isGenerating ? 'bg-primary-100 text-primary-800' : 'bg-gray-100'}`}>
-                  {imageResult.provider}
+                  {getProviderName(imageResult.provider, imageResult.providerName)}
                 </span>
                 <span className={`px-2 py-1 text-xs rounded-full ${isGenerating ? 'bg-primary-100 text-primary-800' : 'bg-gray-100'}`}>
                   {imageResult.aspectRatio}

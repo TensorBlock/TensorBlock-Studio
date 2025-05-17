@@ -16,6 +16,7 @@ export interface ImageGenerationOptions {
   seed: string;
   aspectRatio: string;
   provider: string;
+  providerName: string;
   model: string;
   number: number;
 }
@@ -72,6 +73,7 @@ export class ImageGenerationHandler {
       status: this.status,
       aspectRatio: this.options.aspectRatio,
       provider: this.options.provider,
+      providerName: this.options.providerName,
       model: this.options.model,
       images: this.images,
       updatedAt: this.updatedAt

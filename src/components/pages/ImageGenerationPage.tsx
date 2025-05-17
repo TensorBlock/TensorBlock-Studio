@@ -131,7 +131,7 @@ export const ImageGenerationPage = () => {
     };
     
     initialize();
-  }, [refreshImageHistory, loadImageGenerationProviders]);
+  }, [setSelectedProvider, setSelectedModel, refreshImageHistory, loadImageGenerationProviders]);
 
   // Listen for settings changes
   useEffect(() => {
@@ -242,6 +242,7 @@ export const ImageGenerationPage = () => {
         number: 1,
         aspectRatio: aspectRatio,
         provider: selectedProvider,
+        providerName: handleGetProviderNameById(selectedProvider),
         model: selectedModel,
       });
       

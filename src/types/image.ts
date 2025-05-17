@@ -8,7 +8,8 @@ export interface ImageGenerationResult {
     number: number;
     status: string;
     aspectRatio: string;
-    provider: string;
+    provider: string; // provider id
+    providerName: string; // provider name
     model: string;
     images: MessageContent[];
     updatedAt: Date;
