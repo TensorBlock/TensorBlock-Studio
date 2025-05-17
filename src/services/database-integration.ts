@@ -3,6 +3,7 @@ import { SettingsService } from './settings-service';
 import { Conversation, Message, ConversationFolder, MessageContent, MessageContentType, FileJsonData } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 import { FileData } from '../types/file';
+import { ImageGenerationResult } from '../types/image';
 
 const SYSTEM_MESSAGE_CONTENT: MessageContent[] = [
     {
@@ -348,6 +349,28 @@ export class DatabaseIntegrationService {
         return {
             ...dbMessage,
         };
+    }
+
+    public async saveImageGenerationResult(imageResult: ImageGenerationResult){
+        try {
+            const resultID = await this.dbService.saveImageGenerationResult(imageResult);
+            return resultID;
+        } catch (error) {
+            console.error('Error getting files:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get all image generation results from the database
+     */
+    public async getImageGenerationResults(): Promise<ImageGenerationResult[]> {
+        try {
+            return await this.dbService.getImageGenerationResults();
+        } catch (error) {
+            console.error('Error getting image generation results:', error);
+            return [];
+        }
     }
 
     public async saveFile(fileData: FileJsonData, arrayBuffer: ArrayBuffer): Promise<string> {

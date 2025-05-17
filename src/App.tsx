@@ -3,6 +3,7 @@ import { ChatPage } from './components/pages/ChatPage';
 import { ImageGenerationPage } from './components/pages/ImageGenerationPage';
 import { TranslationPage } from './components/pages/TranslationPage';
 import { FileManagementPage } from './components/pages/FileManagementPage';
+import { MCPServerPage } from './components/pages/MCPServerPage';
 import MainLayout from './components/layout/MainLayout';
 import DatabaseInitializer from './components/core/DatabaseInitializer';
 
@@ -38,6 +39,7 @@ function App() {
         {activePage === 'image' && <ImageGenerationPage />}
         {activePage === 'translation' && <TranslationPage />}
         {activePage === 'files' && <FileManagementPage />}
+        {activePage === 'mcpserver' && <MCPServerPage />}
       </MainLayout>
     </DatabaseInitializer>
   );

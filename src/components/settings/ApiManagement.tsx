@@ -166,24 +166,24 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
   };
 
   // Handle capability change
-  // const handleCapabilityChange = (capability: AIServiceCapability, isChecked: boolean) => {
-  //   if (!currentEditModel) return;
+  const handleCapabilityChange = (capability: AIServiceCapability, isChecked: boolean) => {
+    if (!currentEditModel) return;
     
-  //   let updatedCapabilities = [...currentEditModel.modelCapabilities];
+    let updatedCapabilities = [...currentEditModel.modelCapabilities];
     
-  //   if (isChecked) {
-  //     if (!updatedCapabilities.includes(capability)) {
-  //       updatedCapabilities.push(capability);
-  //     }
-  //   } else {
-  //     updatedCapabilities = updatedCapabilities.filter(cap => cap !== capability);
-  //   }
+    if (isChecked) {
+      if (!updatedCapabilities.includes(capability)) {
+        updatedCapabilities.push(capability);
+      }
+    } else {
+      updatedCapabilities = updatedCapabilities.filter(cap => cap !== capability);
+    }
     
-  //   setCurrentEditModel({
-  //     ...currentEditModel,
-  //     modelCapabilities: updatedCapabilities
-  //   });
-  // };
+    setCurrentEditModel({
+      ...currentEditModel,
+      modelCapabilities: updatedCapabilities
+    });
+  };
 
   // Get capability icon
   const getCapabilityIcon = (capability: AIServiceCapability) => {
@@ -288,17 +288,14 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
               ></textarea>
             </div> */}
             
-            {/* <div>
+            <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Capabilities
               </label>
               <div className="space-y-2">
                 {[
                   {capability: AIServiceCapability.TextCompletion, label: 'Text Completion'},
-                  {capability: AIServiceCapability.Reasoning, label: 'Reasoning'},
-                  {capability: AIServiceCapability.VisionAnalysis, label: 'Vision'},
-                  {capability: AIServiceCapability.ToolUsage, label: 'Tool Usage'},
-                  {capability: AIServiceCapability.Embedding, label: 'Embedding'}
+                  {capability: AIServiceCapability.ImageGeneration, label: 'Image Generation'},
                 ].map(({capability, label}) => (
                   <div key={capability} className="flex items-center">
                     <input
@@ -317,7 +314,7 @@ export const ApiManagement: React.FC<ApiManagementProps> = ({
                   </div>
                 ))}
               </div>
-            </div> */}
+            </div>
           </div>
           
           <div className="flex justify-end mt-6 space-x-2">

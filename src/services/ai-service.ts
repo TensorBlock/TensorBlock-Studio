@@ -3,6 +3,8 @@ import { ProviderFactory } from './providers/provider-factory';
 import { Message } from '../types/chat';
 import { StreamControlHandler } from './streaming-control';
 import { SETTINGS_CHANGE_EVENT, SettingsService } from './settings-service';
+import { MCPService } from './mcp-service';
+import { AIServiceCapability } from '../types/capabilities';
 
 export interface ModelOption {
   id: string;
@@ -34,7 +36,7 @@ export class AIService {
   private state: AIState = {
     status: 'idle',
     error: null,
-    isCachingModels: false
+    isCachingModels: false,
   };
   private listeners: Set<() => void> = new Set();
   private modelCache: Map<string, ModelOption[]> = new Map();
@@ -67,11 +69,17 @@ export class AIService {
     for (const providerID of Object.keys(settings.providers)) {
       const providerSettings = settings.providers[providerID];
 
-      if(this.providers.has(providerID)) {
+      if (this.providers.has(providerID)) {
         this.providers.delete(providerID);
-        this.providers.set(providerID, ProviderFactory.getNewProvider(providerID));
-      }
-      else if (providerSettings && providerSettings.apiKey && providerSettings.apiKey.length > 0) {
+        this.providers.set(
+          providerID,
+          ProviderFactory.getNewProvider(providerID)
+        );
+      } else if (
+        providerSettings &&
+        providerSettings.apiKey &&
+        providerSettings.apiKey.length > 0
+      ) {
         const providerInstance = ProviderFactory.getNewProvider(providerID);
         if (providerInstance) {
           this.providers.set(providerID, providerInstance);
@@ -89,7 +97,7 @@ export class AIService {
       // Refresh models when settings change
       this.refreshModels();
     };
-    
+
     window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
   }
 
@@ -107,7 +115,7 @@ export class AIService {
    * Notify all listeners of state changes
    */
   private notifyListeners(): void {
-    this.listeners.forEach(listener => listener());
+    this.listeners.forEach((listener) => listener());
   }
 
   /**
@@ -124,7 +132,7 @@ export class AIService {
   private handleSuccess(): void {
     this.setState({
       status: 'success',
-      error: null
+      error: null,
     });
   }
 
@@ -135,7 +143,7 @@ export class AIService {
     console.error('AI request error:', error);
     this.setState({
       status: 'error',
-      error
+      error,
     });
   }
 
@@ -153,14 +161,14 @@ export class AIService {
     if (this.providers.has(name)) {
       return this.providers.get(name);
     }
-    
+
     // If provider not in cache, try to create it
     const provider = ProviderFactory.getNewProvider(name);
     if (provider) {
       this.providers.set(name, provider);
       return provider;
     }
-    
+
     return undefined;
   }
 
@@ -172,10 +180,25 @@ export class AIService {
   }
 
   /**
+   * Get all providers that support image generation
+   */
+  public getImageGenerationProviders(): AiServiceProvider[] {
+    const providers = this.getAllProviders();
+    return providers.filter((provider) => {
+      // Check if the provider has any models with image generation capability
+      const models = provider.availableModels || [];
+      return models.some((model) => {
+        const capabilities = provider.getModelCapabilities(model.modelId);
+        return capabilities.includes(AIServiceCapability.ImageGeneration);
+      });
+    });
+  }
+
+  /**
    * Get a streaming chat completion from the AI
    */
   public async getChatCompletion(
-    messages: Message[], 
+    messages: Message[],
     options: CompletionOptions,
     streamController: StreamControlHandler
   ): Promise<Message | null> {
@@ -184,18 +207,25 @@ export class AIService {
       const providerName = options.provider;
       const modelName = options.model;
       const useStreaming = options.stream;
-      
+
       // Get provider instance
       const provider = this.getProvider(providerName);
 
-      console.log('Provider: ', providerName, ' Model: ', modelName, ' Use streaming: ', useStreaming);
-      
+      console.log(
+        'Provider: ',
+        providerName,
+        ' Model: ',
+        modelName,
+        ' Use streaming: ',
+        useStreaming
+      );
+
       if (!provider) {
         throw new Error(`Provider ${providerName} not available`);
       }
-      
+
       const result = await provider.getChatCompletion(
-        messages, 
+        messages,
         {
           model: modelName,
           provider: providerName,
@@ -207,10 +237,10 @@ export class AIService {
           user: options?.user,
           stream: useStreaming,
           signal: streamController.getAbortSignal(),
+          tools: options?.tools,
         },
         streamController
       );
-      
 
       return result;
     } catch (e) {
@@ -219,8 +249,11 @@ export class AIService {
         this.handleSuccess();
         return null;
       }
-      
-      const error = e instanceof Error ? e : new Error('Unknown error during streaming chat completion');
+
+      const error =
+        e instanceof Error
+          ? e
+          : new Error('Unknown error during streaming chat completion');
       this.handleError(error);
       return null;
     }
@@ -242,20 +275,20 @@ export class AIService {
     throw new Error('Not implemented');
 
     // this.startRequest();
-    
+
     // try {
     //   const provider = this.getImageGenerationProvider();
-      
+
     //   if (!provider) {
     //     throw new Error('No image generation provider available');
     //   }
-      
+
     //   if (!provider.generateImage) {
     //     throw new Error(`Provider ${provider.name} does not support image generation`);
     //   }
-      
+
     //   const result = await provider.generateImage(prompt, options);
-      
+
     //   this.handleSuccess();
     //   return result;
     // } catch (e) {
@@ -315,62 +348,67 @@ export class AIService {
     const cacheKey = 'all_providers';
     const cachedTime = this.lastFetchTime.get(cacheKey) || 0;
     const now = Date.now();
-    
+
     // Return cached models if they're still valid
     if (this.modelCache.has(cacheKey) && now - cachedTime < this.CACHE_TTL) {
       return this.modelCache.get(cacheKey) || [];
     }
-    
+
     // Otherwise, collect models from all providers
     const allModels: ModelOption[] = [];
     const providerPromises = [];
-    
+
     for (const provider of this.getAllProviders()) {
       providerPromises.push(this.getModelsForProvider(provider.id));
     }
-    
+
     const results = await Promise.all(providerPromises);
-    
+
     // Flatten results and filter out duplicates
-    results.forEach(models => {
+    results.forEach((models) => {
       allModels.push(...models);
     });
-    
+
     // Cache and return results
     this.modelCache.set(cacheKey, allModels);
     this.lastFetchTime.set(cacheKey, now);
-    
+
     return allModels;
   }
 
   /**
    * Get models for a specific provider
    */
-  public async getModelsForProvider(providerName: string): Promise<ModelOption[]> {
+  public async getModelsForProvider(
+    providerName: string
+  ): Promise<ModelOption[]> {
     // Check if we already have a cached result
     const cachedTime = this.lastFetchTime.get(providerName) || 0;
     const now = Date.now();
-    
+
     // Return cached models if they're still valid
-    if (this.modelCache.has(providerName) && now - cachedTime < this.CACHE_TTL) {
+    if (
+      this.modelCache.has(providerName) &&
+      now - cachedTime < this.CACHE_TTL
+    ) {
       return this.modelCache.get(providerName) || [];
     }
-    
+
     // Get provider instance
     const provider = this.getProvider(providerName);
     if (!provider) {
       console.warn(`Provider ${providerName} not available`);
       return [];
     }
-    
+
     this.setState({ isCachingModels: true });
-    
+
     try {
       // Fetch models from provider
       const models = await provider.fetchAvailableModels();
-      
+
       // Convert to ModelOption format
-      const modelOptions: ModelOption[] = models.map(model => ({
+      const modelOptions: ModelOption[] = models.map((model) => ({
         id: model.modelId,
         name: model.modelName,
         provider: providerName,
@@ -379,7 +417,7 @@ export class AIService {
       // Cache results
       this.modelCache.set(providerName, modelOptions);
       this.lastFetchTime.set(providerName, now);
-      
+
       this.setState({ isCachingModels: false });
       return modelOptions;
     } catch (error) {
@@ -396,10 +434,17 @@ export class AIService {
     // Clear cache
     this.modelCache.clear();
     this.lastFetchTime.clear();
-    
+
     this.refreshProviders();
 
     // Re-fetch all models
     await this.getCachedAllModels();
+  }
+
+  /**
+   * Get all available MCP servers
+   */
+  public getMCPServers(): Record<string, unknown> {
+    return MCPService.getInstance().getMCPServers();
   }
 } 

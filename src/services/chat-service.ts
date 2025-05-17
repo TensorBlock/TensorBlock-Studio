@@ -6,6 +6,8 @@ import { StreamControlHandler } from './streaming-control';
 import { MessageHelper } from './message-helper';
 import { AIServiceCapability } from '../types/capabilities';
 import { FileUploadService } from './file-upload-service';
+import { MCPService } from './mcp-service';
+import { MCPServerSettings } from '../types/settings';
 
 /**
  * Service for managing chat conversations
@@ -131,12 +133,14 @@ export class ChatService {
 
   /**
    * Send a message in the active conversation with streaming support
+   * Optional files parameter allows sending messages with file attachments
    */
   public async sendMessage(
     content: string,
     conversationId: string,
     isStreaming: boolean,
-    conversationUpdate: (conversations: Conversation[]) => void
+    conversationUpdate: (conversations: Conversation[]) => void,
+    files?: File[]
   ): Promise<void> {
     if (!this.dbService) {
       throw new Error('Database service not initialized');
@@ -159,7 +163,9 @@ export class ChatService {
 
       //#region Save user message to database and update title
       // eslint-disable-next-line prefer-const
-      let {conversation: updatedConversation, message: userMessage} = await MessageHelper.addUserMessageToConversation(content, currentConversation);
+      let {conversation: updatedConversation, message: userMessage} = files && files.length > 0 
+        ? await MessageHelper.addUserMessageWithFilesToConversation(content, await FileUploadService.getInstance().processUploadedFiles(files), currentConversation)
+        : await MessageHelper.addUserMessageToConversation(content, currentConversation);
       
       // Update in memory
       this.conversations = this.conversations.map(c => 
@@ -257,134 +263,6 @@ export class ChatService {
       if (error.name === 'AbortError') {
         return;
       }
-      throw error;
-    }
-  }
-
-  /**
-   * Send a message with files in the active conversation
-   */
-  public async sendMessageWithFiles(
-    content: string,
-    files: File[],
-    conversationId: string,
-    isStreaming: boolean,
-    conversationUpdate: (conversations: Conversation[]) => void
-  ): Promise<void> {
-    if (!this.dbService) {
-      throw new Error('Database service not initialized');
-    }
-
-    const currentConversation = this.conversations.find(c => c.conversationId === conversationId);
-    if (currentConversation === undefined) {
-      throw new Error('Active conversation not found');
-    }
-    
-    try {
-      const settingsService = SettingsService.getInstance();
-      const provider = settingsService.getSelectedProvider();
-      const model = settingsService.getSelectedModel();
-
-      // Process uploaded files
-      const fileUploadService = FileUploadService.getInstance();
-      const fileContents = await fileUploadService.processUploadedFiles(files);
-
-      //#region Save user message with files to database and update title
-      // eslint-disable-next-line prefer-const
-      let {conversation: updatedConversation, message: userMessage} = await MessageHelper.addUserMessageWithFilesToConversation(
-        content,
-        fileContents,
-        currentConversation
-      );
-      
-      // Update in memory
-      this.conversations = this.conversations.map(c => 
-        c.conversationId === conversationId ? updatedConversation : c
-      );
-
-      conversationUpdate(this.conversations);
-      //#endregion
-
-      // Map messages to messages array
-      const messages = MessageHelper.mapMessagesTreeToList(updatedConversation, false);
-
-      //#region Streaming Special Message Handling
-      // Create a placeholder for the streaming message
-      const placeholderMessage: Message = MessageHelper.getPlaceholderMessage(model, provider, conversationId);
-
-      userMessage.childrenMessageIds.push(placeholderMessage.messageId);
-      userMessage.preferIndex = userMessage.childrenMessageIds.length - 1;
-
-      // Add placeholder to conversation and update UI
-      const messagesWithPlaceholder = new Map(updatedConversation.messages);
-      messagesWithPlaceholder.set(placeholderMessage.messageId, placeholderMessage);
-
-      updatedConversation = {
-        ...updatedConversation,
-        messages: messagesWithPlaceholder,
-        updatedAt: new Date()
-      };
-
-      this.conversations = this.conversations.map(c => 
-        c.conversationId === conversationId ? updatedConversation : c
-      );
-
-      conversationUpdate(this.conversations);
-      //#endregion
-
-      //#region Send Chat Message to AI with streaming
-
-      // Create a new abort controller for this request
-      const streamController = new StreamControlHandler(
-        updatedConversation, 
-        placeholderMessage,
-        // ---- On chunk callback ----
-        (updated: Conversation) => {  
-          this.conversations = this.conversations.map(c => 
-            c.conversationId === conversationId ? updated : c
-          );
-          conversationUpdate(this.conversations);
-        }, 
-        // ---- On finish callback ----
-        async (aiResponse: Message | null) => { 
-
-          console.log(aiResponse);
-
-          if (aiResponse === null) return;
-
-          const finalConversation = await MessageHelper.insertAssistantMessageToConversation(userMessage, aiResponse, updatedConversation);
-
-          // Update in memory
-          this.conversations = this.conversations.map(c => 
-            c.conversationId === conversationId ? finalConversation : c
-          );
-
-          conversationUpdate(this.conversations);
-
-          this.streamControllerMap.delete(conversationId);
-        }
-      );
-
-      this.streamControllerMap.set(conversationId, streamController);
-
-      console.log('Messages:', messages);
-
-      // Send Chat Message to AI with streaming
-      await this.aiService.getChatCompletion(
-        messages, 
-        {
-          model: model,
-          provider: provider,
-          stream: isStreaming
-        },
-        streamController
-      );
-
-      conversationUpdate(this.conversations);
-      
-      //#endregion
-    } catch (error) {
-      console.error('Failed to send message with files:', error);
       throw error;
     }
   }
@@ -894,5 +772,28 @@ export class ChatService {
    */
   public getFolders(): ConversationFolder[] {
     return [...this.folders];
+  }
+
+  /**
+   * Get available MCP servers
+   */
+  public getAvailableMCPServers(): Record<string, MCPServerSettings> {
+    return MCPService.getInstance().getMCPServers();
+  }
+
+  /**
+   * Check if a specific model supports MCP tools
+   */
+  public doesModelSupportMCPTools(provider: string, model: string): boolean {
+    const providerService = this.aiService.getProvider(provider);
+    
+    if (!providerService) {
+      return false;
+    }
+    
+    const capabilities = providerService.getModelCapabilities(model);
+    return capabilities.includes(AIServiceCapability.ToolUsage) || 
+           capabilities.includes(AIServiceCapability.FunctionCalling) ||
+           capabilities.includes(AIServiceCapability.MCPServer);
   }
 }

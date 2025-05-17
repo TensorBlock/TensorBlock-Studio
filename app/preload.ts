@@ -29,4 +29,11 @@ contextBridge.exposeInMainWorld('electron', {
   saveFile: (fileBuffer: ArrayBuffer | string, fileName: string, fileType: string) => 
     ipcRenderer.invoke('save-file', { fileBuffer, fileName, fileType }),
   openFile: (filePath: string) => ipcRenderer.invoke('open-file', filePath),
+  
+  // Auto-startup and tray functions
+  getAutoLaunch: () => ipcRenderer.invoke('get-auto-launch'),
+  setAutoLaunch: (enable: boolean) => ipcRenderer.invoke('set-auto-launch', enable),
+  setCloseToTray: (enable: boolean) => ipcRenderer.invoke('set-close-to-tray', enable),
+  getCloseToTray: () => ipcRenderer.invoke('get-close-to-tray'),
+  setStartupToTray: (enable: boolean) => ipcRenderer.invoke('set-startup-to-tray', enable),
 }); 

@@ -25,6 +25,8 @@ export interface CompletionOptions {
   user?: string;
   stream?: boolean; // Whether to stream the response
   signal?: AbortSignal; // AbortSignal for cancellation
+  tools?: Record<string, unknown>; // Pre-configured tools for the AI
+  toolChoice?: Record<string, unknown>; // Pre-configured tool Choice for the AI
 }
 
 /**
@@ -49,7 +51,7 @@ export interface AiServiceProvider {
   /**
    * Get the capabilities of a model with this provider
    */
-  getModelCapabilities(model: string): AIServiceCapability[];
+  getModelCapabilities(modelId: string): AIServiceCapability[];
 
   /**
    * Fetch available models from the provider API
@@ -77,7 +79,7 @@ export interface AiServiceProvider {
   getChatCompletion(
     messages: Message[], 
     options: CompletionOptions,
-    streamController: StreamControlHandler
+    streamController: StreamControlHandler,
   ): Promise<Message>;
   
   /**

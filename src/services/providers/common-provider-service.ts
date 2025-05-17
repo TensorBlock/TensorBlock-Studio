@@ -1,13 +1,32 @@
-import { generateText, LanguageModelV1, LanguageModelUsage, Provider, streamText, ToolSet, ToolChoice } from 'ai';
-import { v4 as uuidv4 } from 'uuid';
+import { generateText, streamText, Provider, type LanguageModelUsage, type ToolSet, tool } from 'ai';
 import { Message, MessageRole } from '../../types/chat';
 import { AiServiceProvider, CompletionOptions } from '../core/ai-service-provider';
 import { SettingsService } from '../settings-service';
 import { StreamControlHandler } from '../streaming-control';
-import { AIServiceCapability } from '../../types/capabilities';
-import { mapModelCapabilities } from '../../types/capabilities';
-import { ModelSettings } from '../../types/settings';
+import { v4 as uuidv4 } from 'uuid';
 import { MessageHelper } from '../message-helper';
+import { AIServiceCapability, mapModelCapabilities } from '../../types/capabilities';
+import { ModelSettings } from '../../types/settings';
+import { LanguageModelV1 } from 'ai';
+import { z } from 'zod';
+
+// Define an interface for tool results to fix the 'never' type errors
+interface ToolResult {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+  result?: unknown;
+}
+
+// Define type for the execute function for tools
+type ToolExecuteFunction = (args: Record<string, unknown>) => Promise<unknown>;
+
+// Define interface for tools with execute function
+interface ToolWithExecute {
+  execute: ToolExecuteFunction;
+  [key: string]: unknown;
+}
+
 /**
  * Implementation of OpenAI service provider using the AI SDK
  */
@@ -36,6 +55,8 @@ export class CommonProviderHelper implements AiServiceProvider {
     
     this._apiKey = providerSettings.apiKey || '';
     
+    this.apiModels = this.settingsService.getModels(providerName);
+
     this.ProviderInstance = this.createClient();
   }
 
@@ -85,10 +106,18 @@ export class CommonProviderHelper implements AiServiceProvider {
   /**
    * Get the capabilities of a model with this provider
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getModelCapabilities(model: string): AIServiceCapability[] {
+  getModelCapabilities(modelId: string): AIServiceCapability[] {
+    // Get model data by modelId
+    const models = this.settingsService.getModels(this.providerName);
+    const modelData = models.find(x => x.modelId === modelId);
+    let hasImageGeneration = false;
+
+    if(modelData?.modelCapabilities.findIndex(x => x === AIServiceCapability.ImageGeneration) !== -1){
+      hasImageGeneration = true;
+    }
+
     return mapModelCapabilities(
-      false,
+      hasImageGeneration,
       false,
       false,
       false,
@@ -141,19 +170,70 @@ export class CommonProviderHelper implements AiServiceProvider {
     modelInstance: LanguageModelV1,
     messages: Message[],
     options: CompletionOptions,
-    streamController: StreamControlHandler,
-    tools: ToolSet | undefined = undefined,
-    toolChoice: ToolChoice<ToolSet> | undefined = undefined
+    streamController: StreamControlHandler
   ): Promise<Message> {
     try {
       const formattedMessages = await MessageHelper.MessagesContentToOpenAIFormat(messages);
 
       console.log('formattedMessages: ', formattedMessages);
 
+      // Build ToolSet & ToolChoice for getChatCompletionByModel API
+      const rawTools = options.tools;
+      
+      const err = new Error('test');
+      console.log('rawTools: ', rawTools);
+      console.log('err track trace: ', err);
+
+      // Convert raw tools to AI SDK format
+      const formattedTools: ToolSet = {};
+      
+      if (rawTools && typeof rawTools === 'object') {
+        for (const [toolName, toolConfig] of Object.entries(rawTools)) {
+          if (toolConfig && typeof toolConfig === 'object') {
+            // Special case for image generation
+            if (toolName === 'generate_image') {
+              console.log('toolName: ', toolName);
+              console.log('toolConfig: ', toolConfig);
+              formattedTools[toolName] = tool({
+                description: 'Generate an image from a text prompt',
+                parameters: z.object({
+                  prompt: z.string().describe('The text prompt to generate an image from'),
+                  size: z.string().optional().describe('The size of the image to generate'),
+                  style: z.enum(['vivid', 'natural']).optional().describe('The style of the image to generate')
+                }),
+                execute: async (args) => {
+                  // Execute is handled later in the tool call handler
+                  return (toolConfig as ToolWithExecute).execute(args);
+                }
+              });
+            } else {
+              // For other tools, try to extract description and parameters
+              const toolWithExecute = toolConfig as ToolWithExecute;
+              const description = (toolConfig as {description?: string}).description || `Execute ${toolName} tool`;
+              
+              // Create a fallback schema if not provided
+              const parameters = z.object({}).catchall(z.unknown());
+              
+              formattedTools[toolName] = tool({
+                description,
+                parameters,
+                execute: async (args) => {
+                  if (typeof toolWithExecute.execute === 'function') {
+                    return toolWithExecute.execute(args);
+                  }
+                  throw new Error(`Tool ${toolName} does not have an execute function`);
+                }
+              });
+            }
+          }
+        }
+      }
+
       let fullText = '';
 
       if (options.stream) {
         console.log(`Streaming ${options.provider}/${options.model} response`);
+        
         const result = streamText({
           model: modelInstance,
           abortSignal: streamController.getAbortSignal(),
@@ -163,8 +243,8 @@ export class CommonProviderHelper implements AiServiceProvider {
           topP: options.top_p,
           frequencyPenalty: options.frequency_penalty,
           presencePenalty: options.presence_penalty,
-          tools: tools,
-          toolChoice: toolChoice,
+          tools: Object.keys(formattedTools).length > 0 ? formattedTools : undefined,
+          toolCallStreaming: true,
           onFinish: (result: { usage: LanguageModelUsage }) => {
             console.log('OpenAI streaming chat completion finished');
             streamController.onFinish(result.usage);
@@ -175,13 +255,108 @@ export class CommonProviderHelper implements AiServiceProvider {
           }
         });
 
-        for await (const textPart of result.textStream) {
-          fullText += textPart;
-          streamController.onChunk(fullText);
+        // Track tool calls that are in progress for building arguments
+        const toolCallsInProgress = new Map<string, { name: string, argsText: string }>();
+        
+        for await (const streamPart of result.fullStream) {
+          const type = streamPart.type;
+          switch(type) {
+            case 'tool-call-streaming-start': {
+              // Initialize a new tool call
+              const toolCallId = streamPart.toolCallId;
+              const toolName = streamPart.toolName;
+              
+              toolCallsInProgress.set(toolCallId, {
+                name: toolName,
+                argsText: ''
+              });
+              
+              // Notify about tool call start with empty args for now
+              streamController.onToolCall(toolName, toolCallId, {});
+              break;
+            }
+            
+            case 'tool-call-delta': {
+              // Add to the arguments being built
+              const toolCallId = streamPart.toolCallId;
+              const argsTextDelta = streamPart.argsTextDelta;
+              
+              const toolCall = toolCallsInProgress.get(toolCallId);
+              if (toolCall) {
+                toolCall.argsText += argsTextDelta;
+                toolCallsInProgress.set(toolCallId, toolCall);
+              }
+              break;
+            }
+            
+            case 'tool-call': {
+              // Complete tool call with full arguments
+              const toolCallId = streamPart.toolCallId;
+              const toolName = streamPart.toolName;
+              const args = streamPart.args;
+              
+              // Mark as in progress
+              streamController.onToolCallInProgress(toolCallId);
+              
+              // Check if this is an image generation tool
+              if (toolName === 'generate_image' && args.prompt) {
+                try {
+                  // Handle image generation
+                  const imageGenService = options.provider === 'openai' 
+                    ? modelInstance 
+                    : null;
+                  
+                  if (imageGenService) {
+                    // Execute the tool call - this would typically happen through the tools execute function
+                    // but for demonstration we're handling it here
+                    const result = { images: ['generated_image_placeholder'] };
+                    streamController.onToolCallResult(toolCallId, result);
+                  } else {
+                    streamController.onToolCallError(
+                      toolCallId, 
+                      new Error(`Image generation not supported for provider ${options.provider}`)
+                    );
+                  }
+                } catch (error) {
+                  streamController.onToolCallError(
+                    toolCallId, 
+                    error instanceof Error ? error : new Error('Unknown error in image generation')
+                  );
+                }
+              } else if (rawTools) {
+                // Use a safer way to check for and execute tools
+                const toolsMap = rawTools as Record<string, unknown>;
+                const tool = toolsMap[toolName] as ToolWithExecute | undefined;
+                
+                if (tool && typeof tool.execute === 'function') {
+                  // Execute other tool calls if they have an execute function
+                  try {
+                    const result = await tool.execute(args);
+                    streamController.onToolCallResult(toolCallId, result);
+                  } catch (error) {
+                    streamController.onToolCallError(
+                      toolCallId, 
+                      error instanceof Error ? error : new Error(`Error executing tool ${toolName}`)
+                    );
+                  }
+                }
+              }
+              
+              break;
+            }
+            
+            case 'text-delta': {
+              const textDelta = streamPart.textDelta;
+              fullText += textDelta;
+              streamController.onChunk(fullText);
+              break;
+            }
+          }
         }
       }
-      else{
+      else {
         console.log(`Generating ${options.provider}/${options.model} response`);
+        
         const { text, usage, toolResults } = await generateText({
           model: modelInstance,
           messages: formattedMessages,
@@ -190,11 +365,38 @@ export class CommonProviderHelper implements AiServiceProvider {
           topP: options.top_p,
           frequencyPenalty: options.frequency_penalty,
           presencePenalty: options.presence_penalty,
-          tools: tools,
-          toolChoice: toolChoice,
+          tools: Object.keys(formattedTools).length > 0 ? formattedTools : undefined,
+          maxSteps: 3, // Allow multiple steps for tool calls
         });
 
         console.log('toolResults: ', toolResults);
+        
+        // Process tool results
+        if (toolResults && toolResults.length > 0) {
+          const typedToolResults = toolResults as unknown as ToolResult[];
+          
+          for (const toolResult of typedToolResults) {
+            // First notify about the tool call
+            streamController.onToolCall(toolResult.name, toolResult.id, toolResult.args);
+            
+            // Then mark as in progress
+            streamController.onToolCallInProgress(toolResult.id);
+            
+            // Then provide the result
+            if (toolResult.name === 'generate_image' && 
+                typeof toolResult.result === 'object' && 
+                toolResult.result !== null &&
+                'images' in toolResult.result) {
+              const resultWithImages = toolResult.result as {images: string[]};
+              const images = resultWithImages.images;
+              if (Array.isArray(images)) {
+                streamController.onToolCallResult(toolResult.id, { images });
+              }
+            } else {
+              streamController.onToolCallResult(toolResult.id, toolResult.result);
+            }
+          }
+        }
 
         fullText = text;
         streamController.onChunk(fullText);
@@ -240,29 +442,6 @@ export class CommonProviderHelper implements AiServiceProvider {
   ): Promise<string[]> {
     throw new Error('Not implemented');
 
-    // if (!this.hasValidApiKey()) {
-    //   throw new Error('No API key provided for OpenAI');
-    // }
-
-    // try {
-    //   const response = await generateImage({
-    //     model: 'dall-e-3',
-    //     prompt,
-    //     n: 1,
-    //     size: options.size || '1024x1024',
-    //     style: options.style || 'vivid',
-    //   });
-
-    //   if (!response.ok) {
-    //     const errorData = await response.json();
-    //     throw new Error(`Image generation failed: ${errorData.error?.message || response.statusText}`);
-    //   }
-
-    //   const data = await response.json();
-    //   return data.data.map((item: any) => item.url);
-    // } catch (error) {
-    //   console.error('OpenAI image generation error:', error);
-    //   throw new Error(`OpenAI image generation failed: ${error instanceof Error ? error.message : String(error)}`);
-    // }
+    // If you want to implement this later, the code would go here
   }
 } 

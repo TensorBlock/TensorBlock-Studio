@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import {app, BrowserWindow, ipcMain, shell, dialog} from 'electron';
+import {app, BrowserWindow, ipcMain, shell, dialog, Tray, Menu, nativeImage} from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -8,10 +8,150 @@ import { execSync } from 'child_process';
 
 // Main window reference
 let win: BrowserWindow | null = null;
+// Tray reference
+let tray: Tray | null = null;
+
+// Settings
+let closeToTray = true;
+let forceQuit = false; // Flag to indicate we're trying to actually quit
 
 // Check if app is running in development mode
 const args = process.argv.slice(1);
 const serve = args.some(val => val === '--serve');
+
+/**
+ * Create the system tray
+ */
+function createTray() {
+  if (tray) {
+    return;
+  }
+
+  // Get appropriate icon based on platform
+  const iconPath = path.join(__dirname, '..', 'dist', 'logos', 'favicon.256x256.png');
+  const icon = nativeImage.createFromPath(iconPath);
+  
+  tray = new Tray(icon);
+  tray.setToolTip('TensorBlock Desktop');
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Open TensorBlock', click: () => { 
+      win?.show(); 
+      win?.setSkipTaskbar(false); // Show in taskbar
+    }},
+    { type: 'separator' },
+    { label: 'Quit', click: () => { 
+      forceQuit = true; // Set flag to bypass close-to-tray
+      app.quit(); 
+    }}
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+  
+  tray.on('click', () => {
+    if (win) {
+      if (win.isVisible()) {
+        win.hide();
+        win.setSkipTaskbar(true); // Hide from taskbar
+      } else {
+        win.show();
+        win.setSkipTaskbar(false); // Show in taskbar
+      }
+    }
+  });
+}
+
+/**
+ * Set or remove auto launch on system startup
+ */
+function setAutoLaunch(enable: boolean): boolean {
+  try {
+    if (process.platform === 'win32') {
+      const appPath = app.getPath('exe');
+      const regKey = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
+      const appName = app.getName();
+      
+      if (enable) {
+        // Add to registry to enable auto launch
+        execSync(`reg add ${regKey} /v ${appName} /t REG_SZ /d "${appPath}" /f`);
+      } else {
+        // Remove from registry to disable auto launch
+        execSync(`reg delete ${regKey} /v ${appName} /f`);
+      }
+      return true;
+    } else if (process.platform === 'darwin') {
+      const appPath = app.getPath('exe');
+      const loginItemSettings = app.getLoginItemSettings();
+      
+      // Set login item settings for macOS
+      app.setLoginItemSettings({
+        openAtLogin: enable,
+        path: appPath
+      });
+      
+      return app.getLoginItemSettings().openAtLogin === enable;
+    } else if (process.platform === 'linux') {
+      // For Linux, create or remove a .desktop file in autostart directory
+      const desktopFilePath = path.join(os.homedir(), '.config', 'autostart', `${app.getName()}.desktop`);
+      
+      if (enable) {
+        // Create directory if it doesn't exist
+        const autoStartDir = path.dirname(desktopFilePath);
+        if (!fs.existsSync(autoStartDir)) {
+          fs.mkdirSync(autoStartDir, { recursive: true });
+        }
+        
+        // Create .desktop file
+        const desktopFileContent = `
+          [Desktop Entry]
+          Type=Application
+          Exec=${app.getPath('exe')}
+          Hidden=false
+          NoDisplay=false
+          X-GNOME-Autostart-enabled=true
+          Name=${app.getName()}
+          Comment=${app.getName()} startup script
+          `;
+        fs.writeFileSync(desktopFilePath, desktopFileContent);
+      } else if (fs.existsSync(desktopFilePath)) {
+        // Remove .desktop file
+        fs.unlinkSync(desktopFilePath);
+      }
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error setting auto launch:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if app is set to auto launch on system startup
+ */
+function getAutoLaunchEnabled(): boolean {
+  try {
+    if (process.platform === 'win32') {
+      const regKey = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
+      const appName = app.getName();
+      
+      const output = execSync(`reg query ${regKey} /v ${appName} 2>nul`).toString();
+      return output.includes(appName);
+    } else if (process.platform === 'darwin') {
+      return app.getLoginItemSettings().openAtLogin;
+    } else if (process.platform === 'linux') {
+      const desktopFilePath = path.join(os.homedir(), '.config', 'autostart', `${app.getName()}.desktop`);
+      return fs.existsSync(desktopFilePath);
+    }
+    
+    return false;
+  } catch (error) {
+    // If command fails (e.g., key doesn't exist), auto launch is not enabled
+    return false;
+  }
+}
 
 /**
  * Creates the main application window
@@ -29,8 +169,8 @@ function createWindow(): BrowserWindow {
     frame: false,
     fullscreenable: false,
     autoHideMenuBar: true,
-    minWidth: 600,
-    minHeight: 600,
+    minWidth: 800,
+    minHeight: 700,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -180,12 +320,65 @@ function createWindow(): BrowserWindow {
 
   // Close application
   ipcMain.on('close-app', () => {
-    app.quit();
+    if (closeToTray && !forceQuit) {
+      win?.hide();
+      win?.setSkipTaskbar(true); // Hide from taskbar
+    } else {
+      forceQuit = true; // Ensure we're really quitting
+      app.quit();
+    }
   });
 
   // Open URL in default browser
   ipcMain.on('open-url', (event, url) => {
     shell.openExternal(url);
+  });
+
+  // Auto-startup handlers
+  ipcMain.handle('get-auto-launch', () => {
+    return getAutoLaunchEnabled();
+  });
+
+  ipcMain.handle('set-auto-launch', (event, enable) => {
+    return setAutoLaunch(enable);
+  });
+
+  // Tray handlers
+  ipcMain.handle('set-close-to-tray', (event, enable) => {
+    closeToTray = enable;
+    return true;
+  });
+
+  ipcMain.handle('get-close-to-tray', () => {
+    return closeToTray;
+  });
+
+  ipcMain.handle('set-startup-to-tray', (event, enable) => {
+    // Store this preference for the next app start
+    try {
+      const configPath = path.join(app.getPath('userData'), 'config.json');
+      let config = {};
+      
+      if (fs.existsSync(configPath)) {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      }
+      
+      config = { ...config, startupToTray: enable };
+      fs.writeFileSync(configPath, JSON.stringify(config));
+      return true;
+    } catch (error) {
+      console.error('Error saving startup to tray setting:', error);
+      return false;
+    }
+  });
+
+  // Listen for window close event
+  win.on('close', (e) => {
+    if (closeToTray && !forceQuit) {
+      e.preventDefault();
+      win?.hide();
+      win?.setSkipTaskbar(true); // Hide from taskbar
+    }
   });
 
   // Disable page refresh in production
@@ -290,10 +483,36 @@ function getCPUName() {
 try {
   app.commandLine.appendSwitch('class', 'tensorblock-desktop');
 
+  // Set force quit flag when app is about to quit
+  app.on('before-quit', () => {
+    forceQuit = true;
+  });
+
   // Initialize app when Electron is ready
   // Added delay to fix black background issue with transparent windows
   // See: https://github.com/electron/electron/issues/15947
-  app.on('ready', () => setTimeout(createWindow, 400));
+  app.on('ready', () => {
+    setTimeout(() => {
+      // Create window
+      win = createWindow();
+      
+      // Create tray
+      createTray();
+      
+      // Check if we should start minimized to tray
+      try {
+        const configPath = path.join(app.getPath('userData'), 'config.json');
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (config.startupToTray) {
+            win.hide();
+          }
+        }
+      } catch (error) {
+        console.error('Error reading config file:', error);
+      }
+    }, 400);
+  });
 
   // Quit when all windows are closed
   app.on('window-all-closed', () => {
@@ -303,7 +522,10 @@ try {
   // Re-create window if activated and no windows exist
   app.on('activate', () => {
     if (win === null) {
-      createWindow();
+      win = createWindow();
+    } else {
+      win.show();
+      win.setSkipTaskbar(false); // Show in taskbar
     }
   });
 } catch (_e) {

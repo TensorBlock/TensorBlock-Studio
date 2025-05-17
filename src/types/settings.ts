@@ -10,6 +10,18 @@ export interface UserSettings {
   useStreaming: boolean;
   webSearchEnabled: boolean;
   enableWebSearch_Preview: boolean;
+  // Image generation settings
+  imageGenerationEnabled?: boolean;
+  imageGenerationProvider?: string;
+  imageGenerationModel?: string;
+  // General settings
+  startWithSystem?: boolean;
+  startupToTray?: boolean;
+  closeToTray?: boolean;
+  proxyMode?: 'system' | 'custom' | 'none';
+  customProxyUrl?: string;
+  sendErrorReports?: boolean;
+  mcpServers?: Record<string, MCPServerSettings>;
 }
 
 /**
@@ -38,4 +50,28 @@ export interface ModelSettings {
   modelCategory: string;
   modelDescription: string;
   modelCapabilities: AIServiceCapability[];
+}
+
+/**
+ * Base MCP Server settings interface
+ */
+export interface MCPServerSettings {
+  id: string;
+  name: string;
+  type: 'sse' | 'stdio' | 'streamableHttp';
+  description?: string;
+  isDefault?: boolean;
+  isImageGeneration?: boolean;
+  
+  // Common fields
+  url?: string;   // Used by sse and streamableHttp
+  headers?: Record<string, string>;  // Used by sse and streamableHttp
+  
+  // Stdio specific fields
+  command?: string;  // Used by stdio
+  args?: string[];   // Used by stdio
+  env?: Record<string, string>;  // Used by stdio
+  
+  // Timeout (in seconds)
+  timeout?: number;  // Used by all types
 }

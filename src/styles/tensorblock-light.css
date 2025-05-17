@@ -418,6 +418,39 @@
         color: var(--primary-700);
     }
 
+    /* General Settings */
+    .settings-section {
+        background-color: var(--surface-0);
+        border: 1px solid var(--primary-100);
+        border-radius: 0.5rem;
+    }
+
+    .settings-section-title {
+        color: var(--surface-700);
+    }
+
+    .settings-toggle-label {
+        color: var(--primary-700);
+    }
+
+    .settings-toggle-description {
+        color: var(--surface-500);
+    }
+
+    .settings-radio-group {
+        border-radius: 0.5rem;
+        background-color: var(--primary-50);
+    }
+
+    .settings-radio-item {
+        color: var(--surface-500);
+    }
+
+    .settings-radio-item-active {
+        background-color: var(--primary-200);
+        color: var(--primary-700);
+    }
+
     /* Message */
     .message-model-tag {
         background-color: transparent;

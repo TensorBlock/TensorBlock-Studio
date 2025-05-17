@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Image } from 'lucide-react';
+import { Image, ToggleLeft, ToggleRight } from 'lucide-react';
 import { SettingsService, SETTINGS_CHANGE_EVENT } from '../../services/settings-service';
 import { AIServiceCapability } from '../../types/capabilities';
 import ProviderIcon from '../ui/ProviderIcon';
@@ -25,10 +25,11 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
   const [providers, setProviders] = useState<ProviderModel[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [isEnabled, setIsEnabled] = useState(true);
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Load available image generation providers and models
+  // Load available image generation providers and models and settings
   useEffect(() => {
     const loadProviders = () => {
       const settingsService = SettingsService.getInstance();
@@ -37,6 +38,13 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
       // Get all providers from settings
       const settings = settingsService.getSettings();
       const providerIds = Object.keys(settings.providers);
+      
+      // Load current image generation enabled status
+      setIsEnabled(settings.imageGenerationEnabled !== false);
+      
+      // Load saved selected provider and model
+      const savedProvider = settings.imageGenerationProvider;
+      const savedModel = settings.imageGenerationModel;
       
       for (const providerId of providerIds) {
         // Get the provider's settings
@@ -59,8 +67,11 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
 
       setProviders(availableProviders);
       
-      // Set default selected provider and model if available
-      if (availableProviders.length > 0) {
+      // Set saved or default selected provider and model
+      if (savedProvider && savedModel && availableProviders.some(p => p.providerName === savedProvider && p.modelId === savedModel)) {
+        setSelectedProvider(savedProvider);
+        setSelectedModel(savedModel);
+      } else if (availableProviders.length > 0) {
         setSelectedProvider(availableProviders[0].providerName);
         setSelectedModel(availableProviders[0].modelId);
       }
@@ -99,19 +110,40 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
     setIsPopupOpen(!isPopupOpen);
   };
 
-  const handleProviderModelSelect = (providerName: string, modelId: string) => {
+  const handleProviderModelSelect = async (providerName: string, modelId: string) => {
     setSelectedProvider(providerName);
     setSelectedModel(modelId);
-    setIsPopupOpen(false);
+    
+    // Save selected provider and model in settings
+    const settingsService = SettingsService.getInstance();
+    await settingsService.updateSettings({
+      imageGenerationProvider: providerName,
+      imageGenerationModel: modelId
+    });
     
     // If onImageGenerate is provided, call it with an empty prompt
     // The actual prompt will be filled in by the chat message
-    if (onImageGenerate) {
+    if (onImageGenerate && isEnabled) {
       onImageGenerate("", providerName, modelId);
     }
+    
+    setIsPopupOpen(false);
+  };
+  
+  const toggleImageGeneration = async () => {
+    const newEnabledState = !isEnabled;
+    setIsEnabled(newEnabledState);
+    
+    // Save the enabled state in settings
+    const settingsService = SettingsService.getInstance();
+    await settingsService.updateSettings({
+      imageGenerationEnabled: newEnabledState
+    });
   };
 
-  const isButtonEnabled = !disabled && providers.length > 0;
+  const buttonClass = `flex items-center justify-center w-8 h-8 rounded-full focus:outline-none ${
+    isEnabled ? 'image-generation-button' : 'text-gray-400 bg-gray-100'
+  }`;
 
   return (
     <div className="relative">
@@ -119,9 +151,15 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
         ref={buttonRef}
         type="button"
         onClick={togglePopup}
-        disabled={!isButtonEnabled}
-        className="flex items-center justify-center w-8 h-8 rounded-full image-generation-button focus:outline-none"
-        title={isButtonEnabled ? t('chat.generateImage') : t('chat.imageGenerationNotAvailable')}
+        disabled={providers.length === 0 || disabled}
+        className={buttonClass}
+        title={
+          providers.length === 0 
+            ? t('chat.imageGenerationNotAvailable') 
+            : isEnabled 
+              ? t('chat.generateImage') 
+              : t('chat.imageGenerationDisabled')
+        }
       >
         <Image size={20} />
       </button>
@@ -133,15 +171,28 @@ const ImageGenerationButton: React.FC<ImageGenerationButtonProps> = ({
           style={{ bottom: '100%', left: 0, minWidth: '220px' }}
         >
           <div className="p-2">
-            <div className="mb-2 text-sm font-medium text-gray-700">
-              {t('chat.selectImageProvider')}
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-medium text-gray-700">
+                {t('chat.selectImageProvider')}
+              </div>
+              <button
+                onClick={toggleImageGeneration}
+                className="flex items-center text-sm focus:outline-none"
+                title={isEnabled ? t('chat.disableImageGeneration') : t('chat.enableImageGeneration')}
+              >
+                {isEnabled ? (
+                  <ToggleRight className="w-6 h-6 text-blue-500" />
+                ) : (
+                  <ToggleLeft className="w-6 h-6 text-gray-400" />
+                )}
+              </button>
             </div>
             <div className="overflow-y-auto max-h-60">
               {providers.map((provider) => (
                 <div
                   key={`${provider.providerName}-${provider.modelId}`}
                   className={`flex items-center px-3 py-2 cursor-pointer rounded-md ${
-                    selectedProvider === provider.providerName && selectedModel === provider.modelId
+                    isEnabled && selectedProvider === provider.providerName && selectedModel === provider.modelId
                       ? 'image-generation-provider-selected'
                       : 'image-generation-provider-item'
                   }`}

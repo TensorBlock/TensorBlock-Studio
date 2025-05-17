@@ -13,6 +13,7 @@ import { CommonProviderHelper } from './common-provider-service';
  */
 export class CustomService implements AiServiceProvider {
 
+  private settingsService: SettingsService;
   private openAIProvider: OpenAIProvider;
   private apiModels: ModelSettings[] = [];
 
@@ -29,13 +30,15 @@ export class CustomService implements AiServiceProvider {
   constructor(providerID: string) {
     this.providerID = providerID;
     
-    const settingsService = SettingsService.getInstance();
-    const providerSettings = settingsService.getProviderSettings(this.providerID);
+    this.settingsService = SettingsService.getInstance();
+    const providerSettings = this.settingsService.getProviderSettings(this.providerID);
     const apiKey = providerSettings.apiKey;
     const baseURL = providerSettings.baseUrl;
 
     this.baseURL = `${baseURL}/${this.apiVersion}`;
     this.apiKey = apiKey;
+
+    this.apiModels = this.settingsService.getModels(this.providerID);
 
     this.openAIProvider = createOpenAI({
       apiKey: this.apiKey,
@@ -49,11 +52,7 @@ export class CustomService implements AiServiceProvider {
    * Get the name of the service provider
    */
   get name(): string {
-    const settingsService = SettingsService.getInstance();
-    const providerSettings = settingsService.getProviderSettings(this.providerID);
-    const error = new Error('Custom provider settings: ' + JSON.stringify(providerSettings));
-    console.log(error);
-    console.log('Provider Name: ', providerSettings.providerName);
+    const providerSettings = this.settingsService.getProviderSettings(this.providerID);
     return providerSettings.providerName;
   }
 
@@ -75,8 +74,7 @@ export class CustomService implements AiServiceProvider {
    * Fetch the list of available models from Forge
    */
   public async fetchAvailableModels(): Promise<ModelSettings[]> {
-    const settingsService = SettingsService.getInstance();
-    const models = settingsService.getModels(this.providerID);
+    const models = this.settingsService.getModels(this.providerID);
 
     this.apiModels = models;
 
@@ -87,9 +85,17 @@ export class CustomService implements AiServiceProvider {
    * Get the capabilities of a model with this provider
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getModelCapabilities(model: string): AIServiceCapability[] {
+  getModelCapabilities(modelId: string): AIServiceCapability[] {
+    // Get model data by modelId
+    const modelData = this.apiModels.find(x => x.modelId === modelId);
+    let hasImageGeneration = false;
+
+    if(modelData?.modelCapabilities.findIndex(x => x === AIServiceCapability.ImageGeneration) !== -1){
+      hasImageGeneration = true;
+    }
+    
     return mapModelCapabilities(
-      false,
+      hasImageGeneration,
       false,
       false,
       false,
@@ -143,13 +149,29 @@ export class CustomService implements AiServiceProvider {
    */
   public async getImageGeneration(
     prompt: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: {
       size?: `${number}x${number}`;
+      aspectRatio?: `${number}:${number}`;
       style?: string;
       quality?: string;
-    } = {}
-  ): Promise<string[]> {
-    throw new Error('Not implemented');
+    }
+  ): Promise<string[] | Uint8Array<ArrayBufferLike>[]> {
+
+    const imageModel = this.openAIProvider.imageModel('dall-e-3');
+
+    const result = await imageModel.doGenerate({
+      prompt: prompt,
+      n: 1,
+      size: options.size || '1024x1024',
+      aspectRatio: options.aspectRatio || '1:1',
+      seed: 42,
+      providerOptions: {
+        "openai": {
+          "style": options.style || 'vivid'
+        }
+      }
+    });
+
+    return result.images;
   }
 } 

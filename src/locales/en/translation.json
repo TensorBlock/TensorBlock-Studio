@@ -9,7 +9,8 @@
     "submit": "Submit",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "general": "General"
   },
   "chat": {
     "sendMessage": "Send Message",
@@ -30,7 +31,22 @@
     "edit": "Edit",
     "regenerate": "Regenerate",
     "stopResponse": "Stop Response",
-    "pressShiftEnterToChangeLines": "Press Shift+Enter to change lines"
+    "pressShiftEnterToChangeLines": "Press Shift+Enter to change lines",
+    "generateImage": "Generate Image",
+    "imageGenerationNotAvailable": "Image generation not available",
+    "imageGenerationDisabled": "Image generation is disabled",
+    "enableImageGeneration": "Enable image generation",
+    "disableImageGeneration": "Disable image generation",
+    "selectImageProvider": "Select Image Provider",
+    "noImageProvidersAvailable": "No image providers available"
+  },
+  "tools": {
+    "executing": "Executing tool...",
+    "executedSuccessfully": "Tool execution completed",
+    "executionFailed": "Tool execution failed",
+    "toolName": "Tool name",
+    "result": "Result",
+    "error": "Error"
   },
   "translation": {
     "title": "Translation",
@@ -96,13 +112,53 @@
     "generationCount": "Generation Count",
     "randomSeed": "Random Seed",
     "generateButton": "Generate",
-    "generating": "Generating...",
+    "generating": "Generating image...",
+    "creatingImage": "AI is creating your image",
+    "generationFailed": "Image generation failed",
+    "generatedImage": "Generated image",
     "prompt": "Prompt",
     "promptPlaceholder": "Describe the image you want to create, e.g.: a peaceful lake at sunset with mountains in the background",
     "results": "Generated Results",
     "placeholderText": "Enter a prompt and click generate to create images",
     "apiKeyMissing": "Please set your API key for the selected provider in the settings.",
-    "seedHelp": "Seed for reproducible results"
+    "seedHelp": "Seed for reproducible results",
+    "loading": "Loading image history..."
+  },
+  "mcpServer": {
+    "title": "MCP Servers",
+    "addServer": "Add Server",
+    "editServer": "Edit Server",
+    "exploreMore": "Explore More",
+    "serverName": "Server Name",
+    "serverNamePlaceholder": "Enter server name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter server description (optional)",
+    "transportType": "Transport Type",
+    "serverURL": "Server URL",
+    "serverURLPlaceholder": "Enter server URL",
+    "headers": "Headers (JSON)",
+    "default": "Default",
+    "imageGeneration": "Image Generation",
+    "noServers": "No MCP servers configured",
+    "addServerPrompt": "Click the 'Add Server' button to create one",
+    "cannotEditDefault": "Cannot edit default server",
+    "cannotDeleteDefault": "Cannot delete default server",
+    "sseOption": "Server-Sent Events (SSE)",
+    "stdioOption": "Standard IO (stdio)",
+    "streamableHttpOption": "Streamable HTTP",
+    "sseDisplay": "SSE",
+    "stdioDisplay": "STDIO",
+    "streamableHttpDisplay": "Streamable HTTP",
+    "connectionSettings": "Connection Settings",
+    "command": "Command",
+    "commandPlaceholder": "Enter command (e.g., python, node)",
+    "args": "Arguments",
+    "argsPlaceholder": "One argument per line",
+    "argsHelp": "Enter each argument on a separate line",
+    "env": "Environment Variables (JSON)",
+    "advancedSettings": "Advanced Settings",
+    "timeout": "Timeout",
+    "seconds": "seconds"
   },
   "settings": {
     "language": "Language",
@@ -148,6 +204,20 @@
     
     "webSearch_title": "Web Search (Preview)",
     "webSearch_toggle_label": "Enable Web Search Function",
-    "webSearch_description": "When enabled, the AI can search the web to provide more up-to-date information. Please note that web search is currently only supported with OpenAI and Gemini models. Also, when web search is enabled, streaming responses (where text appears incrementally) will not be available."
+    "webSearch_description": "When enabled, the AI can search the web to provide more up-to-date information. Please note that web search is currently only supported with OpenAI and Gemini models. Also, when web search is enabled, streaming responses (where text appears incrementally) will not be available.",
+
+    "general": "General",
+    "startup": "Startup",
+    "startWithSystem": "Start with system",
+    "startupToTray": "Start minimized to tray",
+    "trayOptions": "Tray Options",
+    "closeToTray": "Close to tray instead of quitting",
+    "networkProxy": "Network Proxy",
+    "systemProxy": "Use system proxy",
+    "customProxy": "Custom proxy",
+    "noProxy": "No proxy",
+    "privacy": "Privacy",
+    "sendErrorReports": "Send anonymous error reports and usage statistics",
+    "sendErrorReports_description": "Help improve the application by sending anonymous crash reports and usage data."
   }
 } 
