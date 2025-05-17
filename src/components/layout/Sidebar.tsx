@@ -1,5 +1,7 @@
 import React from 'react';
-import { MessageSquare, Settings, Image, Languages, FolderClosed, ServerCog } from 'lucide-react';
+import { MessageSquare, Settings, Image, Languages, FolderClosed, 
+  // ServerCog 
+} from 'lucide-react';
 
 interface SidebarProps {
   activePage: string;
@@ -91,7 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <FolderClosed size={22} />
         </button>
 
-        <button 
+        {/* <button 
           className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
             getActivePage() === 'mcpserver' 
               ? 'navigation-item-selected navigation-item-text' 
@@ -101,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-label="MCP Servers"
         >
           <ServerCog size={22} />
-        </button>
+        </button> */}
       </div>
 
       {/* Settings button at bottom */}

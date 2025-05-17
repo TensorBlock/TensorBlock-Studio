@@ -1,7 +1,9 @@
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Conversation, Message } from '../../types/chat';
 import { MCPServerSettings } from '../../types/settings';
-import { Send, Square, Copy, Pencil, Loader2, Globe, RefreshCw, Check, X, ServerCog } from 'lucide-react';
+import { Send, Square, Copy, Pencil, Loader2, Globe, RefreshCw, Check, X, 
+  // ServerCog 
+} from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
 import MessageToolboxMenu, { ToolboxAction } from '../ui/MessageToolboxMenu';
 import { MessageHelper } from '../../services/message-helper';
@@ -13,7 +15,7 @@ import ProviderIcon from '../ui/ProviderIcon';
 import { useTranslation } from '../../hooks/useTranslation';
 import FileUploadButton from './FileUploadButton';
 import FileAttachmentDisplay from './FileAttachmentDisplay';
-import ImageGenerationButton from './ImageGenerationButton';
+// import ImageGenerationButton from './ImageGenerationButton';
 
 interface ChatMessageAreaProps {
   activeConversation: Conversation | null;
@@ -44,9 +46,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   isCurrentlyStreaming = false,
   selectedProvider,
   selectedModel,
-  mcpServers,
-  selectedMcpServers,
-  onToggleMcpServer,
+  // mcpServers,
+  // selectedMcpServers,
+  // onToggleMcpServer,
 }) => {
   const { t } = useTranslation();
   const [inputValue, setInput] = useState('');
@@ -61,9 +63,9 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   const [webSearchActive, setWebSearchActive] = useState(false);
   const [isWebSearchPreviewEnabled, setIsWebSearchPreviewEnabled] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [mcpPopupOpen, setMcpPopupOpen] = useState(false);
-  const mcpButtonRef = useRef<HTMLButtonElement>(null);
-  const mcpPopupRef = useRef<HTMLDivElement>(null);
+  // const [mcpPopupOpen, setMcpPopupOpen] = useState(false);
+  // const mcpButtonRef = useRef<HTMLButtonElement>(null);
+  // const mcpPopupRef = useRef<HTMLDivElement>(null);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -291,23 +293,23 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   }
 
   // Add useEffect to handle click outside for MCP popup
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        mcpPopupRef.current && 
-        !mcpPopupRef.current.contains(event.target as Node) &&
-        mcpButtonRef.current && 
-        !mcpButtonRef.current.contains(event.target as Node)
-      ) {
-        setMcpPopupOpen(false);
-      }
-    };
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (
+  //       mcpPopupRef.current && 
+  //       !mcpPopupRef.current.contains(event.target as Node) &&
+  //       mcpButtonRef.current && 
+  //       !mcpButtonRef.current.contains(event.target as Node)
+  //     ) {
+  //       setMcpPopupOpen(false);
+  //     }
+  //   };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  //   document.addEventListener('mousedown', handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener('mousedown', handleClickOutside);
+  //   };
+  // }, []);
 
   // If no active conversation is selected
   if (!activeConversation) {
@@ -566,7 +568,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             )}
             
             {/* Image generation button */}
-            <ImageGenerationButton 
+            {/* <ImageGenerationButton 
               disabled={isLoading || isCurrentlyStreaming}
               onImageGenerate={(prompt, provider, model) => {
                 // Set special message for image generation
@@ -575,7 +577,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 // Focus the input
                 inputRef.current?.focus();
               }}
-            />
+            /> */}
           </div>
 
           {/* Web search element */}
@@ -584,7 +586,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           }
 
           {/* MCP Servers dropdown */}
-          {mcpServers && Object.keys(mcpServers).length > 0 && (
+          {/* {mcpServers && Object.keys(mcpServers).length > 0 && (
             <div className="relative">
               <button
                 type="button"
@@ -645,7 +647,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 </div>
               )}
             </div>
-          )}
+          )} */}
 
           <span className={`flex-1 hidden text-xs text-center pt-4 text-gray-300 md:block truncate pr-6 lg:pr-12`}>
             {t('chat.pressShiftEnterToChangeLines')}
