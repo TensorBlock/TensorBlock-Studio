@@ -107,6 +107,7 @@
   "imageGeneration": {
     "title": "圖像生成",
     "provider": "提供者",
+    "settingsButton": "設定",
     "model": "模型",
     "imageSize": "圖像大小",
     "generationCount": "生成數量",

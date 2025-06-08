@@ -107,6 +107,7 @@
   "imageGeneration": {
     "title": "画像生成",
     "provider": "プロバイダー",
+    "settingsButton": "設定",
     "model": "モデル",
     "imageSize": "画像サイズ",
     "generationCount": "生成数",

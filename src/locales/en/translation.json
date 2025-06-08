@@ -107,6 +107,7 @@
   "imageGeneration": {
     "title": "Image Generation",
     "provider": "Provider",
+    "settingsButton": "Settings",
     "model": "Model",
     "imageSize": "Image Size",
     "generationCount": "Generation Count",

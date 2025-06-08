@@ -24,16 +24,27 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 
 ## Features
 
-- Multiple LLM provider
-- Web search compatible
-- Multi-language UI and prompt support
-- Beginner-friendly experience
-- Framer Motion UI transitions
-- Local-first data storage for speed and privacy
+### 🎨 Interaction & Creation
+- Image generation with support for multiple providers  
+- Translation scenarios for multilingual workflows  
+- Framer Motion UI transitions for smooth experience  
 
 <br>
 
+### 🧠 Intelligence & Memory
+- File memory store: attach files and persist context across chats  
+- Conversational agents powered by multiple LLM providers  
+- Web search integration for real-time answers
+
 ![TensorBlock Studio Screenshot 01](https://github.com/user-attachments/assets/e947cbb9-6d7d-4714-a8db-5a5e42d7d031)
+
+<br>
+
+### ⚙️ User Experience & Customization
+- Configurable startup settings  
+- Multi-language UI and prompt support  
+- Local-first data storage for speed and privacy  
+- Beginner-friendly interface  
 
 ![TensorBlock Studio Screenshot 02](https://github.com/user-attachments/assets/94d1841f-2242-4045-ae13-d1be3351d54b)
 
