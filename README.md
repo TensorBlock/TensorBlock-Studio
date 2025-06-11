@@ -31,7 +31,7 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 
 ![TensorBlock Studio Image Generation](https://github.com/user-attachments/assets/dfe3050c-7a18-4625-938d-989d29af3f9f)
 
-![TensorBlock Studio Translation](https://github.com/user-attachments/assets/87a9952f-6755-4921-94ed-014f84fc579e)
+
 
 
 
