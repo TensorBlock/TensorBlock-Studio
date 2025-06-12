@@ -29,9 +29,9 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 - Translation scenarios for multilingual workflows  
 - Framer Motion UI transitions for smooth experience
 
-![TensorBlock Studio Image Generation](https://github.com/user-attachments/assets/dfe3050c-7a18-4625-938d-989d29af3f9f)
+![TensorBlock Studio Image Generation Page](https://github.com/user-attachments/assets/24ec4f29-a3b2-41cc-b9d7-0467f5e470ef)
 
-
+![TensorBlock Studio Translation Page](https://github.com/user-attachments/assets/9f5b6a9f-d6dc-4082-a990-4988ce31c14c)
 
 
 
@@ -42,9 +42,9 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 - Conversational agents powered by multiple LLM providers  
 - Web search integration for real-time answers
 
-![TensorBlock Studio File Management](https://github.com/user-attachments/assets/750f5170-5b60-49a0-8371-9f38c46beecc)
+![TensorBlock Studio File Management Page](https://github.com/user-attachments/assets/e4183ae9-b4e1-466e-83ce-de0c5ef1535f)
 
-![TensorBlock Studio Screenshot 01](https://github.com/user-attachments/assets/e947cbb9-6d7d-4714-a8db-5a5e42d7d031)
+![TensorBlock Studio Chat Page](https://github.com/user-attachments/assets/ae7f338b-f997-4594-b393-b5e6cb460ef9)
 
 <br>
 
@@ -54,10 +54,9 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 - Local-first data storage for speed and privacy  
 - Beginner-friendly interface  
 
-![TensorBlock Studio Screenshot 02](https://github.com/user-attachments/assets/94d1841f-2242-4045-ae13-d1be3351d54b)
+![TensorBlock Studio Model Management Page](https://github.com/user-attachments/assets/d5fdf982-c22c-4655-92d0-506cf1faadee)
 
-![TensorBlock Studio Screenshot 03](https://github.com/user-attachments/assets/fe98d5f9-595f-47bc-83e7-20779eba1bfa)
-
+![TensorBlock Studio Model Selection Page](https://github.com/user-attachments/assets/4a3e9e07-e09a-41c1-8941-7fa5b59f4342)
 
 <br>
 
