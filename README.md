@@ -2,11 +2,11 @@
 
 # TensorBlock Studio
 
+[![Website](https://img.shields.io/badge/Website-tensorblock.co-blue?logo=google-chrome&logoColor=white)](https://tensorblock.co)
 [![Twitter](https://img.shields.io/twitter/follow/tensorblock_aoi?style=social)](https://twitter.com/tensorblock_aoi)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?logo=discord&logoColor=white)](https://discord.gg/Ej5NmeHFf2)
+[![🤗 Hugging Face](https://img.shields.io/badge/HuggingFace-TensorBlock-yellow?logo=huggingface&logoColor=white)](https://huggingface.co/tensorblock)
 [![Telegram](https://img.shields.io/badge/Telegram-Group-blue?logo=telegram)](https://t.me/TensorBlock)
-![GitHub Repo stars](https://img.shields.io/github/stars/TensorBlock/TensorBlock-Studio)
-![GitHub forks](https://img.shields.io/github/forks/TensorBlock/TensorBlock-Studio)
 
 > A lightweight, open, and extensible multi-LLM interaction studio.  
 > Part of the [TensorBlock](https://tensorblock.co) ecosystem — built to empower anyone to build with AI from anywhere, not just use it.
