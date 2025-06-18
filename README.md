@@ -3,6 +3,7 @@
 # TensorBlock Studio
 
 [![Twitter](https://img.shields.io/twitter/follow/tensorblock_aoi?style=social)](https://twitter.com/tensorblock_aoi)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?logo=discord&logoColor=white)](https://discord.gg/Ej5NmeHFf2)
 [![Telegram](https://img.shields.io/badge/Telegram-Group-blue?logo=telegram)](https://t.me/TensorBlock)
 ![GitHub Repo stars](https://img.shields.io/github/stars/TensorBlock/TensorBlock-Studio)
 ![GitHub forks](https://img.shields.io/github/forks/TensorBlock/TensorBlock-Studio)
