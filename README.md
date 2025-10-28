@@ -89,7 +89,7 @@ Forget generic AI chat tools. **TensorBlock Studio** is a new kind of workspace 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/TensorBlock/TensorBlock-Studio.git
+   git clone https://github.com/TensorBlock/TensorBlock-Studio.git tensorblock-studio
    cd tensorblock-studio
    ```
 
